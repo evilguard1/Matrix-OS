@@ -3,6 +3,23 @@ export const CONFIG = `${ROOT}/config.json`;
 export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
 
+const DEFAULT_CONFIG = {
+    masterEnabled: true,
+    ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
+    automation: {
+        rooting: true, hacking: true, cloud: true, hacknet: true,
+        contracts: true, stock: true, singularity: true, gang: true,
+        sleeves: true, bladeburner: true, corporation: true,
+    },
+    economy: { cashReserve: 10_000_000, reserveFraction: 0.15 },
+    hacking: {
+        homeReserveGb: 2, fullEngineHomeRam: 32, batchGapMs: 120,
+        prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
+        minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: 24,
+        minTargetMoney: 0,
+    },
+};
+
 export function readJson(ns, file, fallback = {}) {
     try {
         const raw = ns.read(file);
@@ -17,7 +34,7 @@ export async function writeJson(ns, file, value) {
 }
 
 export function config(ns) {
-    return readJson(ns, CONFIG, {});
+    return { ...DEFAULT_CONFIG, ...readJson(ns, CONFIG, {}) };
 }
 
 export function reserveMoney(ns, cfg = config(ns)) {
