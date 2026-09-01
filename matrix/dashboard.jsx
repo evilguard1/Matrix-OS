@@ -12,6 +12,19 @@ function ram(n){if(!Number.isFinite(n))return"—";if(n>=1024*1024)return`${(n/1
 function pct(n){return`${((n??0)*100).toFixed(1)}%`;}
 function age(t){if(!t)return"never";const s=Math.max(0,(Date.now()-t)/1000);return s<60?`${s.toFixed(0)}s`:s<3600?`${(s/60).toFixed(0)}m`:`${(s/3600).toFixed(1)}h`;}
 
+function dashboardData(ns){
+    const overview=readJson(ns,`${STATE_DIR}/overview.txt`,null);
+    if(overview)return overview;
+    const boot=readJson(ns,`${STATE_DIR}/bootstrap.txt`,{});
+    return {
+        updated:boot.updated??0,
+        player:{money:ns.getServerMoneyAvailable("home")},
+        network:{discovered:boot.discovered??0,rooted:boot.rooted??0,maxRam:boot.homeRam??0,ramPct:0},
+        services:{bootstrap:{status:boot.status??"starting"},hacking:{status:"bootstrap",target:boot.target??"n00dles"}},
+        events:[],
+    };
+}
+
 const css=`
 @keyframes mxPulse{0%,100%{opacity:.65}50%{opacity:1}}
 @keyframes mxScan{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
@@ -127,10 +140,10 @@ function Settings({ns,d,cfg}){
 }
 
 function App({ns}){
-    const [data,setData]=React.useState(()=>readJson(ns,`${STATE_DIR}/overview.txt`,{}));
+    const [data,setData]=React.useState(()=>dashboardData(ns));
     const [cfg,setCfg]=React.useState(()=>readJson(ns,CONFIG,{}));
     const [tab,setTab]=React.useState("OVERVIEW");
-    React.useEffect(()=>{const id=setInterval(()=>{setData(readJson(ns,`${STATE_DIR}/overview.txt`,{}));setCfg(readJson(ns,CONFIG,{}));},Math.max(300,cfg.ui?.refreshMs??750));return()=>clearInterval(id);},[cfg.ui?.refreshMs]);
+    React.useEffect(()=>{const id=setInterval(()=>{setData(dashboardData(ns));setCfg(readJson(ns,CONFIG,{}));},Math.max(300,cfg.ui?.refreshMs??750));return()=>clearInterval(id);},[cfg.ui?.refreshMs]);
     const tabs=["OVERVIEW","HACKING","ECONOMY","PROGRESS","SETTINGS"];
     let body=tab==="HACKING"?<Hacking d={data}/>:tab==="ECONOMY"?<Economy d={data}/>:tab==="PROGRESS"?<Progress d={data}/>:tab==="SETTINGS"?<Settings ns={ns} d={data} cfg={cfg}/>:<Overview d={data}/>;
     return <div className="mxRoot">

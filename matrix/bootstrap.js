@@ -3,6 +3,10 @@ import { scanAll, tryRoot } from "/matrix/lib/network.js";
 
 const EARLY = "/matrix/workers/early.js";
 
+function sameScript(a,b){
+    return String(a).replace(/^\/+/,"")===String(b).replace(/^\/+/,"");
+}
+
 function scoreTarget(ns, host) {
     if (!ns.hasRootAccess(host)) return -1;
     const max = ns.getServerMaxMoney(host);
@@ -15,15 +19,16 @@ function scoreTarget(ns, host) {
 async function deploy(ns, hosts, target) {
     const ram = ns.getScriptRam(EARLY, "home");
     for (const host of hosts) {
-        if (host === "home" || !ns.hasRootAccess(host)) continue;
+        if (!ns.hasRootAccess(host)) continue;
         const max = ns.getServerMaxRam(host);
         if (max < ram) continue;
-        await ns.scp(EARLY, host, "home");
+        if (host !== "home") await ns.scp(EARLY, host, "home");
         for (const p of ns.ps(host)) {
-            if (p.filename === EARLY && String(p.args[0]) !== target) ns.kill(p.pid);
+            if (sameScript(p.filename, EARLY) && String(p.args[0]) !== target) ns.kill(p.pid);
         }
-        if (!ns.isRunning(EARLY, host, target)) {
-            const threads = Math.floor((max - ns.getServerUsedRam(host)) / ram);
+        if (!ns.ps(host).some(p => sameScript(p.filename, EARLY) && String(p.args[0]) === target)) {
+            const reserve = host === "home" ? 1 : 0;
+            const threads = Math.floor((max - ns.getServerUsedRam(host) - reserve) / ram);
             if (threads > 0) ns.exec(EARLY, host, threads, target);
         }
     }
