@@ -156,6 +156,15 @@ function stopMatrix(ns) {
         for (const f of WORKERS) {
             try { ns.scriptKill(f, host); } catch {}
         }
+        try {
+            for (const p of ns.ps(host)) {
+                const name = String(p.filename).replace(/^\/+/, "");
+                if (RUNTIME.some(f => f.replace(/^\/+/, "") === name) ||
+                    WORKERS.some(f => f.replace(/^\/+/, "") === name)) {
+                    ns.kill(p.pid, host);
+                }
+            }
+        } catch {}
     }
 }
 
