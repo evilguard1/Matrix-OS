@@ -39,7 +39,7 @@ run install.js --fresh
 
 | Home RAM | Active stage | Behavior |
 | ---: | --- | --- |
-| 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken |
+| 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken, plus a self-propagating worm botnet on the wider network |
 | 16 GB | Early | Distributed early workers and lite Matrix tail |
 | 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, full React dashboard |
 | 64 GB | Operations | Purchased-server cloud manager and the progression coordinator |
@@ -50,6 +50,9 @@ Stage changes are automatic. When Home crosses a boundary, the current process d
 ## Automation coverage
 
 - Recursive network discovery and automatic port opening/rooting
+- Self-propagating 8 GB worm: home seeds it once, then infected servers root
+  their own neighbours, copy the worm onward, and fill every rooted host with
+  hacking drones - the botnet grows itself at zero resident cost to home
 - Fresh-save hacking and 16 GB distributed workers
 - Adaptive target selection, prep, and HWGW batching
 - Purchased-server and Hacknet investment within configured reserves
@@ -100,6 +103,7 @@ matrix/config.json         preserved user configuration
 matrix/lib/                shared utilities
 matrix/services/           autonomous managers
 matrix/workers/            hacking workers
+matrix/worm/               self-propagating 8 GB botnet (seed, spread, drone)
 docs/CAPABILITY-MATRIX.md  capability audit and directive-protocol spec
 ```
 
@@ -110,4 +114,4 @@ npm install
 npm test
 ```
 
-The validator checks JavaScript/JSX syntax, manifest completeness and dependency stages, pure scheduler helpers, legacy API regressions, and required files.
+The validator checks JavaScript/JSX syntax, manifest completeness and dependency stages, pure scheduler helpers, legacy API regressions, required files, and the worm's static Netscript RAM budgets (a script that does not fit its host never launches, so those budgets are asserted rather than assumed).

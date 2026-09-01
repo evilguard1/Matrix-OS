@@ -5,6 +5,7 @@ export function stageForRam(homeRam) {
 }
 
 const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/start.js"];
+const SEED = "/matrix/worm/seed.js";
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -25,5 +26,17 @@ export async function main(ns) {
 
     await ns.sleep(200);
     ns.tprint(`MATRIX-OS // LAUNCHING ${next}`);
+
+    // Below 16 GB home cannot afford to orchestrate a botnet itself (scp 0.6 +
+    // exec 1.3 do not fit alongside the bootstrap controller), so hand off to
+    // the one-shot worm seeder first. It plants the self-propagating worm on
+    // the biggest rootable server and then spawns the real stage, leaving home
+    // with zero resident botnet cost. From 16 GB early.js distributes workers
+    // directly and the worm is retired by the installer's process sweep.
+    if (ns.getServerMaxRam("home") < 16 && ns.fileExists(SEED, "home")) {
+        ns.spawn(SEED, { threads: 1, spawnDelay: 0 }, next);
+        return;
+    }
+
     ns.spawn(next, { threads: 1, spawnDelay: 0 });
 }

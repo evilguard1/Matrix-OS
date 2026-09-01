@@ -17,6 +17,7 @@ reference · **Missing** = not implemented.
 
 | Area | File | Notes |
 | --- | --- | --- |
+| Self-propagating 8 GB botnet | `matrix/worm/` | Worm seeds itself onto the network and grows without home RAM - see below |
 | Staged manifest install / update | `install.js` | SHA-pinned downloads, config preservation, atomic download-then-swap, recover-to-previous-version on any failed download |
 | Kernel stage selection | `matrix/kernel.js` | Picks the RAM-appropriate stage, kills stale stage processes, clears the bootstrap lock |
 | Network discovery + rooting | `matrix/lib/network.js`, `matrix/services/root.js` | BFS scan, port-opener detection, `nuke`, worker `scp` |
@@ -32,7 +33,6 @@ reference · **Missing** = not implemented.
 
 | Area | Gap | Reference | Stage / SF |
 | --- | --- | --- | --- |
-| 8 GB bootstrap | One target, `hack/grow/weaken` from `home` only. Distributed workers were added then reverted for the 8 GB RAM budget. Weakest link in the whole system. | jjclark botnet; alain early | bootstrap / 8 GB |
 | 16 GB early | Distributes a loop worker to one target, no batching | alain `daemon.js` XP mode | early / 16 GB |
 | Coordinator scope | Emits one global objective + directives + budgets, but only some managers consume it (see table below). No per-BitNode strategy switch, no manager enable/disable by phase. | alain `autopilot.js` | full / 64 GB start gate |
 | Hacking target selection | Single target, wave-based (`waitPids` each cycle leaves duty-cycle gaps), no multi-target pipeline, no `ns.share()` | alain `daemon.js` | full / 32 GB |
@@ -59,6 +59,63 @@ reference · **Missing** = not implemented.
 | Continuous / pipelined HWGW batcher with multi-target scheduling | alain `daemon.js` | full / 32 GB |
 | Casino seed ($10b blackjack), Stanek's Gift, IPvGO (`ns.go`), intelligence farm | alain `casino` / `stanek` / `go` | advanced / various SF |
 | Pre-4S momentum stock trading (history buffer + EMA forecast) | alain `stockmaster.js` | advanced / 128 GB |
+
+---
+
+## The 8 GB worm (self-propagating botnet)
+
+Home at 8 GB cannot orchestrate a botnet. `bootstrap.js` already carries `wget`,
+`spawn`, `ps`, `rm` and all five port crackers, so `scp` (0.6 GB) plus `exec`
+(1.3 GB) do not fit alongside it — that is why the earlier "deploy workers from
+the 8 GB stage" attempt had to be reverted.
+
+The worm inverts the problem: the propagation logic runs **on the infected
+hosts**, not on home. Home's steady-state cost for the entire botnet is zero.
+
+| File | RAM | Role |
+| --- | ---: | --- |
+| `matrix/worm/seed.js` | 6.20 GB | One-shot. Launched by the kernel below 16 GB. Roots what it can reach, plants the worm on the largest rootable server, then `spawn`s the real stage so home is freed. |
+| `matrix/worm/spread.js` | 5.05 GB | Resident on infected hosts. Each cycle: root neighbours, `scp` the worm onward, promote hosts >= 16 GB to propagation nodes, fill everything else with drones, retarget when the best target changes. |
+| `matrix/worm/drone.js` | 2.40 GB | The earner. One target, `weaken` / `grow` / `hack` forever. Small enough that a 4 GB node (`n00dles`) carries one. |
+
+Propagation on a fresh save works immediately: `foodnstuff`,
+`sigma-cosmetics` and `joesguns` are 16 GB, need zero open ports, and require
+hacking level 1, so the first seed lands within seconds of starting the game.
+
+Growth is `home -> biggest rootable host -> its neighbours -> ...`. Every host
+with >= 16 GB becomes a propagation node and reserves 5.05 GB for the worm; the
+remaining RAM, and all of every smaller host, becomes drones. `preventDuplicates`
+on `exec` makes each cycle idempotent, and `scriptKill` only fires when the best
+target actually changes, so in-flight work is not thrown away.
+
+### RAM budgets are enforced, not documented
+
+`tests/ram-budget.mjs` is a static Netscript RAM analyser. Bitburner charges a
+script for every NS function it *mentions* plus a 1.6 GB base, and a script that
+does not fit simply never launches — silently. The validator therefore asserts:
+
+- `drone` fits a 4 GB server
+- `spread + drone` fits an 8 GB server
+- `seed` fits an 8 GB home
+- the `SPREAD_RAM` / `DRONE_RAM` constants the worm hardcodes (it cannot afford
+  `ns.getScriptRam`, 0.1 GB) match the measured cost exactly
+- no worm file uses an NS function with an unknown RAM cost
+- no worm file `import`s anything (import RAM is billed to the caller)
+
+Adding a single `ns.getServer()` (2.0 GB) to `spread.js` fails the suite with
+`spread + drone must fit 8 GB, is 9.45 GB`. The regression that cost the first
+attempt cannot recur silently.
+
+### Scope and lifecycle
+
+The worm is active **below 16 GB only**. From 16 GB `early.js` distributes
+workers directly, and from 32 GB the HWGW batcher in `hacking.js` schedules the
+same RAM far more efficiently — running both would just make them compete. The
+worm files are listed in `install.js`'s `MATRIX_PROGRAMS`, so the installer's
+process sweep retires the botnet from every host on a stage transition.
+
+Follow-up: replacing `early.js`'s home-orchestrated deployment with the worm
+would free ~2.6 GB of home RAM at the 16 GB stage too.
 
 ---
 
@@ -119,8 +176,8 @@ its own local default, so removing the coordinator is always safe.
    company work) as `matrix/services/factions.js`, consuming `directives.singularity`.
 3. **Reset-value estimation** in `singularity.js` / `progression.js`: replace the
    pure queued-aug count with a rep-and-money-multiplier estimate.
-4. **8 GB bootstrap distribution** with a measured RAM budget — the previously
-   reverted feature is still the single biggest throughput win.
+4. **Move the 16 GB stage onto the worm** so `early.js` stops spending ~2.6 GB
+   of home RAM orchestrating workers the botnet can place itself.
 5. **Per-BitNode strategy** table in the coordinator that reprioritises managers
    and the `bitNodePlan`.
 6. Wire `budgets.corporation` / `budgets.homeRam`, then expand the corporation

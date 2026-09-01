@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.4.0`
+Current release/version: `0.5.0`
 
 ## Quick Start
 
@@ -52,6 +52,15 @@ Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
 
+### 0.5.0 verification status
+
+The worm's RAM budgets are *computed* from the Netscript cost table and
+asserted exactly (`drone` 2.40 GB, `spread` 5.05 GB, `seed` 6.20 GB one-shot),
+including that the constants the worm hardcodes match the measured values.
+Injecting a single `ns.getServer()` into `spread.js` fails the suite. The
+propagation and drone *behaviour* has NOT been run inside Bitburner - treat
+throughput claims as untested until you watch it on a real 8 GB save.
+
 ### 0.4.0 verification status
 
 The coordinator directive/budget protocol (`planDirectives()`) is covered by
@@ -78,6 +87,12 @@ Important files:
 - `manifest.json`: version, protected config, stage thresholds, deployable files.
 - `matrix/kernel.js`: chooses the appropriate stage.
 - `matrix/bootstrap.js`: deliberately standalone to remain viable at 8 GB.
+- `matrix/worm/{seed,spread,drone}.js`: the self-propagating 8 GB botnet.
+  Home cannot afford `scp`+`exec` alongside the bootstrap controller, so the
+  propagation logic runs on the infected hosts instead. `seed.js` is one-shot
+  from the kernel below 16 GB; `spread.js` is resident on hosts >= 16 GB and
+  grows the botnet; `drone.js` is the 2.4 GB earner that fits even n00dles.
+  RAM budgets are asserted by `tests/ram-budget.mjs`, not merely documented.
 - `matrix/early.js`: early distributed hacking stage.
 - `matrix/start.js`: full-stage supervisor; deduplicates services and tails.
 - `matrix/dashboard.jsx`: responsive full command deck, launched only at 32 GB+.

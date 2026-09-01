@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { transform } from "esbuild";
+import { scriptRam } from "./ram-budget.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = relative => fs.readFileSync(path.join(root, relative), "utf8");
@@ -207,4 +208,45 @@ const dirRepGrind = planDirectives({ targetAugPrice: 5_000_000_000, targetAugNam
 assert.equal(dirRepGrind.phase, "FACTION_REP");
 assert.equal(dirRepGrind.directives.sleeves, "rep:Daedalus", "a rep grind assigns sleeves to that faction");
 
+// --- worm RAM budgets ------------------------------------------------------
+// Bitburner charges a script for every NS function it mentions, and a script
+// that does not fit simply never launches. These budgets are what make the
+// self-propagating botnet viable on 4-16 GB servers, so they are asserted
+// exactly rather than loosely.
+
+const wormRam = {};
+for (const name of ["seed", "spread", "drone"]) {
+    const source = read(`matrix/worm/${name}.js`);
+    assert.doesNotMatch(source, /^\s*import\s/m, `matrix/worm/${name}.js must not import (import RAM is billed to the caller)`);
+    const measured = scriptRam(source);
+    assert.deepEqual(measured.unknown, [], `matrix/worm/${name}.js uses NS functions with no known RAM cost: ${measured.unknown.join(", ")}`);
+    wormRam[name] = measured.ram;
+}
+
+// A 4 GB server (n00dles) must be able to carry one drone.
+assert.ok(wormRam.drone <= 4, `drone must fit a 4 GB server, is ${wormRam.drone} GB`);
+// An 8 GB server must carry the propagator plus at least one drone.
+assert.ok(wormRam.spread + wormRam.drone <= 8, `spread + drone must fit 8 GB, is ${wormRam.spread + wormRam.drone} GB`);
+// The one-shot seeder must fit an 8 GB home on its own.
+assert.ok(wormRam.seed <= 8, `seed must fit an 8 GB home, is ${wormRam.seed} GB`);
+
+// The worm hardcodes these costs because ns.getScriptRam() is RAM it cannot
+// spare. Drift between the constants and reality would silently over-subscribe
+// every server in the botnet, so pin them.
+const constantIn = (file, name) => {
+    const line = read(file).split("\n").find(entry => entry.trim().startsWith(`const ${name} = `));
+    return line ? Number(line.split("=")[1].replace(";", "").trim()) : NaN;
+};
+assert.equal(constantIn("matrix/worm/spread.js", "SPREAD_RAM"), wormRam.spread, "spread.js SPREAD_RAM constant is stale");
+assert.equal(constantIn("matrix/worm/spread.js", "DRONE_RAM"), wormRam.drone, "spread.js DRONE_RAM constant is stale");
+assert.equal(constantIn("matrix/worm/seed.js", "SPREAD_RAM"), wormRam.spread, "seed.js SPREAD_RAM constant is stale");
+
+// The kernel must hand off to the seeder below 16 GB, and the installer must be
+// able to sweep the worm off every host on a stage transition.
+assert.match(read("matrix/kernel.js"), /worm\/seed\.js/, "kernel must be able to launch the worm seeder");
+for (const name of ["seed", "spread", "drone"]) {
+    assert.ok(read("install.js").includes(`matrix/worm/${name}.js`), `installer must sweep matrix/worm/${name}.js`);
+}
+
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
+console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
