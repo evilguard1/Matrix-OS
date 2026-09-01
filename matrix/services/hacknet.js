@@ -1,4 +1,4 @@
-import { config, reserveMoney, writeState, event } from "/matrix/lib/common.js";
+import { config, managerBudget, writeState, event } from "/matrix/lib/common.js";
 
 function cheapestUpgrade(ns) {
     const options = [];
@@ -33,9 +33,7 @@ export async function main(ns) {
         }
 
         try {
-            const cash = ns.getServerMoneyAvailable("home");
-            const reserve = reserveMoney(ns,cfg);
-            const budget = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.hacknetBudgetFraction ?? 0.04)));
+            const budget = managerBudget(ns, "hacknet", cfg);
             let remaining = budget;
             let bought = 0;
             for (let n=0;n<8;n++) {

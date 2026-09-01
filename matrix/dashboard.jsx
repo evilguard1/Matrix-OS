@@ -104,6 +104,7 @@ function Overview({ data }) {
     const objectiveReason = coord.reason ?? (services.singularity?.goal?.augmentation ? `funding ${services.singularity.goal.augmentation}` : "building capability through hacking");
     const milestone = coord.milestone ?? null;
     const liquidate = Boolean(coord.liquidateStocks);
+    const directives = coord.directives ?? null;
 
     return (
         <div className="mxGrid">
@@ -165,6 +166,20 @@ function Overview({ data }) {
                         <span className="mxBadge green" style={{ fontSize: 10 }}>{coord.etaStr ?? "IN PROGRESS"}</span>
                     </div>
                 </div>
+
+                {coord.phase ? (
+                    <div style={{ marginTop: 10 }}>
+                        <div className="mxRow" style={{ padding: "2px 0", border: 0 }}>
+                            <span style={{ fontSize: 9, color: COLOR.dim, letterSpacing: "0.12em" }}>PHASE</span>
+                            <span style={{ fontSize: 10, color: COLOR.cyan, fontWeight: 700 }}>{coord.phase}</span>
+                        </div>
+                        {directives ? (
+                            <div style={{ fontSize: 9, color: COLOR.dim, letterSpacing: "0.06em", lineHeight: 1.6 }}>
+                                HACK {String(directives.hacking ?? "-").toUpperCase()} · SLV {String(directives.sleeves ?? "-").toUpperCase()} · GANG {String(directives.gang ?? "-").toUpperCase()} · STOCK {String(directives.stock ?? "-").toUpperCase()}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 {milestone ? (
                     <div style={{ marginTop: 10 }}>

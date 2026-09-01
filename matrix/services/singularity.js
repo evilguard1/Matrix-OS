@@ -1,4 +1,4 @@
-import { baselineReserveMoney, config, writeJson, writeState, event } from "/matrix/lib/common.js";
+import { baselineReserveMoney, config, writeJson, writeState, event, getDirectives } from "/matrix/lib/common.js";
 
 const NFG="NeuroFlux Governor";
 const RED="The Red Pill";
@@ -141,15 +141,19 @@ export async function main(ns){
             await writeState(ns,"singularity",{status:"paused"});await ns.sleep(5000);continue;
         }
         try{
+            // Coordinator directive: "programs" = spend only on TOR/port programs,
+            // "augs" = stop faction work and just buy queued augs before a reset.
+            const singDir=getDirectives(ns)?.directives?.singularity??"rep";
+
             buyPrograms(ns,cfg);
             const invitations=joinInvitations(ns);
-            const purchased=buyAugs(ns,cfg);
+            const purchased=singDir==="programs"?0:buyAugs(ns,cfg);
 
             const goal=bestRepGoal(ns);
             await publishReserve(ns,cfg,goal);
-            const donated=donateForGoal(ns,cfg,goal);
+            const donated=singDir==="programs"?0:donateForGoal(ns,cfg,goal);
             const key=goal?`${goal.faction}/${goal.aug}`:"";
-            if(goal&&key!==lastGoal){if(workGoal(ns,goal))lastGoal=key;}
+            if(singDir!=="augs"&&goal&&key!==lastGoal){if(workGoal(ns,goal))lastGoal=key;}
 
             try{
                 const cash=ns.getServerMoneyAvailable("home");

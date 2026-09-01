@@ -1,4 +1,4 @@
-import { config, reserveMoney, writeState, event } from "/matrix/lib/common.js";
+import { config, managerBudget, writeState, event } from "/matrix/lib/common.js";
 
 function powersUpTo(limit) {
     const out = [];
@@ -17,9 +17,7 @@ export async function main(ns) {
         }
 
         try {
-            const cash = ns.getServerMoneyAvailable("home");
-            const reserve = reserveMoney(ns, cfg);
-            let spendable = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.cloudBudgetFraction ?? 0.12)));
+            let spendable = managerBudget(ns, "cloud", cfg);
             const limit = ns.cloud.getServerLimit();
             const ramLimit = ns.cloud.getRamLimit();
             let names = ns.cloud.getServerNames();

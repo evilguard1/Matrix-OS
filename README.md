@@ -42,7 +42,7 @@ run install.js --fresh
 | 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken |
 | 16 GB | Early | Distributed early workers and lite Matrix tail |
 | 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, full React dashboard |
-| 64 GB | Operations | Purchased-server cloud and Hacknet managers |
+| 64 GB | Operations | Purchased-server cloud manager and the progression coordinator |
 | 128 GB+ | Advanced | Contracts, stocks, and feature-gated progression managers |
 
 Stage changes are automatic. When Home crosses a boundary, the current process downloads the newly eligible manifest files and restarts into the next stage. Services also check their exact script RAM before launch, so a Source-File API with a large RAM multiplier waits until it actually fits.
@@ -61,6 +61,10 @@ Stage changes are automatic. When Home crosses a boundary, the current process d
 - Bladeburner joining, action selection, stamina/chaos recovery, and skill upgrades
 - Conservative corporation creation and Agriculture bootstrap
 - BitNode route planning with an explicit World Daemon safety switch
+- Cross-system progression coordinator: one global objective plus a per-manager
+  directive/budget protocol (`/matrix/state/directives.txt`) that `sleeves`,
+  `gang`, `stock`, `singularity`, and the hacking/economy managers consume so
+  they stop competing for cash, RAM, and player actions
 - Central telemetry, event history, settings, and full Matrix dashboard
 
 Bitburner does not expose player-action automation on a truly fresh account until Singularity access is unlocked through Source-File 4 or the current BitNode. MATRIX automates everything the installed game APIs permit and keeps unavailable managers gated instead of calling locked APIs.
@@ -96,6 +100,7 @@ matrix/config.json         preserved user configuration
 matrix/lib/                shared utilities
 matrix/services/           autonomous managers
 matrix/workers/            hacking workers
+docs/CAPABILITY-MATRIX.md  capability audit and directive-protocol spec
 ```
 
 Repository validation:

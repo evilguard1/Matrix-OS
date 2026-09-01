@@ -138,7 +138,7 @@ assert.equal(reserveMoney(reserveMock), 15_000_000, "stale augmentation reserve 
 
 const coordSource = fs.readFileSync(path.join(root, "matrix/services/coordinator.js"), "utf8")
     .replace(/from\s+["']\/matrix\/lib\/common\.js["']/g, `from "${pathToFileURL(path.join(root, "matrix/lib/common.js")).href}"`);
-const { evaluateObjective } = await import(`data:text/javascript;base64,${Buffer.from(coordSource).toString("base64")}`);
+const { evaluateObjective, planDirectives } = await import(`data:text/javascript;base64,${Buffer.from(coordSource).toString("base64")}`);
 
 const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
 assert.equal(plannedNextBitNode(reset, [4, 4, 4, 5]), 4);
@@ -162,5 +162,49 @@ assert.equal(objAugs.liquidateStocks, true);
 
 const objTor = evaluateObjective({ cash: 300_000, hasTor: false });
 assert.equal(objTor.id, "BUY_PROGRAMS");
+
+// --- planDirectives: the per-manager directive/budget protocol ---------------
+// Every branch that a consumer reads has a deterministic scenario here.
+
+const dirBoot = planDirectives({ cash: 5_000, hasTor: false });
+assert.equal(dirBoot.phase, "BOOTSTRAP", "low-cash fresh save is the bootstrap phase");
+assert.equal(dirBoot.directives.hacking, "xp", "bootstrap rushes hacking XP");
+assert.equal(dirBoot.directives.singularity, "programs", "bootstrap without TOR funds port programs first");
+assert.equal(dirBoot.directives.gang, "idle", "no gang yet means no gang directive");
+assert.equal(dirBoot.budgets.homeRam, 0.5, "bootstrap spends aggressively on Home RAM");
+
+const dirKarma = planDirectives({ karma: -10, resetInfo: { currentNode: 2 } });
+assert.equal(dirKarma.phase, "KARMA_GANG");
+assert.equal(dirKarma.directives.sleeves, "karma", "karma rush points every sleeve at homicide");
+assert.equal(dirKarma.directives.gang, "idle");
+
+const dirReset = planDirectives({ queuedAugs: 12 });
+assert.equal(dirReset.phase, "AUG_RESET");
+assert.equal(dirReset.directives.stock, "liquidate", "an imminent reset liquidates the portfolio");
+assert.equal(dirReset.directives.singularity, "augs", "reset phase stops faction work and buys queued augs");
+assert.equal(dirReset.budgets.hacknet, 0, "reset phase starves discretionary spenders");
+assert.equal(dirReset.budgets.cloud, 0);
+assert.equal(dirReset.budgets.sleeveAugs, 0.001);
+
+const dirMilestone = planDirectives({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
+assert.equal(dirMilestone.phase, "MILESTONE");
+assert.equal(dirMilestone.budgets.cloud, 0, "a cash milestone starves infrastructure spend");
+assert.equal(dirMilestone.directives.stock, "liquidate");
+
+const dirEndgame = planDirectives({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
+assert.equal(dirEndgame.phase, "ENDGAME");
+assert.equal(dirEndgame.budgets.stock, 0);
+assert.equal(dirEndgame.directives.stock, "liquidate");
+
+const dirEcon = planDirectives({ cash: 5_000_000, hasTor: true, hackingLevel: 800, homeRam: 64 });
+assert.equal(dirEcon.phase, "HACK_ECON", "an established save with RAM headroom is the steady-state phase");
+assert.equal(dirEcon.directives.hacking, "money");
+assert.equal(dirEcon.directives.stock, "trade");
+assert.equal(dirEcon.budgets.hacknet, 0.04);
+assert.equal(dirEcon.budgets.homeRam, 0.15);
+
+const dirRepGrind = planDirectives({ targetAugPrice: 5_000_000_000, targetAugName: "X", targetAugFaction: "Daedalus", cash: 1_000_000_000 });
+assert.equal(dirRepGrind.phase, "FACTION_REP");
+assert.equal(dirRepGrind.directives.sleeves, "rep:Daedalus", "a rep grind assigns sleeves to that faction");
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);

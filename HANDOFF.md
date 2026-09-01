@@ -15,9 +15,9 @@ Repository: `https://github.com/evilguard1/Matrix-OS`
 
 Current branch: `main`
 
-Current published commit: `c04f5af2c4dbdacb221c7adc02acbcc019914898`
+Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.3.0`
+Current release/version: `0.4.0`
 
 ## Quick Start
 
@@ -52,6 +52,16 @@ Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
 
+### 0.4.0 verification status
+
+The coordinator directive/budget protocol (`planDirectives()`) is covered by
+deterministic scenario tests in `tests/validate.mjs` (bootstrap, karma/gang,
+faction-rep, milestone, aug-reset, endgame, steady-state). The consumer wiring in
+`sleeves`, `gang`, `stock`, `singularity`, `hacking`, `early`, `hacknet`, and
+`cloud` is written to be a no-op when `directives.txt` is absent or stale, and
+was **not** yet runtime-tested in a save with Source-File 4 / gangs / sleeves.
+Treat the advanced-manager behaviour changes as API-checked, not proven.
+
 ## Architecture
 
 | Home RAM | Stage | Entry point | Intended scope |
@@ -75,9 +85,14 @@ Important files:
   consumed by the dashboard.
 - `matrix/services/coordinator.js`: central cross-system progression coordinator.
   Evaluates player state, BitNode, karma, augmentations, and income to publish global objectives,
-  reserve targets, and stock liquidation triggers.
+  reserve targets, and stock liquidation triggers. `evaluateObjective()` picks the global
+  objective; `planDirectives()` translates it into the per-manager directive/budget
+  protocol at `/matrix/state/directives.txt`. Both are pure and unit-tested.
 - `matrix/lib/common.js`: config merge, release resolution, state/events,
-  Source File helpers, coordinator state reader, cash reserves, and BitNode planner.
+  Source File helpers, coordinator state reader, cash reserves, BitNode planner,
+  `getDirectives()`, and `managerBudget()` (directive-aware discretionary spend).
+- `docs/CAPABILITY-MATRIX.md`: audit vs. the public reference autopilots, the
+  directive protocol spec and consumption status, and the prioritised next-work queue.
 
 ## Current UI
 
@@ -175,8 +190,15 @@ Highest-value missing behavior:
 Use proven public systems as references, but integrate deliberately rather than
 copying a monolithic script into a RAM-constrained staged design.
 
-1. Progression Coordinator (`matrix/services/coordinator.js`) has been implemented and tested, publishing global objectives, reserve targets, and stock liquidation commands.
-2. Continue expanding manager policy consumption (e.g. Sleeve task assignment & Gang crime focus) based on `coordinator.txt` objectives.
+1. Progression Coordinator (`matrix/services/coordinator.js`) publishes global
+   objectives, reserve targets, stock liquidation commands, and (0.4.0) the
+   per-manager directive/budget protocol at `/matrix/state/directives.txt`.
+   `sleeves`, `gang`, `stock`, `singularity`, `hacking`, `early`, `hacknet`, and
+   `cloud` consume it. `bladeburner` and the `corporation`/`homeRam` budgets are
+   published but not yet consumed.
+2. Next: `ns.share()` rep mode; a backdoor + faction route planner; reset-value
+   estimation; then the 8 GB bootstrap distribution retry. See
+   `docs/CAPABILITY-MATRIX.md` for the full queue.
 3. Test one advanced manager at a time in a real compatible save before turning
    on automatic destructive actions such as installation or World Daemon exit.
 4. Keep `progression.autoDestroyWorldDaemon` opt-in until the complete route

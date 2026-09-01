@@ -1,4 +1,4 @@
-import { config, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
+import { config, event, fetchLatestInstaller, writeState, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 
 const EARLY = "/matrix/workers/early.js";
@@ -6,10 +6,12 @@ const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 
-function scoreTarget(ns, host) {
+function scoreTarget(ns, host, mode = "money") {
     if (!ns.hasRootAccess(host) || ns.getServerMaxMoney(host) <= 0) return -1;
     if (ns.getServerRequiredHackingLevel(host) > ns.getHackingLevel()) return -1;
-    return ns.getServerMoneyAvailable(host) / Math.max(1, ns.getHackTime(host));
+    const hackTime = Math.max(1, ns.getHackTime(host));
+    if (mode === "xp") return ns.getServerRequiredHackingLevel(host) / hackTime;
+    return ns.getServerMoneyAvailable(host) / hackTime;
 }
 
 function sameScript(a, b) {
@@ -135,7 +137,8 @@ export async function main(ns) {
                 if (cfg.automation?.rooting !== false) tryRoot(ns, host);
                 if (ns.hasRootAccess(host)) rooted++;
             }
-            const target = hosts.map(host => ({ host, score: scoreTarget(ns, host) })).filter(item => item.score > 0)
+            const mode = getDirectives(ns)?.directives?.hacking === "xp" ? "xp" : "money";
+            const target = hosts.map(host => ({ host, score: scoreTarget(ns, host, mode) })).filter(item => item.score > 0)
                 .sort((a, b) => b.score - a.score)[0]?.host ?? "n00dles";
             const threads = await deploy(ns, hosts, target);
             const state = { status: "online", phase: "early", target, threads, discovered: hosts.length, rooted };

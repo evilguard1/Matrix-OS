@@ -93,7 +93,10 @@ export async function main(ns) {
         }
 
         const reset = ns.getResetInfo();
-        if (homeRam >= 128 && cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
+        // The coordinator publishes the directive/budget protocol the economy and
+        // advanced managers consume, so start it as early as it reliably fits
+        // rather than waiting for the full advanced stage.
+        if (homeRam >= 64 && cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
         if (homeRam >= 128 && cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
         if (homeRam >= 128 && cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
         if (homeRam >= 128 && cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");

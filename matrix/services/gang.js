@@ -1,4 +1,4 @@
-import { config, writeState, event } from "/matrix/lib/common.js";
+import { config, writeState, event, getDirectives } from "/matrix/lib/common.js";
 
 const NAMES = ["Neo","Trinity","Morpheus","Oracle","Switch","Dozer","Tank","Mouse","Cypher","Niobe","Ghost","Seraph"];
 
@@ -56,7 +56,15 @@ export async function main(ns) {
 
             const info = ns.gang.getGangInformation();
             const members = ns.gang.getMemberNames();
-            const mode = info.wantedPenalty < 0.95 ? "wanted" : (cfg.mode==="money" ? "money" : "balanced");
+            // Recovering from a wanted-level penalty always wins. Otherwise the
+            // coordinator directive ("respect" / "money") overrides the static
+            // config mode; with no live directive the config default applies.
+            const gangDir = getDirectives(ns)?.directives?.gang;
+            const mode = info.wantedPenalty < 0.95
+                ? "wanted"
+                : (gangDir === "respect" || gangDir === "money")
+                    ? gangDir
+                    : (cfg.mode==="money" ? "money" : "balanced");
 
             for (const name of members) {
                 const m = ns.gang.getMemberInformation(name);

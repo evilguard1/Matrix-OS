@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
@@ -32,7 +32,7 @@
     { "path": "matrix/services/contracts.js", "stage": "advanced" },
     { "path": "matrix/services/stock.js", "stage": "advanced" },
     { "path": "matrix/services/progression.js", "stage": "advanced" },
-    { "path": "matrix/services/coordinator.js", "stage": "advanced" },
+    { "path": "matrix/services/coordinator.js", "stage": "full" },
     { "path": "matrix/services/singularity.js", "stage": "advanced" },
     { "path": "matrix/services/gang.js", "stage": "advanced" },
     { "path": "matrix/services/sleeves.js", "stage": "advanced" },

@@ -1,4 +1,4 @@
-import { config, event, writeState, sleepUntil, clamp } from "/matrix/lib/common.js";
+import { config, event, writeState, sleepUntil, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
 
 const H = "/matrix/workers/hack.js";
@@ -24,9 +24,19 @@ function targetScore(ns, h) {
     return max * chance * Math.sqrt(skillFactor) / weaken;
 }
 
-function chooseTarget(ns, hosts, cfg) {
+// XP-per-second is dominated by required level and low hack time, not money, so
+// score differently when the coordinator asks for an experience rush.
+function xpScore(ns, h) {
+    const req = Math.max(1, ns.getServerRequiredHackingLevel(h));
+    const hackTime = Math.max(1, ns.getHackTime(h));
+    const chance = clamp(ns.hackAnalyzeChance(h), 0.05, 1);
+    return req * chance / hackTime;
+}
+
+function chooseTarget(ns, hosts, cfg, mode = "money") {
+    const scorer = mode === "xp" ? xpScore : targetScore;
     const list = candidateTargets(ns, hosts, cfg)
-        .map(h => ({ host: h, score: targetScore(ns, h) }))
+        .map(h => ({ host: h, score: scorer(ns, h) }))
         .sort((a,b) => b.score - a.score);
     return list[0]?.host ?? "n00dles";
 }
@@ -174,7 +184,8 @@ export async function main(ns) {
         }
 
         const { hosts } = scanAll(ns);
-        const target = chooseTarget(ns, hosts, cfg);
+        const mode = getDirectives(ns)?.directives?.hacking === "xp" ? "xp" : "money";
+        const target = chooseTarget(ns, hosts, cfg, mode);
         if (await prep(ns, target, hosts, cfg)) continue;
 
         const shape = batchShape(ns, target, cfg);

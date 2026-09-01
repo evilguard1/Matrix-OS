@@ -1,4 +1,4 @@
-import { config, reserveMoney, writeState, event, getCoordinatorState } from "/matrix/lib/common.js";
+import { config, reserveMoney, managerBudget, writeState, event, getCoordinatorState, getDirectives } from "/matrix/lib/common.js";
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -13,7 +13,9 @@ export async function main(ns) {
             const cash = ns.getServerMoneyAvailable("home");
             const reserve = reserveMoney(ns,cfg);
             const coord = getCoordinatorState(ns);
-            const liquidate = Boolean(coord?.liquidateStocks);
+            const stockDir = getDirectives(ns)?.directives?.stock;
+            const liquidate = Boolean(coord?.liquidateStocks) || stockDir === "liquidate";
+            const hold = stockDir === "hold";
             const constants = ns.stock.getConstants();
 
             if (!ns.stock.hasTixApiAccess() && cash-reserve > constants.TixApiCost*1.5) {
@@ -38,7 +40,7 @@ export async function main(ns) {
             let positions = 0;
 
             if (ns.stock.has4SDataTixApi()) {
-                const budget = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.stockBudgetFraction ?? 0.25)));
+                const budget = managerBudget(ns, "stock", cfg);
                 const snapshots = [];
                 for (const sym of symbols) {
                     const [longShares,longPrice,shortShares,shortPrice] = ns.stock.getPosition(sym);
@@ -92,7 +94,9 @@ export async function main(ns) {
                 }
 
                 // Allocate only remaining portfolio budget, strongest signals first.
-                const ranked = snapshots
+                // "hold" directive: keep existing positions, open no new ones so cash
+                // stays free for a pending progression milestone.
+                const ranked = hold ? [] : snapshots
                     .filter(x => x.longShares===0 && x.shortShares===0)
                     .sort((a,b) => Math.abs(b.forecast-0.5) - Math.abs(a.forecast-0.5));
 
@@ -117,7 +121,7 @@ export async function main(ns) {
                         }
                     }
                 }
-                await writeState(ns,"stock",{status:"trading",fourS:true,positions,exposure,unrealized,budget});
+                await writeState(ns,"stock",{status:hold?"holding":"trading",fourS:true,positions,exposure,unrealized,budget});
                 await ns.stock.nextUpdate();
                 continue;
             }

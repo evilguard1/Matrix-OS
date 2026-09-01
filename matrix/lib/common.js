@@ -2,12 +2,13 @@ export const ROOT = "/matrix";
 export const CONFIG = `${ROOT}/config.json`;
 export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
+export const DIRECTIVES = `${STATE_DIR}/directives.txt`;
 
 const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "0.3.0",
+    version: "0.4.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -111,6 +112,35 @@ export function baselineReserveMoney(ns, cfg = config(ns)) {
     const cash = ns.getServerMoneyAvailable("home");
     const econ = cfg.economy ?? {};
     return Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));
+}
+
+// Live per-manager directive protocol published by the coordinator. Returns null
+// when there is no fresh coordinator (fresh save, coordinator paused, or a
+// crashed coordinator) so every consumer falls back to its own local defaults.
+export function getDirectives(ns) {
+    const raw = readJson(ns, DIRECTIVES, null);
+    if (!raw || Date.now() - Number(raw.updated ?? 0) > 30_000) return null;
+    return raw;
+}
+
+// Discretionary spend ceiling for an infrastructure manager ("hacknet", "cloud",
+// "stock"). The coordinator can shrink the fraction to zero during
+// reserve-heavy phases; without a live coordinator the static config fraction
+// applies exactly as before this protocol existed.
+export function managerBudget(ns, name, cfg = config(ns)) {
+    const cash = ns.getServerMoneyAvailable("home");
+    const reserve = reserveMoney(ns, cfg);
+    const econKey = {
+        hacknet: "hacknetBudgetFraction",
+        cloud: "cloudBudgetFraction",
+        stock: "stockBudgetFraction",
+    }[name];
+    let fraction = econKey ? Number(cfg.economy?.[econKey] ?? 0) : 0;
+    const dir = getDirectives(ns);
+    const override = Number(dir?.budgets?.[name]);
+    if (Number.isFinite(override)) fraction = override;
+    if (!Number.isFinite(fraction) || fraction < 0) fraction = 0;
+    return Math.max(0, Math.min(cash - reserve, cash * fraction));
 }
 
 export async function writeState(ns, name, state) {

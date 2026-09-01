@@ -1,6 +1,7 @@
 import { config, writeState, writeJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
+const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
 const WORLD_DAEMON = "w0r1d_d43m0n";
 const RED_PILL = "The Red Pill";
 const TOR_COST = 200_000;
@@ -218,6 +219,86 @@ export function evaluateObjective(data) {
     };
 }
 
+// Translate the single global objective into a per-manager directive + budget
+// protocol that independent services consume so they stop competing for cash,
+// RAM, and player actions. This is a PURE function: identical input -> identical
+// output, and every branch is covered by tests in tests/validate.mjs.
+//
+// Consumed today (see docs/CAPABILITY-MATRIX.md for status):
+//   directives.hacking      hacking.js / early.js  -> target selection bias
+//   directives.sleeves      sleeves.js             -> sleeve task assignment
+//   directives.gang         gang.js                -> task scoring mode
+//   directives.singularity  singularity.js         -> spend / faction-work focus
+//   directives.stock        stock.js               -> trade / hold / liquidate
+//   budgets.hacknet|cloud|stock   *.js via managerBudget()  -> discretionary spend
+//   budgets.sleeveAugs      sleeves.js             -> sleeve augmentation spend
+// Published for future consumers: directives.bladeburner, budgets.corporation,
+// budgets.homeRam.
+export function planDirectives(data) {
+    const objective = data.objective ?? evaluateObjective(data);
+    const {
+        karma = 0,
+        hasGang = false,
+        resetInfo = {},
+        hasTor = false,
+        homeRam = 8,
+        hackingLevel = 1,
+        targetAugFaction = "",
+    } = data;
+
+    const id = objective.id;
+    const liquidate = Boolean(objective.liquidateStocks);
+
+    let phase;
+    if (id === "W0R1D_D43M0N" || id === "THE_RED_PILL") phase = "ENDGAME";
+    else if (id === "INSTALL_AUGMENTATIONS") phase = "AUG_RESET";
+    else if (id === "RESERVE_MILESTONE") phase = "MILESTONE";
+    else if (id === "GANG_KARMA") phase = "KARMA_GANG";
+    else if (id === "FACTION_REP" || id === "LIQUIDATE_STOCKS") phase = "FACTION_REP";
+    else if (id === "BUY_PROGRAMS" || (id === "BOOTSTRAP_INCOME" && homeRam < 32)) phase = "BOOTSTRAP";
+    else phase = "HACK_ECON";
+
+    // Reserve-heavy phases: stop feeding the infrastructure spenders so cash
+    // converges on the augmentation / milestone reserve.
+    const lean = phase === "AUG_RESET" || phase === "MILESTONE" || phase === "ENDGAME";
+    const repFaction = targetAugFaction || "";
+
+    const budgets = {
+        hacknet:     lean ? 0 : 0.04,
+        cloud:       lean ? 0 : 0.12,
+        stock:       (phase === "AUG_RESET" || phase === "ENDGAME") ? 0 : 0.25,
+        corporation: lean ? 0 : 0.10,
+        sleeveAugs:  lean ? 0.001 : 0.005,
+        homeRam:     phase === "BOOTSTRAP" ? 0.50 : (lean ? 0 : 0.15),
+    };
+
+    const directives = {
+        hacking:
+            phase === "BOOTSTRAP" && hackingLevel < 300 ? "xp" : "money",
+        sleeves:
+            phase === "KARMA_GANG" ? "karma"
+            : (phase === "FACTION_REP" || phase === "ENDGAME") && repFaction ? `rep:${repFaction}`
+            : "money",
+        gang:
+            !hasGang ? "idle"
+            : phase === "KARMA_GANG" ? "respect"
+            : (liquidate || lean) ? "money"
+            : "balanced",
+        singularity:
+            phase === "BOOTSTRAP" && !hasTor ? "programs"
+            : phase === "AUG_RESET" ? "augs"
+            : "rep",
+        bladeburner:
+            phase === "ENDGAME" ? "blackops" : "rank",
+        stock:
+            liquidate ? "liquidate"
+            : lean ? "hold"
+            : "trade",
+    };
+
+    return { phase, objectiveId: id, directives, budgets };
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     let lastCash = 0;
@@ -228,6 +309,8 @@ export async function main(ns) {
         const cfg = config(ns);
         if (cfg.masterEnabled === false || cfg.automation?.progression === false) {
             await writeState(ns, "coordinator", { status: "paused" });
+            // Blank the directive so consumers immediately revert to their own defaults.
+            await writeJson(ns, DIRECTIVES_STATE, { service: "coordinator", updated: 0 });
             await ns.sleep(5000);
             continue;
         }
@@ -331,11 +414,22 @@ export async function main(ns) {
             };
 
             const result = evaluateObjective(data);
+            const plan = planDirectives({ ...data, objective: result });
 
             await writeJson(ns, COORDINATOR_STATE, {
                 service: "coordinator",
                 updated: Date.now(),
                 ...result,
+            });
+
+            await writeJson(ns, DIRECTIVES_STATE, {
+                service: "coordinator",
+                updated: Date.now(),
+                phase: plan.phase,
+                objectiveId: plan.objectiveId,
+                directives: plan.directives,
+                budgets: plan.budgets,
+                liquidateStocks: result.liquidateStocks,
             });
 
             await writeState(ns, "coordinator", {
@@ -347,6 +441,8 @@ export async function main(ns) {
                 milestone: result.milestone,
                 nextStep: result.nextStep,
                 etaStr: result.etaStr,
+                phase: plan.phase,
+                directives: plan.directives,
             });
         } catch (e) {
             await writeState(ns, "coordinator", { status: "error", error: String(e) });
