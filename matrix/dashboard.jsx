@@ -161,7 +161,10 @@ export async function main(ns){
     const self=typeof ns.getRunningScript==="function"?ns.getRunningScript().pid:0;
     const sameScript=p=>String(p.filename).replace(/^\/+/,"")==="matrix/dashboard.jsx";
     const older=ns.ps("home").some(p=>sameScript(p)&&p.pid!==self&&p.pid<self);
-    if(older)return;
+    if(older){
+        if(typeof ns.closeTail==="function")try{ns.closeTail(self);}catch{}
+        return;
+    }
 
     const app = <App ns={ns}/>;
 

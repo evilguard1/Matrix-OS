@@ -163,6 +163,9 @@ function stopMatrix(ns) {
                 const name = String(p.filename).replace(/^\/+/, "");
                 if (RUNTIME.some(f => f.replace(/^\/+/, "") === name) ||
                     WORKERS.some(f => f.replace(/^\/+/, "") === name)) {
+                    if (typeof ns.closeTail === "function") {
+                        try { ns.closeTail(p.pid); } catch {}
+                    }
                     ns.kill(p.pid, host);
                 }
             }
