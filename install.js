@@ -88,6 +88,10 @@ const FILES = [
         "/matrix/start.js"
     ],
     [
+        "matrix/kernel.js",
+        "/matrix/kernel.js"
+    ],
+    [
         "matrix/update.js",
         "/matrix/update.js"
     ],
@@ -191,7 +195,16 @@ export async function main(ns) {
         return;
     }
 
-    const pid = ns.run("/matrix/start.js", { threads: 1, preventDuplicates: true });
-    if (pid) ns.tprint("MATRIX-OS // AUTONOMOUS CONTROL SYSTEM STARTED");
-    else ns.tprint("MATRIX-OS // FILES UPDATED; start.js could not launch (likely RAM). Run /matrix/start.js later.");
+    let pid = ns.run("/matrix/start.js", { threads: 1, preventDuplicates: true });
+    if (pid) {
+        ns.tprint("MATRIX-OS // AUTONOMOUS CONTROL SYSTEM STARTED: /matrix/start.js");
+    } else {
+        pid = ns.run("/matrix/bootstrap.js", { threads: 1, preventDuplicates: true });
+        if (pid) {
+            ns.tprint("MATRIX-OS // LOW-RAM BOOTSTRAP STARTED: /matrix/bootstrap.js");
+        } else {
+            ns.tprint("MATRIX-OS // FILES UPDATED; launch deferred because HOME has insufficient free RAM.");
+            ns.tprint("MATRIX-OS // Try: run /matrix/start.js");
+        }
+    }
 }

@@ -15,6 +15,14 @@ run install.js --fresh
 
 That downloads the complete `/matrix/` system and launches it.
 
+The maintained launcher is:
+
+```text
+run /matrix/start.js
+```
+
+`/matrix/kernel.js` is retained as a compatibility alias for older MATRIX-OS instructions.
+
 ## Update later
 
 Once MATRIX-OS is installed:
@@ -30,6 +38,10 @@ To intentionally reset the configuration to repository defaults:
 ```text
 run install.js --fresh
 ```
+
+If the installer reports that it could not launch because HOME is full, wait for a
+running job to finish and run `/matrix/start.js` again. The installer also attempts
+the low-RAM `/matrix/bootstrap.js` fallback automatically.
 
 ## Architecture
 
