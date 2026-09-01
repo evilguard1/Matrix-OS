@@ -206,16 +206,14 @@ export async function main(ns) {
         return;
     }
 
-    let pid = ns.run("/matrix/start.js", { threads: 1, preventDuplicates: true });
-    if (pid) {
-        ns.tprint("MATRIX-OS // AUTONOMOUS CONTROL SYSTEM STARTED: /matrix/start.js");
-    } else {
-        pid = ns.run("/matrix/bootstrap.js", { threads: 1, preventDuplicates: true });
-        if (pid) {
-            ns.tprint("MATRIX-OS // LOW-RAM BOOTSTRAP STARTED: /matrix/bootstrap.js");
-        } else {
-            ns.tprint("MATRIX-OS // FILES UPDATED; launch deferred because HOME has insufficient free RAM.");
-            ns.tprint("MATRIX-OS // Try: run /matrix/start.js");
-        }
-    }
+    // The installer itself uses Home RAM. Spawn hands control to the launcher
+    // after this process exits, so the launcher sees the full available budget.
+    try {
+        ns.spawn("/matrix/start.js", { threads: 1, spawnDelay: 2000 });
+        ns.tprint("MATRIX-OS // HANDING OFF TO /matrix/start.js");
+        return;
+    } catch {}
+
+    ns.tprint("MATRIX-OS // FILES UPDATED; launch deferred because HOME has insufficient free RAM.");
+    ns.tprint("MATRIX-OS // Try: run /matrix/start.js");
 }
