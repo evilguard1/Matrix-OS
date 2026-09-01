@@ -44,6 +44,9 @@ function ensure(ns,file,...args){
 
 export async function main(ns){
     ns.disableLog("ALL");
+    const self=typeof ns.getRunningScript==="function"?ns.getRunningScript().pid:0;
+    const older=ns.ps("home").some(p=>sameScript(p.filename,"/matrix/start.js")&&p.pid!==self&&p.pid<self);
+    if(older)return;
     const cfg=config(ns);
     const phase2=ns.args.includes("--phase2");
     let announced=false;

@@ -113,6 +113,8 @@ const FILES = [
     ]
 ];
 const RUNTIME = [
+    "/matrix/start.js",
+    "/matrix/kernel.js",
     "/matrix/bootstrap.js",
     "/matrix/dashboard.jsx",
     "/matrix/services/root.js",

@@ -158,6 +158,11 @@ export async function main(ns){
     ns.disableLog("ALL");
     ns.clearLog();
 
+    const self=typeof ns.getRunningScript==="function"?ns.getRunningScript().pid:0;
+    const sameScript=p=>String(p.filename).replace(/^\/+/,"")==="matrix/dashboard.jsx";
+    const older=ns.ps("home").some(p=>sameScript(p)&&p.pid!==self&&p.pid<self);
+    if(older)return;
+
     const app = <App ns={ns}/>;
 
     // Bitburner 3.0.2+ dev builds expose renderPage().
