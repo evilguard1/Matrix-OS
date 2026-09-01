@@ -101,6 +101,19 @@ function draw(ns, state) {
 
     const nextLine = `Reaching $${ns.format.number(targetCash, 2)} for ${nextStep}`;
 
+    const CRACKERS = [
+        { file: "BruteSSH.exe", lvl: 50 },
+        { file: "FTPCrack.exe", lvl: 100 },
+        { file: "relaySMTP.exe", lvl: 250 },
+        { file: "HTTPWorm.exe", lvl: 500 },
+        { file: "SQLInject.exe", lvl: 750 },
+    ];
+    const ports = CRACKERS.filter(c => ns.fileExists(c.file, "home")).length;
+    const nextCracker = CRACKERS.find(c => !ns.fileExists(c.file, "home"));
+    const crackerStr = nextCracker
+        ? (hackLvl >= nextCracker.lvl ? `CREATE ${nextCracker.file} NOW!` : `${nextCracker.file} @ Hack ${nextCracker.lvl} (${nextCracker.lvl - hackLvl} to go)`)
+        : "ALL PORT CRACKERS OWNED";
+
     ns.print(`╔══════════════════════════════════════════════════════════╗`);
     ns.print(`║  M A T R I X  //  F R E S H - S A V E   K E R N E L      ║`);
     ns.print(`╠══════════════════════════════════════════════════════════╣`);
@@ -110,11 +123,13 @@ function draw(ns, state) {
     ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
     ns.print(`║  🌐 NETWORK     : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
     ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}  │  HACK SKILL: ${String(hackLvl).padEnd(6)}  ║`);
+    ns.print(`║  🔓 PORTS       : ${String(ports)}/5 crackers  │  ${crackerStr.slice(0, 26).padEnd(26)} ║`);
     ns.print(`╠══════════════════════════════════════════════════════════╣`);
     ns.print(`║  ⏱️ NEXT STEP   : ${nextLine.slice(0, 38).padEnd(38)} ║`);
     ns.print(`║  ⏳ EST. TIME   : ${etaStr.padEnd(38)} ║`);
     ns.print(`╚══════════════════════════════════════════════════════════╝`);
 }
+
 
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
