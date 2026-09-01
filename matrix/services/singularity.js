@@ -117,7 +117,7 @@ export async function main(ns){
 
             if(cfg.progression?.autoInstallAugmentations!==false&&shouldReset(ns,cfg)){
                 await event(ns,"singularity",`Installing ${q} augmentation(s)`,"success");
-                ns.singularity.installAugmentations("/matrix/start.js");
+                ns.singularity.installAugmentations("/matrix/kernel.js");
                 return;
             }
         }catch(e){await writeState(ns,"singularity",{status:"error",error:String(e)});}

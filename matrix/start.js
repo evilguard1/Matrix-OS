@@ -1,76 +1,103 @@
 import { config, sfLevel, event } from "/matrix/lib/common.js";
 
-const CORE=[
-    "/matrix/services/root.js",
-    "/matrix/services/hacking.js",
-    "/matrix/services/cloud.js",
-    "/matrix/services/hacknet.js",
-    "/matrix/services/contracts.js",
-    "/matrix/services/telemetry.js",
+const UPDATE_REQUEST = "/matrix/state/update.request";
+const INSTALLER = "/matrix/remote-install.js";
+const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
+const DASHBOARD = "/matrix/dashboard.jsx";
+const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
+
+const CORE = [
+    { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
+    { file: "/matrix/services/telemetry.js", minRam: 32 },
+    { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
+    { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
+    { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
+    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
+    { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
 ];
 
-function can(reset,n){return reset.currentNode===n||sfLevel(reset,n)>0;}
-
-function sameScript(a,b){
-    return String(a).replace(/^\/+/,"")===String(b).replace(/^\/+/,"");
+function sameScript(a, b) {
+    return String(a).replace(/^\/+/, "") === String(b).replace(/^\/+/, "");
 }
 
-function processes(ns,file){
-    return ns.ps("home").filter(p=>sameScript(p.filename,file));
+function processes(ns, file) {
+    return ns.ps("home").filter(process => sameScript(process.filename, file));
 }
 
-function running(ns,file){return processes(ns,file).length>0;}
-
-function keepOne(ns,file){
-    const matches=processes(ns,file);
-    for(const p of matches.slice(1)){
-        try{ns.kill(p.pid,"home");}catch{}
+function ensureOne(ns, file) {
+    const matches = processes(ns, file);
+    for (const process of matches.slice(1)) {
+        try { ns.ui.closeTail(process.pid); } catch {}
+        try { ns.kill(process.pid); } catch {}
     }
-    return matches[0]?.pid??0;
+    if (matches.length) return matches[0].pid;
+    if (!ns.fileExists(file, "home")) return 0;
+    const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
+    if (free + 1e-9 < ns.getScriptRam(file, "home")) return 0;
+    return ns.run(file, { threads: 1, preventDuplicates: true });
 }
 
-function ensure(ns,file,...args){
-    if(!ns.fileExists(file,"home"))return 0;
-    if(running(ns,file)){keepOne(ns,file);return 0;}
-    const need=ns.getScriptRam(file,"home");
-    const free=ns.getServerMaxRam("home")-ns.getServerUsedRam("home");
-    if(free<need)return 0;
-    try {
-        const pid=ns.run(file,{threads:1,preventDuplicates:true},...args);
-        if(pid)return pid;
-    } catch {}
-    try { return ns.run(file,1,...args); } catch { return 0; }
+function hasSourceFile(reset, number) {
+    return reset.currentNode === number || sfLevel(reset, number) > 0;
 }
 
-export async function main(ns){
+function expectedStage(homeRam) {
+    if (homeRam >= 128) return "advanced";
+    if (homeRam >= 64) return "operations";
+    return "full";
+}
+
+async function handoffUpdate(ns) {
+    if (!ns.fileExists(UPDATE_REQUEST, "home")) return false;
+    if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) {
+        await event(ns, "system", "Update failed: installer download failed", "error");
+        return false;
+    }
+    ns.rm(UPDATE_REQUEST, "home");
+    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 });
+    return true;
+}
+
+export async function main(ns) {
     ns.disableLog("ALL");
-    const self=typeof ns.getRunningScript==="function"?ns.getRunningScript().pid:0;
-    const older=ns.ps("home").some(p=>sameScript(p.filename,"/matrix/start.js")&&p.pid!==self&&p.pid<self);
-    if(older)return;
-    const cfg=config(ns);
-    const phase2=ns.args.includes("--phase2");
-    let announced=false;
-    while(true){
-        const lowRam=ns.getServerMaxRam("home")<(cfg.hacking?.fullEngineHomeRam??32)&&!phase2;
-        if(lowRam){
-            if(!running(ns,"/matrix/bootstrap.js"))ensure(ns,"/matrix/bootstrap.js");
-            if(cfg.ui?.autoOpen!==false&&!running(ns,"/matrix/dashboard.jsx"))ensure(ns,"/matrix/dashboard.jsx");
-        }else{
-            if(running(ns,"/matrix/bootstrap.js"))ns.scriptKill("/matrix/bootstrap.js","home");
-            for(const f of CORE) if(cfg.automation?.[f.split("/").pop().replace(".js","")]!==false) ensure(ns,f);
-            const reset=ns.getResetInfo();
-            if(cfg.automation?.stock!==false&&ns.getServerMaxRam("home")>=64)ensure(ns,"/matrix/services/stock.js");
-            if(cfg.automation?.singularity!==false&&can(reset,4))ensure(ns,"/matrix/services/singularity.js");
-            if(cfg.automation?.gang!==false&&can(reset,2))ensure(ns,"/matrix/services/gang.js");
-            if(cfg.automation?.sleeves!==false&&can(reset,10))ensure(ns,"/matrix/services/sleeves.js");
-            if(cfg.automation?.bladeburner!==false&&(can(reset,6)||can(reset,7)))ensure(ns,"/matrix/services/bladeburner.js");
-            if(cfg.automation?.corporation!==false&&can(reset,3))ensure(ns,"/matrix/services/corporation.js");
-            if(cfg.ui?.autoOpen!==false&&!running(ns,"/matrix/dashboard.jsx"))ensure(ns,"/matrix/dashboard.jsx");
+    if (ns.getServerMaxRam("home") < 32) {
+        ns.spawn(ns.getServerMaxRam("home") < 16 ? "/matrix/bootstrap.js" : "/matrix/early.js", {
+            threads: 1, preventDuplicates: true, spawnDelay: 0,
+        });
+        return;
+    }
+
+    const self = ns.pid;
+    if (ns.ps("home").some(process => sameScript(process.filename, "/matrix/start.js") && process.pid < self)) return;
+    await event(ns, "system", "MATRIX full supervisor online", "success");
+
+    while (true) {
+        if (await handoffUpdate(ns)) return;
+        const cfg = config(ns);
+        const homeRam = ns.getServerMaxRam("home");
+        if (ns.read(INSTALLED_STAGE) !== expectedStage(homeRam)) {
+            if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) {
+                await event(ns, "system", "Stage download failed: installer unavailable", "error");
+            } else {
+                ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
+                return;
+            }
         }
-        if(!announced){
-            await event(ns,"system",lowRam?"MATRIX low-RAM supervisor online":"MATRIX autonomous control system online","success");
-            announced=true;
+        for (const service of CORE) {
+            if (homeRam < service.minRam) continue;
+            if (service.key && cfg.automation?.[service.key] === false) continue;
+            if (service.file === "/matrix/services/hacking.js" && cfg.ui?.autoOpen !== false) ensureOne(ns, DASHBOARD);
+            ensureOne(ns, service.file);
         }
+
+        const reset = ns.getResetInfo();
+        if (homeRam >= 128 && cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
+        if (homeRam >= 128 && cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
+        if (homeRam >= 128 && cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");
+        if (homeRam >= 128 && cfg.automation?.sleeves !== false && hasSourceFile(reset, 10)) ensureOne(ns, "/matrix/services/sleeves.js");
+        if (homeRam >= 128 && cfg.automation?.bladeburner !== false && (hasSourceFile(reset, 6) || hasSourceFile(reset, 7))) ensureOne(ns, "/matrix/services/bladeburner.js");
+        if (homeRam >= 256 && cfg.automation?.corporation !== false && hasSourceFile(reset, 3)) ensureOne(ns, "/matrix/services/corporation.js");
+        if (cfg.ui?.autoOpen !== false) ensureOne(ns, DASHBOARD);
         await ns.sleep(5000);
     }
 }

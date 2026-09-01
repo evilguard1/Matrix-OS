@@ -14,13 +14,15 @@ function age(t){if(!t)return"never";const s=Math.max(0,(Date.now()-t)/1000);retu
 
 function dashboardData(ns){
     const overview=readJson(ns,`${STATE_DIR}/overview.txt`,null);
-    if(overview)return overview;
-    const boot=readJson(ns,`${STATE_DIR}/bootstrap.txt`,{});
+    if(overview&&Date.now()-(overview.updated??0)<15000)return overview;
+    const bootstrap=readJson(ns,`${STATE_DIR}/bootstrap.txt`,{});
+    const early=readJson(ns,`${STATE_DIR}/early.txt`,{});
+    const boot=(early.updated??0)>(bootstrap.updated??0)?early:bootstrap;
     return {
         updated:boot.updated??0,
         player:{money:ns.getServerMoneyAvailable("home")},
         network:{discovered:boot.discovered??0,rooted:boot.rooted??0,maxRam:boot.homeRam??0,ramPct:0},
-        services:{bootstrap:{status:boot.status??"starting"},hacking:{status:"bootstrap",target:boot.target??"n00dles"}},
+        services:{bootstrap:{status:boot.status??"starting"},hacking:{status:boot.phase??"bootstrap",target:boot.target??"n00dles"}},
         events:[],
     };
 }
@@ -76,7 +78,7 @@ function Overview({d}){
         <Panel title="BitNode" span={3} right={`BN-${d.reset?.currentNode??"?"}`}><div className="mxValue">NODE {d.reset?.currentNode??"?"}</div><div className="mxSmall">SF: {(d.reset?.sourceFiles??[]).map(x=>`${x[0]}.${x[1]}`).join(" · ")||"none"}</div></Panel>
 
         <Panel title="Automation Matrix" span={4}>
-            {["root","hacking","cloud","hacknet","contracts","stock","singularity","gang","sleeves","bladeburner","corporation"].map(n=><Service key={n} name={n} s={services[n]}/>)}
+            {["root","hacking","cloud","hacknet","contracts","stock","progression","singularity","gang","sleeves","bladeburner","corporation"].map(n=><Service key={n} name={n} s={services[n]}/>)}
         </Panel>
         <Panel title="Current Objective" span={4}>
             <div className="mxValue" style={{fontSize:18}}>{services.singularity?.goal?.augmentation??h?.target??"BUILD CAPABILITY"}</div>
@@ -126,7 +128,7 @@ function Progress({d}){
         <Panel title="Operator" span={4}><div className="mxValue">HACK {p.skills?.hacking??0}</div>{["strength","defense","dexterity","agility","charisma","intelligence"].map(k=><div className="mxRow" key={k}><span>{k}</span><span>{p.skills?.[k]??0}</span></div>)}</Panel>
         <Panel title="Factions" span={4}>{(p.factions??[]).map(f=><div className="mxRow" key={f}><span>{f}</span><span>CONNECTED</span></div>)}</Panel>
         <Panel title="Advanced Systems" span={4}>
-            <Service name="Singularity" s={s.singularity}/><Service name="Gang" s={s.gang}/><Service name="Sleeves" s={s.sleeves}/><Service name="Bladeburner" s={s.bladeburner}/><Service name="Corporation" s={s.corporation}/>
+            <Service name="Progression" s={s.progression}/><Service name="Singularity" s={s.singularity}/><Service name="Gang" s={s.gang}/><Service name="Sleeves" s={s.sleeves}/><Service name="Bladeburner" s={s.bladeburner}/><Service name="Corporation" s={s.corporation}/>
         </Panel>
     </div>;
 }
@@ -135,7 +137,7 @@ function Settings({ns,d,cfg}){
         <Toggle ns={ns} cfg={cfg} path="masterEnabled" label="AUTOPILOT"/>
         <div style={{height:10}}/>
         {Object.keys(cfg.automation??{}).map(k=><Toggle key={k} ns={ns} cfg={cfg} path={`automation.${k}`} label={k.toUpperCase()}/>)}
-        <div style={{marginTop:16}} className="mxSmall">Changes are written directly to /matrix/config.txt. Managers pick them up on their next cycle.</div>
+        <div style={{marginTop:16}} className="mxSmall">Changes are written directly to /matrix/config.json. Managers pick them up on their next cycle.</div>
     </Panel></div>;
 }
 
@@ -158,47 +160,26 @@ export async function main(ns){
     ns.disableLog("ALL");
     ns.clearLog();
 
-    const self=typeof ns.getRunningScript==="function"?ns.getRunningScript().pid:0;
+    const self=ns.self().pid;
     const sameScript=p=>String(p.filename).replace(/^\/+/,"")==="matrix/dashboard.jsx";
     const older=ns.ps("home").some(p=>sameScript(p)&&p.pid!==self&&p.pid<self);
     if(older){
-        if(typeof ns.closeTail==="function")try{ns.closeTail(self);}catch{}
+        try{ns.ui.closeTail();}catch{}
         return;
     }
 
     const app = <App ns={ns}/>;
 
-    // Bitburner 3.0.2+ dev builds expose renderPage().
-    // Steam 3.0.1 does not. Prefer it when present, otherwise
-    // render the same React dashboard inside a large tail window.
-    if (typeof ns.ui.renderPage === "function") {
-        ns.ui.renderPage(app);
-    } else {
-        ns.printRaw(app);
-
-        try {
-            ns.ui.setTailTitle("MATRIX // AUTONOMOUS CONTROL");
-        } catch {}
-
-        try {
-            if (typeof ns.ui.windowSize === "function") {
-                const [w, h] = ns.ui.windowSize();
-                ns.ui.resizeTail(
-                    Math.max(900, Math.floor(w * 0.90)),
-                    Math.max(650, Math.floor(h * 0.86))
-                );
-                ns.ui.moveTail(
-                    Math.max(10, Math.floor(w * 0.05)),
-                    Math.max(10, Math.floor(h * 0.06))
-                );
-            } else {
-                ns.ui.resizeTail(1300, 780);
-                ns.ui.moveTail(40, 40);
-            }
-        } catch {}
-
-        ns.ui.openTail();
+    ns.printRaw(app);
+    try { ns.ui.setTailTitle("MATRIX // AUTONOMOUS CONTROL"); } catch {}
+    try {
+        const [w, h] = ns.ui.windowSize();
+        ns.ui.resizeTail(Math.max(900, Math.floor(w * 0.90)),Math.max(650, Math.floor(h * 0.86)));
+        ns.ui.moveTail(Math.max(10, Math.floor(w * 0.05)),Math.max(10, Math.floor(h * 0.06)));
+    } catch {
+        try { ns.ui.resizeTail(1300,780); ns.ui.moveTail(40,40); } catch {}
     }
+    ns.ui.openTail();
 
     while(true) await ns.sleep(60000);
 }

@@ -1,0 +1,12 @@
+{
+  "name": "matrix-os",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

@@ -4,21 +4,43 @@ export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
 
 const DEFAULT_CONFIG = {
+    version: "0.2.0",
     masterEnabled: true,
+    mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
     automation: {
         rooting: true, hacking: true, cloud: true, hacknet: true,
         contracts: true, stock: true, singularity: true, gang: true,
-        sleeves: true, bladeburner: true, corporation: true,
+        sleeves: true, bladeburner: true, corporation: true, progression: true,
     },
-    economy: { cashReserve: 10_000_000, reserveFraction: 0.15 },
+    economy: {
+        cashReserve: 10_000_000, reserveFraction: 0.15,
+        cloudBudgetFraction: 0.12, hacknetBudgetFraction: 0.04, stockBudgetFraction: 0.25,
+    },
     hacking: {
         homeReserveGb: 2, fullEngineHomeRam: 32, batchGapMs: 120,
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
         minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: 24,
-        minTargetMoney: 0,
+        minTargetMoney: 1_000_000,
+    },
+    progression: {
+        autoInstallAugmentations: true, minQueuedAugsForReset: 5,
+        forceResetAtQueuedAugs: 10, minMinutesBetweenResets: 35,
+        autoDestroyWorldDaemon: false,
     },
 };
+
+function merge(base, override) {
+    const out = { ...base };
+    for (const [key, value] of Object.entries(override ?? {})) {
+        if (value && typeof value === "object" && !Array.isArray(value) && typeof base?.[key] === "object") {
+            out[key] = merge(base[key], value);
+        } else {
+            out[key] = value;
+        }
+    }
+    return out;
+}
 
 export function readJson(ns, file, fallback = {}) {
     try {
@@ -34,7 +56,8 @@ export async function writeJson(ns, file, value) {
 }
 
 export function config(ns) {
-    return { ...DEFAULT_CONFIG, ...readJson(ns, CONFIG, {}) };
+    const saved = readJson(ns, CONFIG, readJson(ns, `${ROOT}/config.txt`, {}));
+    return merge(DEFAULT_CONFIG, saved);
 }
 
 export function reserveMoney(ns, cfg = config(ns)) {
@@ -58,6 +81,19 @@ export async function event(ns, service, message, level = "info") {
 
 export function sfLevel(reset, n) {
     return reset?.ownedSF?.get?.(n) ?? 0;
+}
+
+export function plannedNextBitNode(reset, plan) {
+    const required = new Map();
+    for (const value of plan ?? []) {
+        const node = Number(value);
+        if (!Number.isInteger(node) || node < 1 || node > 13) continue;
+        const targetLevel = (required.get(node) ?? 0) + 1;
+        required.set(node, targetLevel);
+        const completingCurrent = reset?.currentNode === node ? 1 : 0;
+        if (sfLevel(reset, node) + completingCurrent < targetLevel) return node;
+    }
+    return 1;
 }
 
 export function hasSF(reset, n) {

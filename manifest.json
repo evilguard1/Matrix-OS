@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
+  "protectedFiles": ["matrix/config.json"],
+  "stages": [
+    { "id": "bootstrap", "minHomeRam": 8 },
+    { "id": "early", "minHomeRam": 16 },
+    { "id": "full", "minHomeRam": 32 },
+    { "id": "operations", "minHomeRam": 64 },
+    { "id": "advanced", "minHomeRam": 128 }
+  ],
+  "files": [
+    { "path": "matrix/VERSION.txt", "stage": "bootstrap" },
+    { "path": "matrix/bootstrap.js", "stage": "bootstrap" },
+    { "path": "matrix/config.json", "stage": "bootstrap" },
+    { "path": "matrix/kernel.js", "stage": "bootstrap" },
+    { "path": "matrix/update.js", "stage": "bootstrap" },
+    { "path": "matrix/early.js", "stage": "early" },
+    { "path": "matrix/workers/early.js", "stage": "early" },
+    { "path": "matrix/start.js", "stage": "full" },
+    { "path": "matrix/dashboard.jsx", "stage": "full" },
+    { "path": "matrix/lib/common.js", "stage": "early" },
+    { "path": "matrix/lib/network.js", "stage": "early" },
+    { "path": "matrix/services/root.js", "stage": "full" },
+    { "path": "matrix/services/hacking.js", "stage": "full" },
+    { "path": "matrix/services/telemetry.js", "stage": "full" },
+    { "path": "matrix/workers/hack.js", "stage": "full" },
+    { "path": "matrix/workers/grow.js", "stage": "full" },
+    { "path": "matrix/workers/weaken.js", "stage": "full" },
+    { "path": "matrix/services/cloud.js", "stage": "operations" },
+    { "path": "matrix/services/hacknet.js", "stage": "operations" },
+    { "path": "matrix/services/contracts.js", "stage": "advanced" },
+    { "path": "matrix/services/stock.js", "stage": "advanced" },
+    { "path": "matrix/services/progression.js", "stage": "advanced" },
+    { "path": "matrix/services/singularity.js", "stage": "advanced" },
+    { "path": "matrix/services/gang.js", "stage": "advanced" },
+    { "path": "matrix/services/sleeves.js", "stage": "advanced" },
+    { "path": "matrix/services/bladeburner.js", "stage": "advanced" },
+    { "path": "matrix/services/corporation.js", "stage": "advanced" }
+  ]
+}

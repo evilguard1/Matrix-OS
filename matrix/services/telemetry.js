@@ -1,7 +1,7 @@
 import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/common.js";
 import { scanAll } from "/matrix/lib/network.js";
 
-const SERVICES=["bootstrap","root","hacking","cloud","hacknet","contracts","stock","singularity","gang","sleeves","bladeburner","corporation"];
+const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","singularity","gang","sleeves","bladeburner","corporation"];
 
 function eventLines(ns){
     const raw=ns.read(EVENTS);

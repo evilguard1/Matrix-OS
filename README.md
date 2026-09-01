@@ -1,131 +1,108 @@
 # MATRIX-OS
 
-**MATRIX-OS** is an autonomous control system for **Bitburner 3.0.1+**. The goal is not just to automate hacking, but to provide one coherent system that can grow from a fresh save toward endgame while exposing its decisions through a Matrix-style control dashboard.
+MATRIX-OS is a staged autonomous control system for **Bitburner Steam v3.0.1**. It starts as one RAM-safe fresh-save process, then downloads and activates more of the system as Home RAM makes each stage useful.
 
-> Current status: **v0.1.3 / active prototype**. The project is usable, but it is still being tested against a live fresh save. Do not treat every endgame manager as mathematically optimal yet.
+## First install
 
-## Install directly from GitHub
-
-From the Bitburner terminal:
+Run these two commands in the Bitburner terminal:
 
 ```text
 wget https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js install.js
 run install.js --fresh
 ```
 
-That downloads the complete `/matrix/` system and launches it.
+The installer validates `manifest.json`, downloads only the stage the current Home can support, and starts `/matrix/kernel.js`. A fresh 8 GB save should then show exactly one lightweight MATRIX window and begin scanning, rooting, growing, weakening, and hacking automatically.
 
-The maintained launcher is:
+## Update
 
-```text
-run /matrix/start.js
-```
-
-`/matrix/kernel.js` is retained as a compatibility alias for older MATRIX-OS instructions.
-
-## Update later
-
-Once MATRIX-OS is installed:
+With MATRIX running:
 
 ```text
 run /matrix/update.js
 ```
 
-The updater fetches the newest GitHub installer, replaces the full MATRIX codebase, **preserves your `config.txt`**, stops stale runtime processes, and restarts the system.
+The tiny update command queues a cache-busted GitHub update. The active stage safely downloads the new installer, preserves `/matrix/config.json`, closes its current tail, updates the eligible stage, and restarts through the kernel.
 
-To intentionally reset the configuration to repository defaults:
+If MATRIX was manually stopped before the update request, start the queued update with:
+
+```text
+run /matrix/kernel.js
+```
+
+To deliberately replace the saved configuration with repository defaults:
 
 ```text
 run install.js --fresh
 ```
 
-If the installer reports that it could not launch because HOME is full, wait for a
-running job to finish and run `/matrix/start.js` again. The installer also attempts
-the low-RAM `/matrix/bootstrap.js` fallback automatically.
+## RAM stages
 
-## Architecture
+| Home RAM | Active stage | Behavior |
+| ---: | --- | --- |
+| 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken |
+| 16 GB | Early | Distributed early workers and lite Matrix tail |
+| 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, full React dashboard |
+| 64 GB | Operations | Purchased-server cloud and Hacknet managers |
+| 128 GB+ | Advanced | Contracts, stocks, and feature-gated progression managers |
+
+Stage changes are automatic. When Home crosses a boundary, the current process downloads the newly eligible manifest files and restarts into the next stage. Services also check their exact script RAM before launch, so a Source-File API with a large RAM multiplier waits until it actually fits.
+
+## Automation coverage
+
+- Recursive network discovery and automatic port opening/rooting
+- Fresh-save hacking and 16 GB distributed workers
+- Adaptive target selection, prep, and HWGW batching
+- Purchased-server and Hacknet investment within configured reserves
+- Safe coding-contract solvers; unsupported types are skipped without consuming attempts
+- WSE/TIX/4S acquisition and forecast-based stock trading
+- Singularity faction work, programs, Home RAM, augment purchases, and controlled resets
+- Gang recruiting, ascension, assignments, and territory warfare
+- Sleeve recovery, synchronization, crime, study, and augmentation purchasing
+- Bladeburner joining, action selection, stamina/chaos recovery, and skill upgrades
+- Conservative corporation creation and Agriculture bootstrap
+- BitNode route planning with an explicit World Daemon safety switch
+- Central telemetry, event history, settings, and full Matrix dashboard
+
+Bitburner does not expose player-action automation on a truly fresh account until Singularity access is unlocked through Source-File 4 or the current BitNode. MATRIX automates everything the installed game APIs permit and keeps unavailable managers gated instead of calling locked APIs.
+
+## Configuration and safety
+
+Configuration lives at:
 
 ```text
-MATRIX dashboard
-      │
-      ▼
-telemetry / state
-      │
-      ▼
-MATRIX runtime
- ├─ root + discovery
- ├─ hacking scheduler
- ├─ cloud
- ├─ Hacknet
- ├─ contracts
- ├─ stocks
- ├─ Singularity
- ├─ gang
- ├─ sleeves
- ├─ Bladeburner
- └─ corporation
-      │
-      ▼
-distributed workers
+/matrix/config.json
 ```
 
-The dashboard is deliberately separate from the automation. Closing the dashboard does not stop the backend.
+Updates preserve this file. Older installations using `/matrix/config.txt` are migrated automatically.
 
-## Current features
+`progression.autoDestroyWorldDaemon` defaults to `false`. MATRIX still calculates and displays the next planned BitNode, but it will not leave the current BitNode until that setting is intentionally enabled.
 
-- Network discovery and automatic rooting
-- Fresh-save low-RAM bootstrap
-- Distributed early-game hacking
-- Automatic transition into adaptive HWGW
-- Target scoring and automatic target switching
-- Adaptive hack-fraction search
-- RAM-aware distributed execution
-- Bitburner 3.x `ns.cloud` purchased-server management
-- Hacknet investment and hash handling
-- Safe coding-contract solver set; unsupported contracts are skipped
-- Stock manager for WSE/TIX/4S progression
-- Singularity automation when available
-- Gang manager
-- Sleeve manager
-- Bladeburner manager
-- Conservative Corporation bootstrap
-- Central telemetry and event stream
-- React Matrix dashboard
-- Bitburner 3.0.1 dashboard fallback using React in a large tail window
-- GitHub-native one-command updater
+## Compatibility
 
-## Version compatibility
-
-The live test machine currently runs **Bitburner v3.0.1 (3162fd2)**. MATRIX-OS therefore avoids assuming that APIs appearing only in the current `dev` documentation exist in 3.0.1.
-
-For example, the dashboard detects `ns.ui.renderPage()` when available, but falls back to `ns.printRaw()` + `ns.ui.openTail()` on 3.0.1.
-
-## Safety
-
-`autoDestroyWorldDaemon` is disabled by default. Automatic BitNode selection/destruction is intentionally held back until the progression planner is validated on real runs.
-
-Corporation logic is currently conservative. The hacking/rooting/telemetry layers are more mature than the high-level endgame planners.
-
-## Project direction
-
-The target is a system where the player can launch MATRIX-OS, watch the cyber empire operate from one interface, understand *why* it is making decisions, override priorities when desired, and otherwise let the automation progress the game.
+The implementation targets the API surface in the official **Bitburner v3.0.1** source, including `ns.ui.closeTail()` and the v3 `ns.cloud` namespace. Dev-only APIs are not required. Optional game systems are checked through Source Files and runtime availability before launch.
 
 ## Repository layout
 
 ```text
-install.js              GitHub installer/updater entry point
-matrix/
-  start.js              launcher/director
-  bootstrap.js          tiny-RAM early-game bootstrap
-  dashboard.jsx         Matrix UI
-  update.js             self-updater
-  config.txt            configuration
-  lib/                   shared utilities
-  services/              autonomous managers
-  workers/               RAM-light hack/grow/weaken workers
-  state/                 runtime-generated telemetry (not stored in Git)
+install.js                 manifest installer and updater
+manifest.json              versioned files and RAM stages
+matrix/kernel.js           tiny stage selector
+matrix/bootstrap.js        standalone 8 GB controller and lite UI
+matrix/early.js            16 GB distributed controller and lite UI
+matrix/start.js            32 GB+ service supervisor
+matrix/dashboard.jsx       full Matrix dashboard
+matrix/update.js           low-RAM update request
+matrix/config.json         preserved user configuration
+matrix/lib/                shared utilities
+matrix/services/           autonomous managers
+matrix/workers/            hacking workers
 ```
 
-## Development rule
+Repository validation:
 
-When a fix is made, the full corrected file is committed here. Users should update with `/matrix/update.js`; they should not have to manually hunt through large scripts and patch individual lines.
+```text
+npm install
+npm test
+```
+
+The validator checks JavaScript/JSX syntax, manifest completeness and dependency stages, pure scheduler helpers, legacy API regressions, and required files.
