@@ -1,0 +1,83 @@
+{
+  "version": "0.1.3",
+  "masterEnabled": true,
+  "mode": "balanced",
+  "ui": {
+    "refreshMs": 750,
+    "autoOpen": true,
+    "matrixRain": true
+  },
+  "automation": {
+    "rooting": true,
+    "hacking": true,
+    "cloud": true,
+    "hacknet": true,
+    "contracts": true,
+    "stock": true,
+    "singularity": true,
+    "gang": true,
+    "sleeves": true,
+    "bladeburner": true,
+    "corporation": true
+  },
+  "economy": {
+    "cashReserve": 10000000,
+    "reserveFraction": 0.15,
+    "cloudBudgetFraction": 0.12,
+    "hacknetBudgetFraction": 0.04,
+    "stockBudgetFraction": 0.25
+  },
+  "hacking": {
+    "homeReserveGb": 24,
+    "fullEngineHomeRam": 32,
+    "batchGapMs": 120,
+    "prepSecurityMargin": 0.5,
+    "prepMoneyFraction": 0.985,
+    "minHackFraction": 0.05,
+    "maxHackFraction": 0.4,
+    "maxBatches": 24,
+    "minTargetMoney": 1000000
+  },
+  "progression": {
+    "autoInstallAugmentations": true,
+    "minQueuedAugsForReset": 5,
+    "forceResetAtQueuedAugs": 10,
+    "minMinutesBetweenResets": 35,
+    "autoDestroyWorldDaemon": false,
+    "bitNodePlan": [
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      10,
+      10,
+      10,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      6,
+      6,
+      6,
+      7,
+      7,
+      7,
+      8,
+      8,
+      8,
+      9,
+      9,
+      9,
+      11,
+      11,
+      11,
+      13,
+      13,
+      13
+    ]
+  }
+}
