@@ -2,8 +2,9 @@ const LOCK = "/matrix/state/bootstrap-lock.txt";
 const STATE = "/matrix/state/bootstrap.txt";
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
-const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
+const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
+const RELEASE_META = "/matrix/state/release-metadata.txt";
 
 export function scanNetwork(ns) {
     const seen = new Set(["home"]);
@@ -64,7 +65,12 @@ function draw(ns, state) {
 
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
-    if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) return false;
+    const stamp = Date.now();
+    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) return false;
+    let sha = "";
+    try { sha = String(JSON.parse(ns.read(RELEASE_META)).sha ?? ""); } catch {}
+    if (!/^[a-f0-9]{40}$/i.test(sha)) return false;
+    if (!await ns.wget(`https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`, INSTALLER, "home")) return false;
     ns.rm(UPDATE_REQUEST, "home");
     ns.ui.closeTail();
     ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");

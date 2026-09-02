@@ -1,8 +1,7 @@
-import { config, sfLevel, event } from "/matrix/lib/common.js";
+import { config, sfLevel, event, fetchLatestInstaller } from "/matrix/lib/common.js";
 
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
-const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
 const DASHBOARD = "/matrix/dashboard.jsx";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 
@@ -49,7 +48,7 @@ function expectedStage(homeRam) {
 
 async function handoffUpdate(ns) {
     if (!ns.fileExists(UPDATE_REQUEST, "home")) return false;
-    if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) {
+    if (!await fetchLatestInstaller(ns, INSTALLER)) {
         await event(ns, "system", "Update failed: installer download failed", "error");
         return false;
     }
@@ -76,7 +75,7 @@ export async function main(ns) {
         const cfg = config(ns);
         const homeRam = ns.getServerMaxRam("home");
         if (ns.read(INSTALLED_STAGE) !== expectedStage(homeRam)) {
-            if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) {
+            if (!await fetchLatestInstaller(ns, INSTALLER)) {
                 await event(ns, "system", "Stage download failed: installer unavailable", "error");
             } else {
                 ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");

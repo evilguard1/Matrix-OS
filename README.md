@@ -21,7 +21,7 @@ With MATRIX running:
 run /matrix/update.js
 ```
 
-The tiny update command queues a cache-busted GitHub update. The active stage safely downloads the new installer, preserves `/matrix/config.json`, closes its current tail, updates the eligible stage, and restarts through the kernel.
+The tiny update command queues a GitHub update. The active stage resolves the latest commit, pins every download to that immutable commit SHA, preserves `/matrix/config.json`, closes its current tail, updates the eligible stage, and restarts through the kernel.
 
 If MATRIX was manually stopped before the update request, start the queued update with:
 

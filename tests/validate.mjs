@@ -65,6 +65,8 @@ for (const absolute of runtimeFiles) {
 const updateSource = read("matrix/update.js");
 assert.doesNotMatch(updateSource, /\bns\.(?:spawn|run|exec|wget|ps)\b/, "the 8 GB updater must remain request-only");
 assert.doesNotMatch(read("matrix/bootstrap.js"), /from\s+["']\/matrix\//, "bootstrap must remain standalone");
+assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\/main/);
+assert.match(read("install.js"), /\$\{release\}\//, "installer downloads must be pinned to the resolved commit");
 
 const { scanNetwork, tryRoot, chooseTarget } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
 const { stageForRam } = await import(pathToFileURL(path.join(root, "matrix/kernel.js")));

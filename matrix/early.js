@@ -1,10 +1,9 @@
-import { config, event, writeState } from "/matrix/lib/common.js";
+import { config, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 
 const EARLY = "/matrix/workers/early.js";
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
-const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 
 function scoreTarget(ns, host) {
@@ -56,7 +55,7 @@ function draw(ns, state) {
 
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
-    if (!await ns.wget(`${INSTALLER_URL}?t=${Date.now()}`, INSTALLER, "home")) return false;
+    if (!await fetchLatestInstaller(ns, INSTALLER)) return false;
     ns.rm(UPDATE_REQUEST, "home");
     ns.ui.closeTail();
     ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");

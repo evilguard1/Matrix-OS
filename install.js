@@ -8,10 +8,11 @@
  * Later updates:
  *   run /matrix/update.js
  */
-const REPOSITORY = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/";
-const MANIFEST_URL = `${REPOSITORY}manifest.json`;
+const RAW_ROOT = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/";
+const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
 const MANIFEST_FILE = "/matrix/manifest.json";
 const MANIFEST_TEMP = "/matrix/state/manifest.download.txt";
+const RELEASE_TEMP = "/matrix/state/release-metadata.txt";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const CONFIG_FILE = "/matrix/config.json";
 const LEGACY_CONFIG = "/matrix/config.txt";
@@ -87,6 +88,16 @@ function parseManifest(ns) {
     }
 }
 
+async function resolveRelease(ns, stamp) {
+    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_TEMP, "home")) return null;
+    try {
+        const sha = String(JSON.parse(ns.read(RELEASE_TEMP)).sha ?? "");
+        return /^[a-f0-9]{40}$/i.test(sha) ? sha : null;
+    } catch {
+        return null;
+    }
+}
+
 export function stageLimit(manifest, homeRam) {
     const stages = [...manifest.stages].sort((a, b) => Number(a.minHomeRam) - Number(b.minHomeRam));
     let index = 0;
@@ -129,7 +140,14 @@ export async function main(ns) {
     ns.tprint("MATRIX-OS // MANIFEST INSTALLER ONLINE");
     ns.tprint(fresh ? "MATRIX-OS // FRESH INSTALL" : "MATRIX-OS // STAGED UPDATE (CONFIG PRESERVED)");
 
-    if (!await ns.wget(`${MANIFEST_URL}?t=${stamp}`, MANIFEST_TEMP, "home")) {
+    const release = await resolveRelease(ns, stamp);
+    if (!release) {
+        ns.tprint("MATRIX-OS // ERROR: COULD NOT RESOLVE THE LATEST GITHUB COMMIT");
+        recover(ns, noStart);
+        return;
+    }
+    const releaseBase = `${RAW_ROOT}${release}/`;
+    if (!await ns.wget(`${releaseBase}manifest.json`, MANIFEST_TEMP, "home")) {
         ns.tprint("MATRIX-OS // ERROR: COULD NOT DOWNLOAD manifest.json");
         recover(ns, noStart);
         return;
@@ -160,8 +178,7 @@ export async function main(ns) {
             preserved++;
             continue;
         }
-        const base = manifest.baseUrl.endsWith("/") ? manifest.baseUrl : `${manifest.baseUrl}/`;
-        const url = `${base}${normalize(entry.path)}?v=${encodeURIComponent(manifest.version)}&t=${stamp}`;
+        const url = `${releaseBase}${normalize(entry.path)}`;
         const temp = `/matrix/state/download-${stamp}-${index}.txt`;
         if (await ns.wget(url, temp, "home") && ns.read(temp).length > 0) {
             downloads.push({ local, temp });
@@ -171,6 +188,7 @@ export async function main(ns) {
     }
 
     ns.tprint(`MATRIX-OS // VERSION ${manifest.version}`);
+    ns.tprint(`MATRIX-OS // RELEASE ${release.slice(0, 12)}`);
     if (failed.length) {
         ns.tprint(`MATRIX-OS // ERROR: ${failed.length} DOWNLOAD(S) FAILED`);
         for (const file of failed) ns.tprint(`  ${file}`);

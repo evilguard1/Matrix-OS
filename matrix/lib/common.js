@@ -3,8 +3,11 @@ export const CONFIG = `${ROOT}/config.json`;
 export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
 
+const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
+const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
+
 const DEFAULT_CONFIG = {
-    version: "0.2.1",
+    version: "0.2.2",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -58,6 +61,16 @@ export async function writeJson(ns, file, value) {
 export function config(ns) {
     const saved = readJson(ns, CONFIG, readJson(ns, `${ROOT}/config.txt`, {}));
     return merge(DEFAULT_CONFIG, saved);
+}
+
+export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-install.js`) {
+    const stamp = Date.now();
+    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) return null;
+    let sha = "";
+    try { sha = String(JSON.parse(ns.read(RELEASE_META)).sha ?? ""); } catch {}
+    if (!/^[a-f0-9]{40}$/i.test(sha)) return null;
+    const url = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
+    return await ns.wget(url, destination, "home") ? sha : null;
 }
 
 export function reserveMoney(ns, cfg = config(ns)) {
