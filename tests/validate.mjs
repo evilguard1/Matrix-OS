@@ -68,7 +68,7 @@ assert.doesNotMatch(read("matrix/bootstrap.js"), /from\s+["']\/matrix\//, "boots
 assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\/main/);
 assert.match(read("install.js"), /\$\{release\}\//, "installer downloads must be pinned to the resolved commit");
 
-const { scanNetwork, tryRoot, chooseTarget } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
+const { scanNetwork, tryRoot, chooseTarget, chooseStarterAction } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
 const { stageForRam } = await import(pathToFileURL(path.join(root, "matrix/kernel.js")));
 const { config, plannedNextBitNode } = await import(pathToFileURL(path.join(root, "matrix/lib/common.js")));
 const { eligibleFiles } = await import(pathToFileURL(path.join(root, "install.js")));
@@ -106,9 +106,15 @@ const targetMock = {
     getHackingLevel: () => 20,
     hasRootAccess: host => host !== "home",
     getServerMaxMoney: host => ({ n00dles: 100_000, foodnstuff: 2_000_000 }[host] ?? 0),
+    getServerMoneyAvailable: host => ({ n00dles: 70_000, foodnstuff: 2_000_000 }[host] ?? 0),
     getServerRequiredHackingLevel: host => ({ n00dles: 1, foodnstuff: 10 }[host] ?? 1),
 };
 assert.equal(chooseTarget(targetMock, ["home", "n00dles", "foodnstuff"]), "foodnstuff");
+targetMock.getServerMoneyAvailable = host => ({ n00dles: 70_000, foodnstuff: 1_000 }[host] ?? 0);
+assert.equal(chooseTarget(targetMock, ["home", "n00dles", "foodnstuff"]), "n00dles");
+assert.equal(chooseStarterAction(2_000_000, 50_000_000, 10, 3), "hack");
+assert.equal(chooseStarterAction(100_000, 50_000_000, 10, 3), "grow");
+assert.equal(chooseStarterAction(2_000_000, 50_000_000, 95, 3), "weaken");
 
 const merged = config({ read: file => file.endsWith("config.json") ? '{"economy":{"cashReserve":123}}' : "" });
 assert.equal(merged.economy.cashReserve, 123);

@@ -5,8 +5,8 @@ export async function main(ns) {
         const min = ns.getServerMinSecurityLevel(target);
         const money = ns.getServerMoneyAvailable(target);
         const max = ns.getServerMaxMoney(target);
-        if (sec > min + 5) await ns.weaken(target);
-        else if (max > 0 && money < max * 0.80) await ns.grow(target);
+        if (max > 0 && money <= max * 0.005) await ns.grow(target);
+        else if (sec >= 95 && sec > min + 5) await ns.weaken(target);
         else await ns.hack(target);
     }
 }

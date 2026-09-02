@@ -9,7 +9,7 @@ const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 function scoreTarget(ns, host) {
     if (!ns.hasRootAccess(host) || ns.getServerMaxMoney(host) <= 0) return -1;
     if (ns.getServerRequiredHackingLevel(host) > ns.getHackingLevel()) return -1;
-    return ns.getServerMaxMoney(host) / Math.max(1, ns.getHackTime(host));
+    return ns.getServerMoneyAvailable(host) / Math.max(1, ns.getHackTime(host));
 }
 
 function sameScript(a, b) {

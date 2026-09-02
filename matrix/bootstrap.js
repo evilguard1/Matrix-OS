@@ -40,11 +40,17 @@ export function chooseTarget(ns, hosts) {
         ns.getServerRequiredHackingLevel(host) <= level
     );
     candidates.sort((a, b) => {
-        const scoreA = ns.getServerMaxMoney(a) / Math.max(1, ns.getServerRequiredHackingLevel(a));
-        const scoreB = ns.getServerMaxMoney(b) / Math.max(1, ns.getServerRequiredHackingLevel(b));
+        const scoreA = ns.getServerMoneyAvailable(a) / Math.max(1, ns.getServerRequiredHackingLevel(a));
+        const scoreB = ns.getServerMoneyAvailable(b) / Math.max(1, ns.getServerRequiredHackingLevel(b));
         return scoreB - scoreA;
     });
     return candidates[0] ?? "n00dles";
+}
+
+export function chooseStarterAction(money, maxMoney, security, minSecurity) {
+    if (maxMoney > 0 && money <= maxMoney * 0.005) return "grow";
+    if (security >= 95 && security > minSecurity + 5) return "weaken";
+    return "hack";
 }
 
 function draw(ns, state) {
@@ -106,9 +112,7 @@ export async function main(ns) {
             const minSecurity = ns.getServerMinSecurityLevel(target);
             const money = ns.getServerMoneyAvailable(target);
             const maxMoney = ns.getServerMaxMoney(target);
-            let action = "hack";
-            if (security > minSecurity + 5) action = "weaken";
-            else if (maxMoney > 0 && money < maxMoney * 0.80) action = "grow";
+            const action = chooseStarterAction(money, maxMoney, security, minSecurity);
             const state = {
                 status: "online", phase: "bootstrap", action, target,
                 discovered: hosts.length, rooted, homeRam: ns.getServerMaxRam("home"), updated: Date.now(),
