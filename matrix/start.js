@@ -65,6 +65,9 @@ export const SERVICES = [
     { file: "/matrix/services/sleeves.js", key: "sleeves", minRam: 256, sf: 10 },
     { file: "/matrix/services/gang.js", key: "gang", minRam: 256, sf: 2 },
     // 512 GB: + 77.6 + 79.7 (singularity only fits at SF4 level 3)
+    // 26.7 GB, almost all of it the DOM charge. No Source-File needed, and the
+    // largest sum in the game reachable without one.
+    { file: "/matrix/services/casino.js", key: "casino", minRam: 128 },
     { file: "/matrix/services/stanek.js", key: "stanek", minRam: 256, sf: 13 },
     { file: "/matrix/services/bladeburner.js", key: "bladeburner", minRam: 512, sf: [6, 7] },
     { file: "/matrix/services/singularity.js", key: "singularity", minRam: 512, sf: 4, sf4Level3: true },

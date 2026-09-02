@@ -70,6 +70,10 @@ const LINES = {
         "There is a market below the surface. You will need an address.",
         "The darkweb does not advertise. Buy the router and it will find you.",
     ],
+    CASINO: [
+        "There is a room in Aevum where the house does not know what you are.",
+        "Aevum. The Iker Molina Casino. Sit down at blackjack and let me play.",
+    ],
     DEFAULT: [
         "Something here needs a hand that is not mine.",
     ],
@@ -92,6 +96,7 @@ export function speak(directive = {}) {
     else if (tag === "HOME RAM" || tag === "HOME_RAM") key = "HOME_RAM";
     else if (tag === "MODULE") key = "MODULE";
     else if (tag === "TOR") key = "TOR";
+    else if (tag === "CASINO") key = "CASINO";
     return pick(LINES[key], id);
 }
 

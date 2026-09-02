@@ -4,7 +4,7 @@ import { leaseDecision } from "/matrix/lib/singleton.js";
 const DECK = "/matrix/dashboard.jsx";
 
 const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
-const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "stanek", "bladeburner", "corporation"];
+const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "casino", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "stanek", "bladeburner", "corporation"];
 
 function money(value) {
     if (!Number.isFinite(value)) return "--";

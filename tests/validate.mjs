@@ -63,11 +63,18 @@ for (const absolute of runtimeFiles) {
     // statically on the identifier whether or not the line ever runs. One
     // window.innerWidth in a decorative canvas made the command deck 26.9 GB and
     // silently unlaunchable at 32 GB. Use a React ref instead.
-    assert.deepEqual(
-        stripComments(source).match(DOM_IDENTIFIERS) ?? [],
-        [],
-        `${absolute} touches the DOM, which costs 25 GB`,
-    );
+    //
+    // casino.js is the sole exception and is deliberate: there is no casino API,
+    // so the DOM is the only way in. It is gated at 128 GB with the 25 GB in its
+    // measured cost, and it is the only file allowed to spend it.
+    const posix = absolute.split(String.fromCharCode(92)).join("/");
+    if (!posix.endsWith("matrix/services/casino.js")) {
+        assert.deepEqual(
+            stripComments(source).match(DOM_IDENTIFIERS) ?? [],
+            [],
+            `${absolute} touches the DOM, which costs 25 GB`,
+        );
+    }
     for (const match of source.matchAll(/["'`](\/matrix\/state\/[^"'`$]+)["'`]/g)) {
         assert.match(match[1], /\.(?:txt|json|js|jsx)$/, `${absolute} uses an invalid Bitburner state-file extension`);
     }

@@ -169,6 +169,8 @@ const shapes = {
     "go playing": { ...base, services: { go: { status: "online", opponent: "Netburners", bonus: "hacknet production", routers: 7, enemyRouters: 6, open: 10, games: 4, totalWins: 3, wins: 2 } } },
     "go unavailable in this bitnode": { ...base, services: { go: { status: "unavailable", error: "no go" } } },
     "stanek charging": { ...base, services: { stanek: { status: "online", fragments: 5, charging: "2,1", threads: 256, lowestCharge: 12, highestCharge: 900 } } },
+    "casino playing": { ...base, services: { casino: { status: "playing", hands: 42, won: 3.2e9, hand: 18, soft: true, showing: "6", action: "stay" } } },
+    "casino waiting": { ...base, services: { casino: { status: "waiting", reason: "blackjack table not on screen", hands: 0, won: 0 } } },
     "stanek locked": { ...base, services: { stanek: { status: "locked", reason: "needs Source-File 13" } } },
     "hacknet with hash spends": { ...base, services: { hacknet: { status: "online", nodes: 8, hashes: 40, capacity: 100, serverUpgrades: 3, hashSpends: [{ upgrade: "Reduce Minimum Security", target: "phantasy", why: "cheaper weakens" }] } } },
     "go half-reported": { ...base, services: { go: { status: "online" } } },

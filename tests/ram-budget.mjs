@@ -20,7 +20,14 @@ export const BASE_COST = 1.6;
 // charged STATICALLY on the identifier, so a single window.innerWidth in a
 // decorative canvas silently made the command deck unlaunchable at 32 GB.
 export const DOM_COST = 25;
-export const DOM_IDENTIFIERS = /(?:^|[^\w$.])(?:window|document)\s*\./g;
+// Bitburner walks the parsed script and charges for REFERENCING window or
+// document, not for calling a method on one - so requiring a trailing dot
+// missed `typeof document`, a bare `document` returned from a guard, and
+// anything passed around by name. Matching the bare word instead over-charges,
+// because prose in a comment or JSX text ("leaves a dead window on screen") is
+// not an identifier. So the word must be followed by something only real code
+// puts there: a member access, a call, or an operator.
+export const DOM_IDENTIFIERS = /(?:^|[^\w$.])(?:window|document)\s*(?:[.[(),;?:=&|!]|$)/g;
 
 export const RAM_COSTS = {
     // free
