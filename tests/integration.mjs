@@ -121,46 +121,57 @@ console.log("MATRIX-OS integration passed: worm seeds, spreads, respects RAM, an
 console.log("MATRIX-OS integration passed: contracts dispatch off-home, once each.");
 
 // --- exactly one command deck, however many supervisors race -----------------
-// "Multiple overlapping dashboard tails" is a documented prior failure mode.
-// A startup-only check cannot prevent it, so the rule is enforced continuously.
+// "Multiple overlapping dashboard tails" is a documented prior failure mode. The
+// first attempt at a fix had the owner KILL duplicates, which made it worse: a
+// killed script never runs its own closeTail(), so it leaves an orphan window.
+// Duplicates must therefore stand down voluntarily.
 {
-    const { claimSingleton } = await import("../matrix/lib/singleton.js");
+    const { isSingletonOwner, holdSingleton } = await import("../matrix/lib/singleton.js");
     const DECK = "/matrix/dashboard.jsx";
     const ns = createMockNs();
 
-    // Three supervisors restarting a second apart each launched a deck.
     for (const pid of [30, 10, 20]) ns._spawnFake("home", DECK, pid);
-    assert.equal(ns._servers.get("home").procs.filter(p => p.file === DECK).length, 3);
 
-    // The oldest claims ownership and evicts the rest.
-    assert.equal(claimSingleton(ns._asPid(10), DECK), true, "the lowest PID owns the deck");
-    const survivors = ns._servers.get("home").procs.filter(p => p.file === DECK);
-    assert.equal(survivors.length, 1, "the owner must evict every duplicate");
-    assert.equal(survivors[0].pid, 10);
+    assert.equal(isSingletonOwner(ns._asPid(10), DECK), true, "the lowest PID owns the deck");
+    assert.equal(isSingletonOwner(ns._asPid(20), DECK), false, "a newer deck does not own it");
+    assert.equal(isSingletonOwner(ns._asPid(30), DECK), false);
 
-    // Losers stand down rather than fighting back, so this cannot oscillate.
-    ns._spawnFake("home", DECK, 40);
-    assert.equal(claimSingleton(ns._asPid(40), DECK), false, "a newer deck must stand down");
-    assert.equal(claimSingleton(ns._asPid(10), DECK), true, "the owner keeps ownership");
-    assert.equal(ns._servers.get("home").procs.filter(p => p.file === DECK).length, 1,
-        "the network converges to exactly one deck");
+    // Nobody is killed - each loser closes its own window and returns.
+    assert.equal(holdSingleton(ns._asPid(20), DECK), false, "a duplicate must stand down");
+    assert.equal(ns._servers.get("home").procs.filter(p => p.file === DECK).length, 3,
+        "standing down must not kill anyone: a killed script cannot close its own tail");
 
-    // A deck that is genuinely alone keeps running.
-    assert.equal(claimSingleton(ns._asPid(10), DECK), true);
+    // The rule is total and stable, so it converges and cannot oscillate.
+    assert.equal(holdSingleton(ns._asPid(10), DECK), true, "the owner keeps running");
+    assert.equal(holdSingleton(ns._asPid(10), DECK), true, "and stays the owner");
+
+    // A deck that is genuinely alone survives.
+    const solo = createMockNs();
+    solo._spawnFake("home", DECK, 7);
+    assert.equal(holdSingleton(solo._asPid(7), DECK), true);
 }
 
-// The kernel must sweep the deck, or a relaunch leaves the old one on screen.
+// Guards that keep the failure from returning.
 {
     const fs = await import("node:fs");
-    const kernel = fs.readFileSync("matrix/kernel.js", "utf8");
-    assert.match(kernel, /STAGE_SCRIPTS = \[[^\]]*dashboard\.jsx/,
-        "kernel.js must kill the dashboard alongside the stage scripts");
     const deck = fs.readFileSync("matrix/dashboard.jsx", "utf8");
-    assert.match(deck, /claimSingleton/, "the deck must enforce its own singleton");
-    assert.ok(
-        (deck.match(/claimSingleton/g) ?? []).length >= 3,
-        "the deck must re-claim ownership in its loop, not only at startup",
-    );
+    assert.match(deck, /holdSingleton/, "the deck must enforce its own singleton");
+    // The deck must re-check ownership inside its main loop, not only at startup:
+    // a startup-only check is exactly what let racing supervisors leave decks behind.
+    const deckLoop = deck.slice(deck.lastIndexOf("while (true)"));
+    assert.ok(deckLoop.includes("holdSingleton"),
+        "the deck must re-check ownership inside its loop, not only at startup");
+
+    // A stage transition restarts everything, so the installer spawn must sit
+    // behind a time gate. Unthrottled, it is an infinite restart loop that leaves
+    // a new command deck behind every cycle.
+    const start = fs.readFileSync("matrix/start.js", "utf8");
+    assert.ok(start.includes("Date.now() - lastAttempt > STAGE_RETRY_MS"),
+        "the stage transition must be time-gated");
+    const stageBlock = start.slice(start.indexOf("const wantStage"), start.indexOf("const reset ="));
+    assert.ok(stageBlock.includes("STAGE_ATTEMPT"), "the attempt time must be persisted across restarts");
+    assert.ok(stageBlock.indexOf("lastAttempt") < stageBlock.indexOf("ns.spawn(INSTALLER"),
+        "the time gate must be checked before spawning the installer");
 }
 
 console.log("MATRIX-OS integration passed: exactly one command deck survives.");

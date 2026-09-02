@@ -1,5 +1,5 @@
 import { CONFIG, STATE_DIR, readJson } from "/matrix/lib/common.js";
-import { claimSingleton } from "/matrix/lib/singleton.js";
+import { holdSingleton } from "/matrix/lib/singleton.js";
 
 const DECK = "/matrix/dashboard.jsx";
 
@@ -495,10 +495,9 @@ export async function main(ns) {
     ns.clearLog();
     // A startup-only check let racing supervisors leave several decks alive.
     // Claim ownership now and keep re-claiming below, so duplicates collapse.
-    if (!claimSingleton(ns, DECK)) {
-        try { ns.ui.closeTail(); } catch {}
-        return;
-    }
+    // Stand down rather than being killed: a killed script cannot close its own
+    // window, which is how orphaned decks pile up on screen.
+    if (!holdSingleton(ns, DECK)) return;
     ns.printRaw(<App ns={ns} />);
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {}
@@ -517,9 +516,6 @@ export async function main(ns) {
     // supervisor restart can spawn another deck at any moment.
     while (true) {
         await ns.sleep(2000);
-        if (!claimSingleton(ns, DECK)) {
-            try { ns.ui.closeTail(); } catch {}
-            return;
-        }
+        if (!holdSingleton(ns, DECK)) return;
     }
 }

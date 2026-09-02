@@ -1,12 +1,16 @@
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
-import { claimSingleton } from "/matrix/lib/singleton.js";
+import { holdSingleton } from "/matrix/lib/singleton.js";
 
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const DASHBOARD = "/matrix/dashboard.jsx";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const UPDATE_SCRIPT = "/matrix/update.js";
+const STAGE_ATTEMPT = "/matrix/state/stage-attempt.txt";
+// A stage transition restarts the whole system. If it does not take, retrying
+// every 5s is an infinite restart loop that spawns a command deck each time.
+const STAGE_RETRY_MS = 300_000;
 
 // Every managed service, with the Home RAM it genuinely needs.
 //
@@ -111,7 +115,7 @@ async function handoffUpdate(ns) {
 // is the real UI, so this tail only appears when the deck is NOT running - which
 // is exactly when you need to know why. Costs 0 GB: print/tail/ui are all free,
 // and the report is already computed.
-function drawSupervisor(ns, homeRam, report, reason) {
+function drawSupervisor(ns, homeRam, report, reason, stuck) {
     ns.clearLog();
     const used = ns.getServerUsedRam("home");
     const worm = readWorm(ns);
@@ -120,6 +124,7 @@ function drawSupervisor(ns, homeRam, report, reason) {
     ns.print(rule());
     ns.print(row("💻", "HOME RAM", `${ns.format.ram(homeRam)}  │  ${ns.format.ram(used)} used, ${ns.format.ram(homeRam - used)} free`));
     if (reason) ns.print(row("⚠️", "DECK", reason));
+    if (stuck) ns.print(row("⛔", "STAGE", stuck));
     if (worm) ns.print(row("🐛", "BOTNET", `${worm.infected}/${worm.rooted} infected  │  ${worm.drones} drones`));
     ns.print(rule("S E R V I C E S"));
     for (const entry of report) {
@@ -149,23 +154,36 @@ export async function main(ns) {
 
     // Duplicate supervisors are what produced duplicate command decks: each one
     // launched its own. Lowest PID wins and evicts the rest.
-    if (!claimSingleton(ns, "/matrix/start.js")) return;
+    if (!holdSingleton(ns, "/matrix/start.js")) return;
     await event(ns, "system", "MATRIX full supervisor online", "success");
     let tailOpen = false;
 
     while (true) {
-        if (!claimSingleton(ns, "/matrix/start.js")) return;
+        if (!holdSingleton(ns, "/matrix/start.js")) return;
         if (await handoffUpdate(ns)) return;
         const cfg = config(ns);
         const homeRam = ns.getServerMaxRam("home");
-        if (ns.read(INSTALLED_STAGE) !== expectedStage(homeRam)) {
-            if (!await fetchLatestInstaller(ns, INSTALLER)) {
+        // A stage change restarts everything, so it must be rate-limited. Left
+        // unguarded, a transition that never "takes" relaunches the supervisor
+        // every cycle and leaves a new command deck behind each time.
+        const wantStage = expectedStage(homeRam);
+        const haveStage = ns.read(INSTALLED_STAGE);
+        let stageStuck = false;
+        if (haveStage !== wantStage) {
+            const lastAttempt = Number(ns.read(STAGE_ATTEMPT) || 0);
+            if (Date.now() - lastAttempt > STAGE_RETRY_MS) {
+                await ns.write(STAGE_ATTEMPT, String(Date.now()), "w");
+                if (await fetchLatestInstaller(ns, INSTALLER)) {
+                    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
+                    return;
+                }
                 await event(ns, "system", "Stage download failed: installer unavailable", "error");
             } else {
-                ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
-                return;
+                // Keep running the services we already have rather than spinning.
+                stageStuck = true;
             }
         }
+
         const reset = ns.getResetInfo();
         const report = [];
         for (const service of SERVICES) {
@@ -189,7 +207,10 @@ export async function main(ns) {
             }
             ensureOne(ns, service.file, report);
         }
-        await writeState(ns, "supervisor", { status: "online", homeRam, services: report });
+        await writeState(ns, "supervisor", {
+            status: "online", homeRam, services: report,
+            stage: haveStage, expectedStage: wantStage, stageStuck,
+        });
 
         // The command deck is the real UI. If it is not up, show why rather than
         // leaving the player with no window at all - the state this stage used to
@@ -212,7 +233,8 @@ export async function main(ns) {
                 await event(ns, "system", `Command deck unavailable: ${reason}`, "error");
                 tailOpen = true;
             }
-            drawSupervisor(ns, homeRam, report, reason);
+            drawSupervisor(ns, homeRam, report, reason,
+                stageStuck ? `installed "${haveStage}" but expected "${wantStage}"` : null);
         }
 
         await ns.sleep(5000);

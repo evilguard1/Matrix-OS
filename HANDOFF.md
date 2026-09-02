@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.8.2`
+Current release/version: `0.8.3`
 
 ## Quick Start
 
@@ -51,6 +51,35 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.8.3 verification status
+
+0.8.2's singleton made the problem WORSE - six decks instead of three - and the
+reason is worth recording permanently:
+
+**`ns.kill(pid)` terminates the victim instantly, so the victim never runs its
+own `closeTail()`.** Closing another script's tail by PID is not reliable, so
+"owner kills duplicates" produces a dead process behind a window that nothing can
+subsequently close. Orphaned windows accumulate.
+
+The rule is now voluntary stand-down: lowest PID wins, and every other instance
+notices on its next poll, closes ITS OWN tail - which always works - and returns.
+Nobody kills anybody. `matrix/lib/singleton.js` has no `ns.kill`, and a test
+asserts it never gains one.
+
+The restart storm behind it is also fixed. A stage transition restarts the whole
+system, and it was retried every 5 s; if the transition never "takes" that is an
+infinite restart loop leaving a new deck behind each cycle. Transitions are now
+gated to one attempt per 5 minutes, persisted in `stage-attempt.txt`, and a stuck
+stage is reported in the supervisor state and tail instead of retried forever.
+
+All three guards are regression-tested and each was verified to FAIL when the
+fix is reverted: the singleton gaining an `ns.kill`, the stage transition losing
+its time gate, and the deck checking ownership only at startup. Two earlier
+versions of the last two assertions were too weak to bite and were strengthened.
+
+Orphaned tail windows from before this fix cannot be closed programmatically -
+close them once by hand.
 
 ### 0.8.2 verification status
 

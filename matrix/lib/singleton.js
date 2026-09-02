@@ -1,29 +1,32 @@
 /**
- * Exactly-one-process enforcement.
+ * Exactly-one-process enforcement, by voluntary stand-down.
  *
- * "Multiple overlapping dashboard tails" is a documented prior failure mode of
- * this project, and a startup-only check cannot prevent it: two supervisors
- * restarting a second apart each see no other deck and both survive, and neither
- * ever re-checks.
+ * "Multiple overlapping dashboard tails" is a documented prior failure mode. The
+ * obvious fix - have the owner kill the duplicates - makes it WORSE: ns.kill()
+ * terminates the victim instantly, so the victim never runs its own closeTail(),
+ * and closing another script's tail by PID is not reliable. The result is a dead
+ * process behind a window nothing can close.
  *
- * Lowest PID wins, deterministically. The owner actively kills newer duplicates;
- * a loser closes its tail and exits. Because the rule is total and stable, this
- * converges to one process and cannot oscillate.
+ * So nobody kills anybody. Lowest PID wins; every other instance notices on its
+ * next poll, closes ITS OWN tail - which always works - and returns. The rule is
+ * total and stable, so this converges and cannot oscillate.
  *
- * Costs the caller ns.ps (0.2) + ns.kill (0.5). ui.closeTail is free.
+ * Costs the caller ns.ps (0.2) only. ui.closeTail is free.
  */
-export function claimSingleton(ns, script) {
+export function isSingletonOwner(ns, script) {
     const normalise = value => String(value).replace(/^\/+/, "");
     const target = normalise(script);
     const self = ns.pid;
+    return !ns.ps("home").some(entry =>
+        normalise(entry.filename) === target && entry.pid !== self && entry.pid < self);
+}
 
-    const others = ns.ps("home").filter(entry => normalise(entry.filename) === target && entry.pid !== self);
-    // Someone older owns it. We are the duplicate.
-    if (others.some(entry => entry.pid < self)) return false;
-
-    for (const entry of others) {
-        try { ns.ui.closeTail(entry.pid); } catch {}
-        try { ns.kill(entry.pid); } catch {}
-    }
-    return true;
+/**
+ * Stand down if another instance owns this script.
+ * @returns {boolean} true while this process should keep running.
+ */
+export function holdSingleton(ns, script) {
+    if (isSingletonOwner(ns, script)) return true;
+    try { ns.ui.closeTail(); } catch {}
+    return false;
 }
