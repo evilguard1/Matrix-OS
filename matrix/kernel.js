@@ -4,7 +4,9 @@ export function stageForRam(homeRam) {
     return "/matrix/start.js";
 }
 
-const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/start.js"];
+// The dashboard is included: a kernel relaunch that left the old deck running
+// is how "multiple overlapping dashboard tails" comes back.
+const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/start.js", "/matrix/dashboard.jsx"];
 const SEED = "/matrix/worm/seed.js";
 
 export async function main(ns) {

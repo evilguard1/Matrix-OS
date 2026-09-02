@@ -1,5 +1,6 @@
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
+import { claimSingleton } from "/matrix/lib/singleton.js";
 
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
@@ -146,12 +147,14 @@ export async function main(ns) {
         return;
     }
 
-    const self = ns.pid;
-    if (ns.ps("home").some(process => sameScript(process.filename, "/matrix/start.js") && process.pid < self)) return;
+    // Duplicate supervisors are what produced duplicate command decks: each one
+    // launched its own. Lowest PID wins and evicts the rest.
+    if (!claimSingleton(ns, "/matrix/start.js")) return;
     await event(ns, "system", "MATRIX full supervisor online", "success");
     let tailOpen = false;
 
     while (true) {
+        if (!claimSingleton(ns, "/matrix/start.js")) return;
         if (await handoffUpdate(ns)) return;
         const cfg = config(ns);
         const homeRam = ns.getServerMaxRam("home");

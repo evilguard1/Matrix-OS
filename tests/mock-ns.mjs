@@ -153,6 +153,9 @@ export function createMockNs({
         _addContract: (host, file) => server(host).files.add(file),
         // The same world, viewed from another host - this is how a worm instance
         // running on foodnstuff sees things.
+        // The same world seen by a process with a different PID.
+        _asPid: pid => ({ ...ns, pid }),
+        _spawnFake: (host, file, pid) => server(host).procs.push({ pid, file, threads: 1, args: [] }),
         _as: other => ({ ...ns, getHostname: () => other, fileExists: (f, h = other) => server(h).files.has(f) }),
     };
     return ns;

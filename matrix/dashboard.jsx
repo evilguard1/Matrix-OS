@@ -1,4 +1,7 @@
 import { CONFIG, STATE_DIR, readJson } from "/matrix/lib/common.js";
+import { claimSingleton } from "/matrix/lib/singleton.js";
+
+const DECK = "/matrix/dashboard.jsx";
 
 const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
 const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "bladeburner", "corporation"];
@@ -490,10 +493,9 @@ function App({ ns }) {
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.clearLog();
-    const self = ns.pid;
-    const sameScript = process => String(process.filename).replace(/^\/+/, "") === "matrix/dashboard.jsx";
-    const older = ns.ps("home").some(process => sameScript(process) && process.pid !== self && process.pid < self);
-    if (older) {
+    // A startup-only check let racing supervisors leave several decks alive.
+    // Claim ownership now and keep re-claiming below, so duplicates collapse.
+    if (!claimSingleton(ns, DECK)) {
         try { ns.ui.closeTail(); } catch {}
         return;
     }
@@ -511,5 +513,13 @@ export async function main(ns) {
         } catch {}
     }
     ns.ui.openTail();
-    while (true) await ns.sleep(60_000);
+    // Re-assert ownership rather than trusting the one check at startup: a
+    // supervisor restart can spawn another deck at any moment.
+    while (true) {
+        await ns.sleep(2000);
+        if (!claimSingleton(ns, DECK)) {
+            try { ns.ui.closeTail(); } catch {}
+            return;
+        }
+    }
 }

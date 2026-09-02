@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.8.1`
+Current release/version: `0.8.2`
 
 ## Quick Start
 
@@ -51,6 +51,29 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.8.2 verification status
+
+"Multiple overlapping dashboard tails" - a documented prior failure mode -
+returned as soon as the deck could actually launch again. Three live decks, and
+six `MATRIX full supervisor online` events in ten minutes with two of them a
+second apart.
+
+The guards were startup-only and passive: each process checked once for an
+*older* instance and then never looked again. Two supervisors restarting a second
+apart therefore each saw nothing and both survived, and each launched its own
+deck. `kernel.js` also swept the stage scripts but not `dashboard.jsx`, so a
+relaunch left the old deck on screen.
+
+`matrix/lib/singleton.js` replaces both guards with a total, stable rule: lowest
+PID wins, the owner actively evicts duplicates, losers stand down. Because the
+ordering is total it converges and cannot oscillate. It is re-asserted every
+2 s in the deck and every supervisor cycle, not merely at startup, and
+`kernel.js` now sweeps the deck too.
+
+Regression-tested in `tests/integration.mjs`: three racing decks collapse to the
+lowest PID, a late arrival stands down, the owner keeps ownership, and a lone
+deck survives. Verified to fail when the eviction is removed.
 
 ### 0.8.1 verification status
 
