@@ -4,8 +4,26 @@ export function stageForRam(homeRam) {
     return "/matrix/start.js";
 }
 
+const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/start.js"];
+
 export async function main(ns) {
     ns.disableLog("ALL");
     const next = stageForRam(ns.getServerMaxRam("home"));
-    ns.spawn(next, { threads: 1, preventDuplicates: true, spawnDelay: 0 });
+
+    // Kill ALL stale stage processes so preventDuplicates can't silently no-op
+    for (const script of STAGE_SCRIPTS) {
+        for (const proc of ns.ps("home")) {
+            if (String(proc.filename).replace(/^\/+/, "") === script.replace(/^\/+/, "") && proc.pid !== ns.pid) {
+                try { ns.ui.closeTail(proc.pid); } catch {}
+                try { ns.kill(proc.pid); } catch {}
+            }
+        }
+    }
+
+    // Also clear the lock file so bootstrap doesn't see a stale lock
+    ns.rm("/matrix/state/bootstrap-lock.txt", "home");
+
+    await ns.sleep(200);
+    ns.tprint(`MATRIX-OS // LAUNCHING ${next}`);
+    ns.spawn(next, { threads: 1, spawnDelay: 0 });
 }
