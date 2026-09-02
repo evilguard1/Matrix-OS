@@ -1,4 +1,4 @@
-import { baselineReserveMoney, reserveMoney, config, writeJson, writeState, event, getDirectives } from "/matrix/lib/common.js";
+import { baselineReserveMoney, reserveMoney, config, writeJson, writeState, event, getDirectives, STATE_DIR } from "/matrix/lib/common.js";
 
 const NFG="NeuroFlux Governor";
 const RED="The Red Pill";
@@ -171,6 +171,15 @@ export async function main(ns){
                 // on home by 1+(cores-1)/16, so 1->2 is +6.25% on a subset of
                 // threads, and it costs more than doubling home RAM.
                 if(ramCost>0&&cash-ramCost>reserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
+            }catch{}
+
+            // Faction reputation is Singularity-only. Publishing it lets the
+            // augmentation planner - which works from a static table without SF4 -
+            // switch from "needs rep" to exact shortfalls once SF4 exists.
+            try{
+                const rep={};
+                for(const faction of ns.getPlayer().factions) rep[faction]=ns.singularity.getFactionRep(faction);
+                await writeJson(ns,`${STATE_DIR}/faction-rep.txt`,rep);
             }catch{}
 
             const q=queued(ns);

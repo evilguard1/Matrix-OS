@@ -24,7 +24,7 @@ const locked = speak({ id: "BACKDOOR_CyberSec", tag: "BACKDOOR", ready: false })
 assert.notEqual(ready, locked, "'do this now' and 'here is why you cannot' are different messages");
 
 // --- every tag the system emits has a voice ----------------------------------
-for (const tag of ["JOIN", "BACKDOOR", "UNLOCK", "CREATE", "PROGRAM", "BUY SERVER", "HOME RAM", "MODULE", "TOR", "CASINO"]) {
+for (const tag of ["JOIN", "BACKDOOR", "UNLOCK", "CREATE", "PROGRAM", "BUY SERVER", "HOME RAM", "MODULE", "TOR", "AUGMENT", "REPUTATION"]) {
     const line = speak({ id: `x_${tag}`, tag });
     assert.ok(line && line.length > 10, `${tag} has no voice`);
 }

@@ -63,18 +63,11 @@ for (const absolute of runtimeFiles) {
     // statically on the identifier whether or not the line ever runs. One
     // window.innerWidth in a decorative canvas made the command deck 26.9 GB and
     // silently unlaunchable at 32 GB. Use a React ref instead.
-    //
-    // casino.js is the sole exception and is deliberate: there is no casino API,
-    // so the DOM is the only way in. It is gated at 128 GB with the 25 GB in its
-    // measured cost, and it is the only file allowed to spend it.
-    const posix = absolute.split(String.fromCharCode(92)).join("/");
-    if (!posix.endsWith("matrix/services/casino.js")) {
-        assert.deepEqual(
-            stripComments(source).match(DOM_IDENTIFIERS) ?? [],
-            [],
-            `${absolute} touches the DOM, which costs 25 GB`,
-        );
-    }
+    assert.deepEqual(
+        stripComments(source).match(DOM_IDENTIFIERS) ?? [],
+        [],
+        `${absolute} touches the DOM, which costs 25 GB`,
+    );
     for (const match of source.matchAll(/["'`](\/matrix\/state\/[^"'`$]+)["'`]/g)) {
         assert.match(match[1], /\.(?:txt|json|js|jsx)$/, `${absolute} uses an invalid Bitburner state-file extension`);
     }
@@ -462,6 +455,52 @@ const finderRam = scriptRam(read("matrix/services/contracts.js"), { root }).ram;
 assert.ok(solverRam > 20, `the solver carries the contract API (${solverRam} GB)`);
 assert.ok(finderRam < 6, `the finder must stay cheap enough to run early (${finderRam} GB)`);
 assert.match(read("matrix/early.js"), /dispatchContracts/, "the 16 GB stage must dispatch contracts too");
+
+
+// --- imports that actually exist ---------------------------------------------
+// esbuild parses each script but cannot see that a name is never bound. Adding
+// `${STATE_DIR}/faction-rep.txt` to a service that never imported STATE_DIR
+// parses perfectly and throws the moment the line runs - in game, unattended.
+//
+// Scoped to the UPPER_CASE constants. The function exports (config, event,
+// readJson) are routinely shadowed by locals and destructuring - the deck's
+// `const { data, config } = useStore()` is legitimate - and telling those apart
+// from a genuine miss needs real scope analysis. The constants are never
+// shadowed here, and they are the class that bites: a bare CONSTANT inside a
+// template literal reads as valid code right up until it runs.
+{
+    const constants = [...new Set([...read("matrix/lib/common.js")
+        .matchAll(/export\s+const\s+([A-Z][A-Z0-9_]+)\s*=/g)].map(m => m[1]))];
+    assert.ok(constants.length >= 4, "expected common.js to export UPPER_CASE constants");
+
+    // Quoted strings are not code. Template literals are BOTH: the literal text
+    // is not code but every ${...} inside it is, and that is exactly where a
+    // missing constant hides - so keep the interpolations and drop the prose.
+    const codeOnly = source => stripComments(source)
+        .replace(/^\s*import[^;]*;/gm, "")
+        .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+        .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+        .replace(/`(?:[^`\\]|\\.)*`/g, match =>
+            [...match.matchAll(/\$\{([^{}]*)\}/g)].map(m => m[1]).join(";"));
+
+    for (const absolute of runtimeFiles) {
+        const source = fs.readFileSync(absolute, "utf8");
+        if (!source.includes('from "/matrix/lib/common.js"')) continue;
+        const imported = new Set();
+        for (const match of source.matchAll(/import\s*\{([^}]*)\}/g)) {
+            for (const name of match[1].split(",")) imported.add(name.trim().split(/\s+as\s+/).pop());
+        }
+        const stripped = codeOnly(source);
+        for (const name of constants) {
+            const used = new RegExp(String.raw`(^|[^\w$.])` + name + String.raw`\b`).test(stripped);
+            const declared = new RegExp(String.raw`(?:const|let|var)\s+` + name + String.raw`\b`).test(stripped);
+            if (used && !declared) {
+                assert.ok(imported.has(name),
+                    `${absolute} uses ${name} from common.js without importing it - parses fine, throws at runtime`);
+            }
+        }
+    }
+}
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
 console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);

@@ -3,6 +3,7 @@ import { scanAll, routeTo } from "/matrix/lib/network.js";
 import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 import { factionDirectives, factionPlan, BACKDOOR_FACTIONS } from "/matrix/lib/factions.js";
 import { narrate, moduleDirectives } from "/matrix/lib/voice.js";
+import { augmentationPlan, augmentationDirectives, bestFactionToGrind } from "/matrix/lib/augmentations.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
 
@@ -92,20 +93,32 @@ export async function main(ns){
             // real move even when the game will not let a script take it.
             const factionInput={
                 skills:player.skills,money:player.money,city:player.city,karma:player.karma,
-                kills:player.numPeopleKilled,factions:player.factions,
+                kills:player.numPeopleKilled,factions:player.factions,jobs:player.jobs,
                 backdoors:backdoorsDone(player.factions??[]),
                 reachable:backdoorable(ns),
                 backdoorInfo:backdoorDetail(ns,parent,owned.length),
                 augs:(player.augmentations??[]).length,
                 hacknet:serviceState.hacknet?.totals??{levels:0,ram:0,cores:0},
             };
-            let factions=null,directives=[];
+            let factions=null,directives=[],augs=null,grind=null,augState=null;
             try{
                 factions=factionPlan(factionInput,{singularity});
                 // Order is the message: what you can do now, then what MATRIX is
                 // holding in reserve and which BitNode releases it.
+                // Faction rep needs Singularity to read, so before SF4 it is
+                // absent and every implant reports as "needs rep" - which names
+                // the requirement instead of hiding the implant.
+                augState={
+                    owned:(player.augmentations??[]).map(a=>typeof a==="string"?a:a?.name).filter(Boolean),
+                    factions:player.factions??[],
+                    factionRep:readJson(ns,`${STATE_DIR}/faction-rep.txt`,{}),
+                    money:player.money,
+                };
+                augs=augmentationPlan(augState);
+                grind=bestFactionToGrind(augState);
                 directives=narrate([
                     ...factionDirectives(factionInput,{singularity}),
+                    ...augmentationDirectives(augState,{singularity}),
                     ...moduleDirectives([...(reset.ownedSF?.entries?.()??[])]),
                 ]);
             }catch{}
@@ -124,6 +137,12 @@ export async function main(ns){
                     pending:factions.pending.slice(0,8).map(f=>({name:f.name,missing:f.missing,how:f.how})),
                 }:null,
                 directives,
+                augmentations:augs?{
+                    ready:augs.ready.map(a=>({name:a.name,faction:a.faction,money:a.money,value:a.value})),
+                    blocked:augs.blocked.map(a=>({name:a.name,faction:a.faction,repShort:a.repShort,moneyShort:a.moneyShort})),
+                    total:augs.total,
+                }:null,
+                grind,
                 services:serviceState,
                 events:eventLines(ns)
             });

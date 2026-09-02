@@ -70,9 +70,13 @@ const LINES = {
         "There is a market below the surface. You will need an address.",
         "The darkweb does not advertise. Buy the router and it will find you.",
     ],
-    CASINO: [
-        "There is a room in Aevum where the house does not know what you are.",
-        "Aevum. The Iker Molina Casino. Sit down at blackjack and let me play.",
+    AUGMENT: [
+        "This one changes what you are, not what you own. Take it.",
+        "The implant is on the shelf and the credits are in your account.",
+    ],
+    REPUTATION: [
+        "They will not sell to a stranger. Become someone they trust.",
+        "Reputation is the only currency this faction accepts.",
     ],
     DEFAULT: [
         "Something here needs a hand that is not mine.",
@@ -96,7 +100,8 @@ export function speak(directive = {}) {
     else if (tag === "HOME RAM" || tag === "HOME_RAM") key = "HOME_RAM";
     else if (tag === "MODULE") key = "MODULE";
     else if (tag === "TOR") key = "TOR";
-    else if (tag === "CASINO") key = "CASINO";
+    else if (tag === "AUGMENT") key = "AUGMENT";
+    else if (tag === "REPUTATION") key = "REPUTATION";
     return pick(LINES[key], id);
 }
 

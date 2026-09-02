@@ -65,6 +65,9 @@ export const FACTIONS = [
     { name: "Tetrads", kind: "crime", priority: 10,
       req: { city: ["Chongqing", "New Tokyo", "Ishima"], combat: 75, karma: -18 },
       how: "train combat, commit crimes, travel to Chongqing / New Tokyo / Ishima" },
+    { name: "Silhouette", kind: "crime", priority: 10,
+      req: { money: 15e6, karma: -22, jobTitle: ["CTO", "CFO", "CEO"] },
+      how: "reach CTO, CFO or CEO at any company, then commit crimes for karma" },
     { name: "The Syndicate", kind: "crime", priority: 11,
       req: { hacking: 200, combat: 200, city: ["Aevum", "Sector-12"], money: 10e6, karma: -90 },
       how: "train combat to 200 and commit crimes for karma" },
@@ -141,6 +144,10 @@ export function playerSnapshot(raw = {}) {
         // Hosts that are rooted and within hacking range: the backdoor is
         // actionable right now rather than something to work toward.
         reachable: new Set(Array.isArray(raw.reachable) ? raw.reachable : []),
+        // Company positions held, as title strings. Silhouette is the only
+        // faction that asks for one.
+        titles: new Set(Object.values(raw.jobs && typeof raw.jobs === "object" ? raw.jobs : {})
+            .map(title => String(title ?? ""))),
         // Per-host detail so a blocked backdoor can say WHICH requirement is
         // blocking it, and a ready one can hand over the exact terminal command.
         // installBackdoor() is Singularity, so until SF4 this is the whole help
@@ -179,6 +186,11 @@ export function unmetRequirements(req = {}, p) {
     if (req.kills && p.kills < req.kills) missing.push(`${p.kills}/${req.kills} people killed`);
     if (req.augs && p.augs < req.augs) missing.push(`${p.augs}/${req.augs} augmentations`);
     if (req.backdoor && !p.backdoors.has(req.backdoor)) missing.push(`backdoor ${req.backdoor}`);
+    // Job titles come from getPlayer().jobs, which is free; an empty map simply
+    // means the player holds no position yet.
+    if (req.jobTitle && !req.jobTitle.some(title => p.titles.has(title))) {
+        missing.push(`be ${req.jobTitle.join(", ")} at a company`);
+    }
     if (req.hacknetLevels && p.hacknet.levels < req.hacknetLevels) missing.push(`hacknet levels ${p.hacknet.levels}/${req.hacknetLevels}`);
     if (req.hacknetRam && p.hacknet.ram < req.hacknetRam) missing.push(`hacknet RAM ${p.hacknet.ram}/${req.hacknetRam}`);
     if (req.hacknetCores && p.hacknet.cores < req.hacknetCores) missing.push(`hacknet cores ${p.hacknet.cores}/${req.hacknetCores}`);

@@ -4,7 +4,7 @@ import { leaseDecision } from "/matrix/lib/singleton.js";
 const DECK = "/matrix/dashboard.jsx";
 
 const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
-const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "casino", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "stanek", "bladeburner", "corporation"];
+const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "stanek", "bladeburner", "corporation"];
 
 function money(value) {
     if (!Number.isFinite(value)) return "--";
@@ -463,7 +463,12 @@ function Economy({ data }) {
 }
 
 function Progress({ data }) {
-    const player = data.player ?? {}, services = data.services ?? {}, goal = services.singularity?.goal, coord = services.coordinator ?? {}, go = services.go ?? {};
+    const player = data.player ?? {}, services = data.services ?? {}, goal = services.singularity?.goal, coord = services.coordinator ?? {}, go = services.go ?? {}, augs = data.augmentations ?? {},
+        // Telemetry may be older, mid-write, or reporting a failed service: a
+        // nullish guard does not save a `.map` on a string.
+        augReady = Array.isArray(augs.ready) ? augs.ready.filter(a => a && a.name) : [],
+        augBlocked = Array.isArray(augs.blocked) ? augs.blocked.filter(a => a && a.name) : [],
+        grind = data.grind && typeof data.grind === "object" ? data.grind : null;
     const skills = ["strength", "defense", "dexterity", "agility", "charisma", "intelligence"];
 
     return (
@@ -511,6 +516,31 @@ function Progress({ data }) {
                         <div className="mxMeter cyan"><i style={{ width: `${meter(coord.milestone.pct)}%` }} /></div>
                     </div>
                 ) : null}
+            </Panel>
+            <Panel title="Augmentation shortlist" right={Number(augs.total) ? `${augs.total} REACHABLE` : "NO FACTION ACCESS"} span={12}>
+                {(augReady.length || augBlocked.length) ? (
+                    <>
+                        {augReady.map(aug => (
+                            <div className="mxRow" key={`r-${aug.name}`}>
+                                <span className="mxServiceName"><i className="mxDot" style={{ color: COLOR.amber }} />{aug.name}</span>
+                                <span style={{ color: COLOR.amber }}>{aug.faction} · {money(aug.money)} · BUY NOW</span>
+                            </div>
+                        ))}
+                        {augBlocked.map(aug => (
+                            <div className="mxRow" key={`b-${aug.name}`}>
+                                <span className="mxServiceName"><i className="mxDot" style={{ color: COLOR.dim }} />{aug.name}</span>
+                                <span className="mxServiceStatus" style={{ color: COLOR.dim }}>
+                                    {aug.faction} · {aug.repShort > 0 ? `${Math.round(aug.repShort).toLocaleString()} rep short` : ""}
+                                    {aug.repShort > 0 && aug.moneyShort > 0 ? " · " : ""}
+                                    {aug.moneyShort > 0 ? `${money(aug.moneyShort)} short` : ""}
+                                </span>
+                            </div>
+                        ))}
+                        {grind?.faction ? <div className="mxHint" style={{ marginTop: 10 }}>Best faction to work for: {grind.faction} ({grind.augs ?? 0} implants locked)</div> : null}
+                    </>
+                ) : (
+                    <div className="mxEmpty">JOIN A FACTION TO SEE ITS AUGMENTATIONS</div>
+                )}
             </Panel>
             <Panel title="Subnet control // IPvGO" right={go.status === "unavailable" ? "NOT IN THIS BITNODE" : (go.opponent ?? "STANDBY")} span={12}>
                 {go.status && go.status !== "unavailable" ? (
