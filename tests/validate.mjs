@@ -57,6 +57,9 @@ for (const absolute of runtimeFiles) {
     await transform(source, { loader, format: "esm", target: "es2022" });
     assert.doesNotMatch(source, /\bns\.closeTail\b/, `${absolute} uses the removed pre-v3 tail API`);
     assert.doesNotMatch(source, /\bui\.renderPage\b/, `${absolute} uses a dev-only UI API`);
+    for (const match of source.matchAll(/["'`](\/matrix\/state\/[^"'`$]+)["'`]/g)) {
+        assert.match(match[1], /\.(?:txt|json|js|jsx)$/, `${absolute} uses an invalid Bitburner state-file extension`);
+    }
 }
 
 const updateSource = read("matrix/update.js");

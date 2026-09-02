@@ -4,7 +4,7 @@ export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "0.2.0",
+    version: "0.2.1",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },

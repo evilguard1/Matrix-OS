@@ -1,6 +1,6 @@
 import { config, sfLevel, event } from "/matrix/lib/common.js";
 
-const UPDATE_REQUEST = "/matrix/state/update.request";
+const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
 const DASHBOARD = "/matrix/dashboard.jsx";

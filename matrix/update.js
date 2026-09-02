@@ -1,4 +1,4 @@
-const REQUEST = "/matrix/state/update.request";
+const REQUEST = "/matrix/state/update-request.txt";
 
 export async function main(ns) {
     await ns.write(REQUEST, String(Date.now()), "w");

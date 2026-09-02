@@ -2,7 +2,7 @@ import { config, event, writeState } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 
 const EARLY = "/matrix/workers/early.js";
-const UPDATE_REQUEST = "/matrix/state/update.request";
+const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLER_URL = "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
