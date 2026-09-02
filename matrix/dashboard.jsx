@@ -1,5 +1,5 @@
 import { CONFIG, STATE_DIR, readJson, writeJson } from "/matrix/lib/common.js";
-import { holdSingleton } from "/matrix/lib/singleton.js";
+import { holdSingleton, heartbeatOwner } from "/matrix/lib/singleton.js";
 
 const DECK = "/matrix/dashboard.jsx";
 
@@ -499,12 +499,9 @@ function App({ ns }) {
 // refreshes its heartbeat every 2s, and any newcomer that sees a fresh one from
 // a different PID stands down without even rendering.
 function anotherDeckAlive(ns) {
-    const beat = readJson(ns, `${STATE_DIR}/dashboard.txt`, null);
-    return Boolean(beat)
-        && beat.pid !== ns.pid
-        && beat.phase === "alive"
-        && Date.now() - Number(beat.updated ?? 0) < 6000;
+    return !heartbeatOwner(readJson(ns, `${STATE_DIR}/dashboard.txt`, null), ns.pid);
 }
+
 
 // Heartbeat: where the deck got to, and how long it survived. ns.write is free.
 async function beat(ns, phase, ticks, error) {

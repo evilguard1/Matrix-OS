@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "0.8.6",
+    version: "0.9.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },

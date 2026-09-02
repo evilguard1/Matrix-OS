@@ -30,3 +30,24 @@ export function holdSingleton(ns, script) {
     try { ns.ui.closeTail(); } catch {}
     return false;
 }
+
+/**
+ * Does this process own the window, judged by a shared heartbeat file?
+ *
+ * MUST be antisymmetric. Every instance writes the same file, so a naive
+ * "someone else is beating" test is symmetric: A sees B, B sees A, and both
+ * stand down. That mutual annihilation killed a command deck every 10 seconds.
+ * Ownership is therefore ordered by PID, exactly like isSingletonOwner().
+ *
+ * Pure so the ordering property can be proven rather than assumed.
+ *
+ * @param {{pid:number,phase:string,updated:number}|null} beat
+ * @returns {boolean} true when `selfPid` may keep running.
+ */
+export function heartbeatOwner(beat, selfPid, now = Date.now(), maxAgeMs = 6000) {
+    if (!beat) return true;                                  // nobody has claimed it
+    if (beat.pid === selfPid) return true;                   // our own heartbeat
+    if (beat.phase !== "alive") return true;                 // they never got up
+    if (now - Number(beat.updated ?? 0) >= maxAgeMs) return true;  // stale: they are gone
+    return beat.pid > selfPid;                               // only an older PID outranks us
+}

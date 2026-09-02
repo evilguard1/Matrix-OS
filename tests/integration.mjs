@@ -243,9 +243,34 @@ console.log("MATRIX-OS integration passed: stage transitions cannot loop.");
     assert.ok(beats.includes('beat(ns, "alive"'), "the deck must record that it is alive");
     assert.ok(beats.length >= 3, "the heartbeat must be refreshed, not written once");
 
-    // Staleness matters: the guard must expire, or one crashed deck blocks all.
-    assert.match(deck, /Date\.now\(\) - Number\(beat\.updated \?\? 0\) < \d+/,
-        "the heartbeat guard must expire so a crashed deck cannot lock the UI out forever");
+    // Ownership MUST be antisymmetric. Every deck writes the same heartbeat file,
+    // so an unordered "someone else is beating" test makes A stand down for B and
+    // B stand down for A - both die. That killed a deck every 10 seconds in game
+    // ("Recently Killed: dashboard.jsx died 0/10/20 seconds ago").
+    const { heartbeatOwner } = await import("../matrix/lib/singleton.js");
+    const now = 1_000_000;
+    const alive = pid => ({ pid, phase: "alive", updated: now });
+
+    for (const [a, b] of [[100, 105], [1, 2], [7, 99], [40, 41]]) {
+        const aOwns = heartbeatOwner(alive(b), a, now);
+        const bOwns = heartbeatOwner(alive(a), b, now);
+        assert.ok(aOwns !== bOwns, `ownership between ${a} and ${b} must not be symmetric`);
+        assert.equal(aOwns, true, "the lower PID keeps the window");
+        assert.equal(bOwns, false, "the higher PID stands down");
+    }
+
+    // Nobody may be locked out by a heartbeat that is absent, stale, or unfinished.
+    assert.equal(heartbeatOwner(null, 50, now), true, "no heartbeat means the window is free");
+    assert.equal(heartbeatOwner(alive(10), 50, now + 60_000), true, "a stale heartbeat must expire");
+    assert.equal(heartbeatOwner({ pid: 10, phase: "rendering", updated: now }, 50, now), true,
+        "a deck that never reached alive does not own the window");
+    assert.equal(heartbeatOwner(alive(50), 50, now), true, "our own heartbeat is not a rival");
+
+    // And it must converge: from any set of live PIDs, exactly one survives.
+    const pids = [88, 12, 45, 103, 7];
+    const owners = pids.filter(pid =>
+        pids.every(other => other === pid || heartbeatOwner(alive(other), pid, now)));
+    assert.deepEqual(owners, [7], "exactly the lowest PID may survive");
 
     // The supervisor must stop respawning something that will not stay up.
     const start = fs.readFileSync("matrix/start.js", "utf8");
