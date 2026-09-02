@@ -154,7 +154,18 @@ function Overview({ data }) {
                         <b style={{ color: liquidate ? COLOR.amber : COLOR.green, fontSize: 11 }}>{liquidate ? "LIQUIDATING" : "ACTIVE"}</b>
                     </div>
                 </div>
-                <div className="mxHint" style={{ marginTop: 11 }}>{objectiveReason}</div>
+
+                <div style={{ marginTop: 12, padding: "9px", background: "rgba(0,0,0,0.25)", borderLeft: `2px solid ${COLOR.cyan}` }}>
+                    <div style={{ fontSize: 9, color: COLOR.cyan, letterSpacing: "0.14em", textTransform: "uppercase" }}>NEXT STEP / MILESTONE</div>
+                    <div style={{ fontSize: 11, color: "#e6fff3", fontWeight: 600, marginTop: 3 }}>
+                        {coord.nextStep ?? "Building hacking level & capital"}
+                    </div>
+                    <div className="mxRow" style={{ padding: "4px 0 0", border: 0 }}>
+                        <span style={{ fontSize: 10, color: COLOR.dim }}>COUNTDOWN / EST. TIME</span>
+                        <span className="mxBadge green" style={{ fontSize: 10 }}>{coord.etaStr ?? "IN PROGRESS"}</span>
+                    </div>
+                </div>
+
                 {milestone ? (
                     <div style={{ marginTop: 10 }}>
                         <div className="mxRow" style={{ padding: "2px 0", border: 0 }}>
@@ -310,8 +321,16 @@ function Progress({ data }) {
             <Panel title="Progression Directive" right={coord.objective ?? "ACTIVE"} span={4}>
                 <div className="mxValue" style={{ fontSize: 16, color: COLOR.mint }}>{coord.title ?? "Hacking Income"}</div>
                 <div className="mxHint">{coord.reason ?? "Expanding network capabilities"}</div>
+                <div style={{ marginTop: 10, padding: "8px", background: "rgba(0,0,0,0.2)", borderLeft: `2px solid ${COLOR.cyan}` }}>
+                    <div style={{ fontSize: 9, color: COLOR.cyan, letterSpacing: "0.12em" }}>NEXT STEP</div>
+                    <div style={{ fontSize: 10, color: "#e6fff3", fontWeight: 600, marginTop: 2 }}>{coord.nextStep ?? "Building hacking level & capital"}</div>
+                    <div className="mxRow" style={{ padding: "4px 0 0", border: 0 }}>
+                        <span style={{ fontSize: 9, color: COLOR.dim }}>ESTIMATED TIME</span>
+                        <span className="mxBadge green" style={{ fontSize: 9 }}>{coord.etaStr ?? "IN PROGRESS"}</span>
+                    </div>
+                </div>
                 {coord.milestone ? (
-                    <div style={{ marginTop: 12 }}>
+                    <div style={{ marginTop: 10 }}>
                         <div className="mxRow" style={{ border: 0, padding: 0 }}>
                             <span style={{ fontSize: 10, color: COLOR.dim }}>{coord.milestone.name}</span>
                             <span style={{ fontSize: 10, color: COLOR.mint }}>{coord.milestone.pct.toFixed(1)}%</span>

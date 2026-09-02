@@ -55,15 +55,50 @@ export function chooseStarterAction(money, maxMoney, security, minSecurity) {
 
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 let tick = 0;
+let lastCash = 0;
+let lastTime = 0;
+let cashRate = 0;
 
 function draw(ns, state) {
     ns.clearLog();
     const spin = SPINNER[(tick++) % SPINNER.length];
-    const moneyStr = ns.format.number(ns.getServerMoneyAvailable("home"), 2);
+    const currentCash = ns.getServerMoneyAvailable("home");
+    const moneyStr = ns.format.number(currentCash, 2);
     const maxRam = ns.format.ram(ns.getServerMaxRam("home"));
     const hackLvl = ns.getHackingLevel();
     const rootPct = Math.floor((state.rooted / Math.max(1, state.discovered)) * 16);
     const bar = "█".repeat(rootPct) + "░".repeat(16 - rootPct);
+
+    const now = Date.now();
+    if (lastTime > 0 && now > lastTime) {
+        const dt = (now - lastTime) / 1000;
+        const diff = currentCash - lastCash;
+        if (dt > 0 && diff >= 0) {
+            const currentRate = diff / dt;
+            cashRate = cashRate === 0 ? currentRate : (cashRate * 0.7 + currentRate * 0.3);
+        }
+    }
+    lastCash = currentCash;
+    lastTime = now;
+
+    let targetCash = 1_000_000;
+    let nextStep = "16 GB RAM Upgrade";
+    if (currentCash >= 1_000_000) {
+        targetCash = 3_000_000;
+        nextStep = "32 GB Full Deck Upgrade";
+    }
+
+    let etaStr = "READY";
+    if (currentCash < targetCash) {
+        if (cashRate > 0) {
+            const secs = Math.ceil((targetCash - currentCash) / cashRate);
+            etaStr = secs < 60 ? `~${secs}s` : `~${Math.floor(secs / 60)}m ${secs % 60}s`;
+        } else {
+            etaStr = "CALCULATING...";
+        }
+    }
+
+    const nextLine = `Reaching $${ns.format.number(targetCash, 2)} for ${nextStep}`;
 
     ns.print(`╔══════════════════════════════════════════════════════════╗`);
     ns.print(`║  M A T R I X  //  F R E S H - S A V E   K E R N E L      ║`);
@@ -75,7 +110,8 @@ function draw(ns, state) {
     ns.print(`║  🌐 NETWORK     : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
     ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}  │  HACK SKILL: ${String(hackLvl).padEnd(6)}  ║`);
     ns.print(`╠══════════════════════════════════════════════════════════╣`);
-    ns.print(`║  16 GB -> Distributed Workers │ 32 GB -> Full MATRIX Deck ║`);
+    ns.print(`║  ⏱️ NEXT STEP   : ${nextLine.slice(0, 38).padEnd(38)} ║`);
+    ns.print(`║  ⏳ EST. TIME   : ${etaStr.padEnd(38)} ║`);
     ns.print(`╚══════════════════════════════════════════════════════════╝`);
 }
 

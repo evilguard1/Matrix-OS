@@ -1,4 +1,4 @@
-import { config, writeState, writeJson, STATE_DIR } from "/matrix/lib/common.js";
+import { config, writeState, writeJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const WORLD_DAEMON = "w0r1d_d43m0n";
@@ -7,9 +7,22 @@ const TOR_COST = 200_000;
 const DAEDALUS_CASH = 100_000_000_000;
 const CORP_CASH = 150_000_000_000;
 
+export function formatEta(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "CALCULATING...";
+    if (seconds === 0) return "READY";
+    if (seconds < 60) return `~${Math.ceil(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.ceil(seconds % 60);
+    if (mins < 60) return `~${mins}m ${secs}s`;
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return `~${hrs}h ${remMins}m`;
+}
+
 export function evaluateObjective(data) {
     const {
         cash = 0,
+        cashRate = 0,
         hackingLevel = 1,
         karma = 0,
         homeRam = 8,
@@ -37,6 +50,12 @@ export function evaluateObjective(data) {
     const sf2 = (resetInfo.currentNode === 2) || ((resetInfo.ownedSF?.get?.(2) ?? 0) > 0);
     const sf3 = (resetInfo.currentNode === 3) || ((resetInfo.ownedSF?.get?.(3) ?? 0) > 0);
 
+    const calcEta = (reqCash) => {
+        if (cash >= reqCash) return "READY";
+        if (cashRate > 0) return formatEta((reqCash - cash) / cashRate);
+        return "CALCULATING...";
+    };
+
     // 1. World Daemon / BitNode completion
     if (worldDaemonRooted && hackingLevel >= worldDaemonReqLevel) {
         return {
@@ -46,6 +65,8 @@ export function evaluateObjective(data) {
             liquidateStocks: true,
             budgets: { augmentationReserve: 0, milestoneReserve: 0, discretionaryFraction: 0 },
             milestone: { name: "BitNode Exit", current: hackingLevel, required: worldDaemonReqLevel, pct: 100 },
+            nextStep: "Destroy World Daemon to finish BitNode",
+            etaStr: "READY",
         };
     }
 
@@ -58,6 +79,8 @@ export function evaluateObjective(data) {
             liquidateStocks: true,
             budgets: { augmentationReserve: targetAugPrice, milestoneReserve: 0, discretionaryFraction: 0.05 },
             milestone: { name: "Augmentation Reset", current: queuedAugs, required: 5, pct: Math.min(100, (queuedAugs / 5) * 100) },
+            nextStep: `Install ${queuedAugs} queued augmentations and restart`,
+            etaStr: "READY",
         };
     }
 
@@ -73,6 +96,8 @@ export function evaluateObjective(data) {
                 liquidateStocks: canAfford && cash < redPillCost,
                 budgets: { augmentationReserve: redPillCost, milestoneReserve: 0, discretionaryFraction: 0.05 },
                 milestone: { name: "Red Pill Purchase", current: totalAssets, required: redPillCost, pct: Math.min(100, (totalAssets / redPillCost) * 100) },
+                nextStep: `Accumulating ${formatMoney(redPillCost)} for The Red Pill`,
+                etaStr: calcEta(redPillCost),
             };
         }
     }
@@ -88,6 +113,8 @@ export function evaluateObjective(data) {
             liquidateStocks: liquidate,
             budgets: { augmentationReserve: 0, milestoneReserve: DAEDALUS_CASH, discretionaryFraction: 0.10 },
             milestone: { name: "Daedalus Cash", current: totalAssets, required: DAEDALUS_CASH, pct },
+            nextStep: `Accumulating ${formatMoney(DAEDALUS_CASH)} for Daedalus invite`,
+            etaStr: calcEta(DAEDALUS_CASH),
         };
     }
 
@@ -102,6 +129,8 @@ export function evaluateObjective(data) {
             liquidateStocks: liquidate,
             budgets: { augmentationReserve: targetAugPrice, milestoneReserve: 0, discretionaryFraction: 0.15 },
             milestone: { name: targetAugName || "Augmentation", current: cash, required: targetAugPrice, pct: Math.min(100, (cash / targetAugPrice) * 100) },
+            nextStep: `Funding ${targetAugName || "augmentation"} (${formatMoney(targetAugPrice)})`,
+            etaStr: calcEta(targetAugPrice),
         };
     }
 
@@ -114,11 +143,13 @@ export function evaluateObjective(data) {
             liquidateStocks: false,
             budgets: { augmentationReserve: 0, milestoneReserve: 0, discretionaryFraction: 0.20 },
             milestone: { name: "Gang Karma", current: Math.abs(karma), required: 54, pct: Math.min(100, (Math.abs(karma) / 54) * 100) },
+            nextStep: `Accumulating Karma (${karma.toFixed(1)} / -54.0 for Gang)`,
+            etaStr: "IN PROGRESS",
         };
     }
 
     // 7. Port programs acquisition
-    if (!hasTor && cash >= TOR_COST) {
+    if (!hasTor && cash >= TOR_COST * 0.5) {
         return {
             id: "BUY_PROGRAMS",
             title: "Purchase TOR Router",
@@ -126,6 +157,8 @@ export function evaluateObjective(data) {
             liquidateStocks: false,
             budgets: { augmentationReserve: 0, milestoneReserve: TOR_COST, discretionaryFraction: 0.10 },
             milestone: { name: "TOR Router", current: cash, required: TOR_COST, pct: Math.min(100, (cash / TOR_COST) * 100) },
+            nextStep: `Reaching ${formatMoney(TOR_COST)} for TOR Router`,
+            etaStr: calcEta(TOR_COST),
         };
     }
     if (missingPrograms.length > 0 && programCosts > 0) {
@@ -136,6 +169,8 @@ export function evaluateObjective(data) {
             liquidateStocks: false,
             budgets: { augmentationReserve: 0, milestoneReserve: programCosts, discretionaryFraction: 0.15 },
             milestone: { name: "Port Programs", current: cash, required: programCosts, pct: Math.min(100, (cash / programCosts) * 100) },
+            nextStep: `Buying ${missingPrograms[0]} (${formatMoney(programCosts)})`,
+            etaStr: calcEta(programCosts),
         };
     }
 
@@ -149,34 +184,46 @@ export function evaluateObjective(data) {
             liquidateStocks: totalAssets >= CORP_CASH && cash < CORP_CASH,
             budgets: { augmentationReserve: 0, milestoneReserve: CORP_CASH, discretionaryFraction: 0.10 },
             milestone: { name: "Corp Capital", current: totalAssets, required: CORP_CASH, pct },
+            nextStep: `Accumulating ${formatMoney(CORP_CASH)} for Corporation bootstrap`,
+            etaStr: calcEta(CORP_CASH),
         };
     }
 
     // 9. Home RAM expansion
-    if (homeRam < 64 && Number.isFinite(homeRamUpgradeCost) && homeRamUpgradeCost > 0 && cash >= homeRamUpgradeCost) {
+    if (homeRam < 64 && Number.isFinite(homeRamUpgradeCost) && homeRamUpgradeCost > 0 && cash >= homeRamUpgradeCost * 0.5) {
         return {
             id: "EXPAND_RAM",
             title: `Upgrade Home RAM (${homeRam * 2}GB)`,
             reason: `Expanding Home RAM from ${homeRam}GB to ${homeRam * 2}GB`,
             liquidateStocks: false,
             budgets: { augmentationReserve: 0, milestoneReserve: homeRamUpgradeCost, discretionaryFraction: 0.15 },
-            milestone: { name: "Home RAM Upgrade", current: cash, required: homeRamUpgradeCost, pct: 100 },
+            milestone: { name: "Home RAM Upgrade", current: cash, required: homeRamUpgradeCost, pct: Math.min(100, (cash / homeRamUpgradeCost) * 100) },
+            nextStep: `Reaching ${formatMoney(homeRamUpgradeCost)} for ${homeRam * 2}GB Home RAM`,
+            etaStr: calcEta(homeRamUpgradeCost),
         };
     }
 
     // Default: Bootstrap / Growth Hacking
+    const reqCash = homeRam < 16 ? 1_000_000 : 500_000;
+    const reqLabel = homeRam < 16 ? "16 GB Home RAM upgrade" : "network growth target";
     return {
         id: "BOOTSTRAP_INCOME",
         title: "Network Expansion & Hacking Income",
         reason: `Building cash reserve and hacking skill (lvl ${hackingLevel})`,
         liquidateStocks: false,
         budgets: { augmentationReserve: 0, milestoneReserve: 0, discretionaryFraction: 0.25 },
-        milestone: { name: "Hacking Skill", current: hackingLevel, required: 100, pct: Math.min(100, (hackingLevel / 100) * 100) },
+        milestone: { name: "Capital Target", current: cash, required: reqCash, pct: Math.min(100, (cash / reqCash) * 100) },
+        nextStep: `Reaching ${formatMoney(reqCash)} for ${reqLabel}`,
+        etaStr: calcEta(reqCash),
     };
 }
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    let lastCash = 0;
+    let lastTime = 0;
+    let cashRate = 0;
+
     while (true) {
         const cfg = config(ns);
         if (cfg.masterEnabled === false || cfg.automation?.progression === false) {
@@ -191,6 +238,18 @@ export async function main(ns) {
             const cash = ns.getServerMoneyAvailable("home");
             const hackingLevel = ns.getHackingLevel();
             const homeRam = ns.getServerMaxRam("home");
+
+            const now = Date.now();
+            if (lastTime > 0 && now > lastTime) {
+                const dt = (now - lastTime) / 1000;
+                const diff = cash - lastCash;
+                if (dt > 0 && diff >= 0) {
+                    const currentRate = diff / dt;
+                    cashRate = cashRate === 0 ? currentRate : (cashRate * 0.7 + currentRate * 0.3);
+                }
+            }
+            lastCash = cash;
+            lastTime = now;
 
             let homeRamUpgradeCost = Infinity;
             try { homeRamUpgradeCost = ns.singularity.getUpgradeHomeRamCost(); } catch {}
@@ -263,7 +322,7 @@ export async function main(ns) {
             try { hasCorp = Boolean(ns.corporation.getCorporation()); } catch {}
 
             const data = {
-                cash, hackingLevel, karma: player.karma, homeRam, homeRamUpgradeCost,
+                cash, cashRate, hackingLevel, karma: player.karma, homeRam, homeRamUpgradeCost,
                 hasTor, missingPrograms, programCosts, resetInfo, factions: player.factions,
                 queuedAugs, targetAugPrice, targetAugName, targetAugFaction,
                 stockPortfolioValue, worldDaemonRooted, worldDaemonReqLevel,
@@ -286,6 +345,8 @@ export async function main(ns) {
                 reason: result.reason,
                 liquidateStocks: result.liquidateStocks,
                 milestone: result.milestone,
+                nextStep: result.nextStep,
+                etaStr: result.etaStr,
             });
         } catch (e) {
             await writeState(ns, "coordinator", { status: "error", error: String(e) });
