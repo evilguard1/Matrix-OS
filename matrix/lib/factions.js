@@ -83,6 +83,26 @@ export const FACTIONS = [
       how: "install 30 augmentations, then reach Hacking 2500" },
 ];
 
+// The exact terminal command, ready to paste. A path of hops beats "go find it".
+export function terminalRoute(info) {
+    const path = Array.isArray(info?.path) ? info.path.filter(Boolean) : [];
+    if (!path.length) return null;
+    return `${path.map(hop => `connect ${hop}`).join("; ")}; backdoor`;
+}
+
+// Names the single requirement actually blocking this backdoor, rather than the
+// useless "not rooted or out of range".
+export function backdoorHelp(host, info, ready) {
+    if (ready) return `run: ${terminalRoute(info) ?? `connect ${host}; backdoor`}`;
+    if (!info) return "route not mapped yet";
+    const level = Number(info.level ?? 0), have = Number(info.have ?? 0);
+    if (have < level) return `needs Hacking ${level}, you have ${have}`;
+    const ports = Number(info.ports ?? 0), crackers = Number(info.crackers ?? 0);
+    if (crackers < ports) return `needs ${ports} port crackers, you have ${crackers}`;
+    if (!info.rooted) return "root it first - MATRIX does this automatically";
+    return "not reachable yet";
+}
+
 function money(value) {
     if (!Number.isFinite(value)) return "$?";
     const units = [["q", 1e15], ["t", 1e12], ["b", 1e9], ["m", 1e6], ["k", 1e3]];
@@ -121,6 +141,11 @@ export function playerSnapshot(raw = {}) {
         // Hosts that are rooted and within hacking range: the backdoor is
         // actionable right now rather than something to work toward.
         reachable: new Set(Array.isArray(raw.reachable) ? raw.reachable : []),
+        // Per-host detail so a blocked backdoor can say WHICH requirement is
+        // blocking it, and a ready one can hand over the exact terminal command.
+        // installBackdoor() is Singularity, so until SF4 this is the whole help
+        // MATRIX can give - it should therefore be precise.
+        backdoorInfo: raw.backdoorInfo && typeof raw.backdoorInfo === "object" ? raw.backdoorInfo : {},
         hacknet: {
             levels: Number(raw.hacknet?.levels ?? 0) || 0,
             ram: Number(raw.hacknet?.ram ?? 0) || 0,
@@ -216,14 +241,14 @@ export function factionDirectives(rawPlayer, { singularity = false, limit = 4 } 
         const backdoorOnly = faction.missing.length === 1 && faction.missing[0].startsWith("backdoor");
         if (!backdoorOnly) continue;
         // Only call it an instruction when the player can actually do it now.
-        const now = reachable.has(faction.req.backdoor);
+        const host = faction.req.backdoor;
+        const now = reachable.has(host);
         out.push({
             id: `BACKDOOR_${faction.name}`,
             tag: "BACKDOOR",
-            label: `Backdoor ${faction.req.backdoor}`,
-            detail: now
-                ? `unlocks ${faction.name} - ${faction.how}`
-                : `unlocks ${faction.name} - not rooted or out of hacking range yet`,
+            label: `Backdoor ${host}`,
+            detail: `unlocks ${faction.name} - ${backdoorHelp(host, plan.player.backdoorInfo[host], now)}`,
+            command: now ? terminalRoute(plan.player.backdoorInfo[host]) : null,
             urgent: false,
             ready: now,
         });

@@ -125,6 +125,16 @@ export function sf4Multiplier(sf4Level) {
 const CORP_FREE = new Set(["hasCorporation", "canCreateCorporation", "getConstants", "getBonusTime", "nextUpdate"]);
 const CORP_QUERY = /^(get|has|find)/;
 
+// IPvGO. Chains and liberties cost 16 GB each and getValidMoves 8, but all
+// three are derivable from the 4 GB board state with a flood fill in plain JS -
+// so MATRIX pays for the board and computes the rest itself.
+const GO_COSTS = {
+    makeMove: 4, getBoardState: 4, setTestingBoardState: 4,
+    getValidMoves: 8, getChains: 16, getLiberties: 16, getControlledEmptyNodes: 16,
+    getCheatSuccessChance: 1, getCheatCount: 1,
+    removeRouter: 8, playTwoMoves: 8, repairOfflineNode: 8, destroyNode: 8,
+};
+
 export const NAMESPACE_COST = {
     gang: () => GANG,
     sleeve: () => SLEEVE,
@@ -138,7 +148,10 @@ export const NAMESPACE_COST = {
     }[fn] ?? 10),
     stock: fn => /^(buy|sell|purchase)/.test(fn) ? 2.5
         : /^(has|nextUpdate|getConstants)/.test(fn) ? 0 : 2.0,
-    go: fn => /^(getChains|getLiberties)/.test(fn) ? 16 : /^getValidMoves/.test(fn) ? 8 : 4,
+    // passTurn, getMoveHistory, getCurrentPlayer, getGameState, getOpponent,
+    // opponentNextTurn, resetBoardState and getStats are all free - the old
+    // catch-all charged them 4 GB each and overstated any Go script.
+    go: fn => GO_COSTS[fn] ?? 0,
     stanek: fn => /^(place|acceptGift)/.test(fn) ? 5 : 0.4,
     formulas: () => 0,
     ui: () => 0,

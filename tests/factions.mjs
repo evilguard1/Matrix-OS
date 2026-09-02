@@ -8,7 +8,29 @@
 import assert from "node:assert/strict";
 import {
     factionPlan, factionDirectives, unmetRequirements, playerSnapshot, FACTIONS, CITY_FACTIONS,
+    terminalRoute, backdoorHelp,
 } from "../matrix/lib/factions.js";
+
+// --- backdoor guidance must name the real blocker ---------------------------
+// installBackdoor() is Singularity-gated, so this text is the only help MATRIX
+// can give below SF4. "not rooted or out of range" is not help.
+assert.equal(terminalRoute({ path: ["n00dles", "zer0", "CSEC"] }),
+    "connect n00dles; connect zer0; connect CSEC; backdoor");
+assert.equal(terminalRoute({ path: [] }), null, "no route means no command");
+assert.equal(terminalRoute(null), null);
+assert.equal(terminalRoute({ path: ["a", null, "b"] }), "connect a; connect b; backdoor");
+
+assert.match(backdoorHelp("CSEC", { path: ["CSEC"] }, true), /^run: connect CSEC; backdoor$/);
+assert.match(backdoorHelp("x", { level: 340, have: 252, ports: 3, crackers: 3, rooted: false }, false),
+    /needs Hacking 340, you have 252/);
+// Hacking level is met, so the honest blocker is the missing crackers.
+assert.match(backdoorHelp("x", { level: 100, have: 252, ports: 4, crackers: 3, rooted: false }, false),
+    /needs 4 port crackers, you have 3/);
+// Everything met but not yet rooted: that is MATRIX's job, not the player's.
+assert.match(backdoorHelp("x", { level: 100, have: 252, ports: 2, crackers: 3, rooted: false }, false),
+    /MATRIX does this automatically/);
+assert.match(backdoorHelp("x", null, false), /not mapped/);
+
 
 const names = FACTIONS.map(f => f.name);
 assert.equal(new Set(names).size, names.length, "duplicate faction in the table");
@@ -81,14 +103,22 @@ assert.ok(unmetRequirements(netburners, playerSnapshot({
 // backdoors = effectively done (its faction is joined). reachable = rooted and
 // in hacking range, so the player can do it right now. Confusing the two would
 // either mark a faction joinable when it is not, or nag about finished work.
-const bdBase = { ...live, factions: [], backdoors: [], reachable: ["CSEC"] };
+const bdBase = { ...live, factions: [], backdoors: [], reachable: ["CSEC"], backdoorInfo: {
+    "CSEC": { level: 54, have: 252, ports: 1, crackers: 3, rooted: true, path: ["n00dles", "CSEC"] },
+    "avmnite-02h": { level: 202, have: 252, ports: 2, crackers: 3, rooted: false, path: ["avmnite-02h"] },
+} };
 const bd = factionDirectives(bdBase, { limit: 6 });
 const csec = bd.find(d => d.id === "BACKDOOR_CyberSec");
 assert.ok(csec, "a reachable, unjoined backdoor must be an instruction");
 assert.equal(csec.ready, true, "CSEC is rooted and in range, so it is actionable now");
 const nite = bd.find(d => d.id === "BACKDOOR_NiteSec");
 assert.equal(nite?.ready, false, "avmnite-02h is not reachable, so it is not yet actionable");
-assert.match(nite.detail, /not rooted or out of hacking range/);
+// Level and crackers are both met, so the only thing left is rooting - which is
+// MATRIX's own job, and the text must say so rather than blaming the player.
+assert.match(nite.detail, /MATRIX does this automatically/);
+// A ready backdoor hands over the exact command, not a description of one.
+assert.equal(csec.command, "connect n00dles; connect CSEC; backdoor");
+assert.equal(nite.command, null, "a locked backdoor must not offer a command");
 
 // Reachability must NOT make the faction joinable.
 assert.ok(!factionPlan(bdBase).eligible.some(f => f.name === "CyberSec"),

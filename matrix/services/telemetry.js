@@ -1,5 +1,5 @@
 import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/common.js";
-import { scanAll } from "/matrix/lib/network.js";
+import { scanAll, routeTo } from "/matrix/lib/network.js";
 import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 import { factionDirectives, factionPlan, BACKDOOR_FACTIONS } from "/matrix/lib/factions.js";
 
@@ -15,6 +15,27 @@ function backdoorable(ns){
     for(const host of Object.keys(BACKDOOR_FACTIONS)){
         try{
             if(ns.hasRootAccess(host)&&ns.getServerRequiredHackingLevel(host)<=ns.getHackingLevel())out.push(host);
+        }catch{}
+    }
+    return out;
+}
+
+// installBackdoor() is Singularity, so below SF4 the player has to type it. The
+// least MATRIX can do is say exactly what is blocking each one and hand over the
+// full connect path - every input here is already paid for by this service.
+function backdoorDetail(ns,parent,crackers){
+    const out={};
+    for(const host of Object.keys(BACKDOOR_FACTIONS)){
+        try{
+            out[host]={
+                level:ns.getServerRequiredHackingLevel(host),
+                have:ns.getHackingLevel(),
+                ports:ns.getServerNumPortsRequired(host),
+                crackers,
+                rooted:ns.hasRootAccess(host),
+                // routeTo omits "home"; the hops are what the player types.
+                path:routeTo(parent,host).filter(h=>h!=="home"),
+            };
         }catch{}
     }
     return out;
@@ -39,7 +60,7 @@ export async function main(ns){
             const cfg=config(ns);
             const player=ns.getPlayer();
             const reset=ns.getResetInfo();
-            const {hosts}=scanAll(ns);
+            const {hosts,parent}=scanAll(ns);
             const rooted=hosts.filter(h=>ns.hasRootAccess(h)).length;
             const maxRam=hosts.reduce((s,h)=>s+(ns.hasRootAccess(h)?ns.getServerMaxRam(h):0),0);
             const usedRam=hosts.reduce((s,h)=>s+(ns.hasRootAccess(h)?ns.getServerUsedRam(h):0),0);
@@ -73,6 +94,7 @@ export async function main(ns){
                 kills:player.numPeopleKilled,factions:player.factions,
                 backdoors:backdoorsDone(player.factions??[]),
                 reachable:backdoorable(ns),
+                backdoorInfo:backdoorDetail(ns,parent,owned.length),
                 augs:(player.augmentations??[]).length,
                 hacknet:serviceState.hacknet?.totals??{levels:0,ram:0,cores:0},
             };
