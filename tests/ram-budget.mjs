@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 /**
  * Static Netscript RAM cost analyser.
  *
@@ -146,7 +149,26 @@ export function stripComments(source) {
 /**
  * @returns {{ram:number, used:string[], unknown:string[], runtime:string[], exact:boolean}}
  */
-export function scriptRam(source, { sf4 = 0 } = {}) {
+// Bitburner charges an imported file's RAM to the IMPORTER, so a static cost is
+// only correct if it follows /matrix/... imports and unions their NS usage.
+// Each unique function is billed once no matter how many modules mention it.
+function collectSources(source, { root, seen = new Set() } = {}) {
+    const out = [source];
+    if (!root) return out;
+    for (const match of source.matchAll(/from\s+["'](\/matrix\/[^"']+)["']/g)) {
+        const spec = match[1];
+        if (seen.has(spec)) continue;
+        seen.add(spec);
+        try {
+            const nested = fs.readFileSync(path.join(root, spec.replace(/^\//, "")), "utf8");
+            out.push(...collectSources(nested, { root, seen }));
+        } catch {}
+    }
+    return out;
+}
+
+export function scriptRam(source, { sf4 = 0, root = null } = {}) {
+    source = collectSources(source, { root }).join(String.fromCharCode(10));
     const code = stripComments(source);
     const used = new Map();
     const unknown = new Set();

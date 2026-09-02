@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.7.0`
+Current release/version: `0.8.0`
 
 ## Quick Start
 
@@ -51,6 +51,36 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.8.0 verification status
+
+Coding contracts are split the way the worm splits propagation. Solving costs
+20 GB of API (`attempt` 10 + `getData` 5 + `getContractType` 5), which would keep
+contracts behind a 128 GB home. `matrix/lib/dispatch.js` (4.45 GB) only finds
+them; `matrix/workers/contract.js` (21.6 GB) is a one-shot solver sent to a
+network host. `early.js` already owns scp and exec, so it dispatches contracts
+for the price of `ls` - **contracts now work from the 16 GB stage**.
+
+The integration harness earned itself here. The worm saturates the network by
+design, so no host had 21.6 GB free and contracts would never have run:
+`{ found: 2, sent: 0, waiting: 2 }`. `makeRoom()` now evicts drones from the
+largest capable host; verified 36 drones -> solver lands on zer0 -> 25 drones,
+with the worm refilling on its next cycle. `CodingContractBaseMoneyGain` is
+$75m x difficulty, so the trade is heavily in our favour.
+
+The RAM analyser now follows `/matrix/...` imports, because Bitburner bills an
+import's RAM to the importer. Several earlier figures were understated by up to
+3.15 GB; the stage table was re-derived from the corrected numbers, and
+`root.js` moved to 64 GB (the worm roots continuously, and hacking.js scp's its
+own workers, so it is redundant below that).
+
+Contract attempts are finite, so the worker returns WITHOUT attempting on an
+unknown type or a throwing solver, and the dispatcher never sends the same
+contract twice. Both are asserted.
+
+Still NOT runtime-tested in Bitburner: the 32 GB+ stage as a whole, contract
+dispatch against real `.cct` files, the relaxed service gates on a Source-File
+save, and `ns.share()`.
 
 ### 0.7.0 verification status
 

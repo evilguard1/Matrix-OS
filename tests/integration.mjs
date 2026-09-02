@@ -80,3 +80,42 @@ const spread = await import("../matrix/worm/spread.js");
 }
 
 console.log("MATRIX-OS integration passed: worm seeds, spreads, respects RAM, and reports home.");
+
+// --- contracts are dispatched to the network, never solved on home -----------
+{
+    const { dispatchContracts } = await import("../matrix/lib/dispatch.js");
+    const ns = createMockNs();
+    // Root the network first so there are hosts with room for the 21.6 GB solver.
+    await run(seed.main, ns);
+    const origin = ns._log.find(e => e.event === "exec" && e.file.includes("spread.js")).host;
+    await run(spread.main, ns._as(origin));
+
+    ns._addContract("phantasy", "contract-1.cct");
+    ns._addContract("n00dles", "contract-2.cct");
+
+    const hosts = [...ns._servers.keys()];
+    const dispatched = new Set();
+    const first = dispatchContracts(ns, hosts, dispatched);
+    assert.equal(first.found, 2, "both contracts must be found wherever they sit");
+
+    const solverRuns = ns._log.filter(e => e.event === "exec" && e.file.includes("workers/contract.js"));
+    assert.ok(solverRuns.length > 0, "a solver must actually be dispatched");
+    assert.ok(!solverRuns.some(e => e.host === "home"), "the 21.6 GB solver must never run on home");
+    for (const runEntry of solverRuns) {
+        assert.ok(ns._servers.get(runEntry.host).files.has("/matrix/lib/solvers.js"),
+            "the solver's imported library must be copied with it or it cannot start");
+    }
+
+    // Running again must not re-attempt the same contract: attempts are finite.
+    const before = solverRuns.length;
+    dispatchContracts(ns, hosts, dispatched);
+    const after = ns._log.filter(e => e.event === "exec" && e.file.includes("workers/contract.js")).length;
+    assert.equal(after, before, "a contract must never be dispatched twice");
+
+    // A contract that disappears is forgotten, so the set cannot grow forever.
+    ns._servers.get("phantasy").files.delete("contract-1.cct");
+    dispatchContracts(ns, hosts, dispatched);
+    assert.ok(![...dispatched].some(k => k.includes("contract-1")), "solved contracts must be forgotten");
+}
+
+console.log("MATRIX-OS integration passed: contracts dispatch off-home, once each.");

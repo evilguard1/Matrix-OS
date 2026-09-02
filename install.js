@@ -44,6 +44,7 @@ const MATRIX_PROGRAMS = new Set([
     "matrix/workers/grow.js",
     "matrix/workers/weaken.js",
     "matrix/workers/share.js",
+    "matrix/workers/contract.js",
 ]);
 
 function normalize(path) {

@@ -238,7 +238,7 @@ assert.ok(wormRam.seed <= 8, `seed must fit an 8 GB home, is ${wormRam.seed} GB`
 
 // The bootstrap controller shares the same 8 GB home and now renders worm
 // telemetry, so hold it to the hard game limit too.
-const bootstrapRam = scriptRam(read("matrix/bootstrap.js"));
+const bootstrapRam = scriptRam(read("matrix/bootstrap.js"), { root });
 assert.deepEqual(bootstrapRam.unknown, [], `bootstrap.js uses NS functions with no known RAM cost: ${bootstrapRam.unknown.join(", ")}`);
 assert.ok(bootstrapRam.ram <= 8, `bootstrap.js must fit an 8 GB home, is ${bootstrapRam.ram} GB`);
 
@@ -341,12 +341,12 @@ assert.equal(hud.bar(0.5, 16), "████████░░░░░░░░
 const { SERVICES } = await import(
     `data:text/javascript;base64,${Buffer.from(asFileImports(read("matrix/start.js"))).toString("base64")}`
 );
-const UPDATE_RESERVE = scriptRam(read("matrix/update.js")).ram;
+const UPDATE_RESERVE = scriptRam(read("matrix/update.js"), { root }).ram;
 
 for (const service of SERVICES) {
     const relative = service.file.replace(/^\//, "");
     // Singularity services are only reachable at SF4 level 3; price them there.
-    const measured = scriptRam(read(relative), { sf4: service.sf4Level3 ? 3 : 0 });
+    const measured = scriptRam(read(relative), { sf4: service.sf4Level3 ? 3 : 0, root });
     assert.deepEqual(measured.unknown, [], `${relative} uses NS functions with no known RAM cost: ${measured.unknown.join(", ")}`);
     assert.ok(
         service.minRam >= measured.ram + UPDATE_RESERVE,
@@ -357,8 +357,8 @@ for (const service of SERVICES) {
 // The 32 GB set must actually co-exist in 32 GB, which is the promise the README
 // makes and the one that was previously false.
 const at32 = SERVICES.filter(s => s.minRam <= 32);
-const total32 = at32.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, ""))).ram, 0)
-    + scriptRam(read("matrix/start.js")).ram + UPDATE_RESERVE;
+const total32 = at32.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, "")), { root }).ram, 0)
+    + scriptRam(read("matrix/start.js"), { root }).ram + UPDATE_RESERVE;
 assert.ok(total32 <= 32, `the 32 GB stage needs ${Math.round(total32 * 100) / 100} GB and does not fit`);
 assert.ok(at32.some(s => s.file.includes("hacking.js")), "hacking must be in the 32 GB set");
 assert.ok(at32.some(s => s.file.includes("coordinator.js")), "the coordinator must be in the 32 GB set");
@@ -367,8 +367,8 @@ assert.ok(at32.some(s => s.file.includes("coordinator.js")), "the coordinator mu
 // supervisor will retry it forever on a save that can never run it.
 const sing = SERVICES.find(s => s.file.includes("singularity.js"));
 assert.ok(sing.sf4Level3, "singularity.js must be marked as requiring SF4 level 3");
-assert.ok(scriptRam(read("matrix/services/singularity.js")).ram > 1000, "singularity without SF4 is over 1 TB");
-assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3 }).ram < 100, "singularity at SF4 L3 is under 100 GB");
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { root }).ram > 1000, "singularity without SF4 is over 1 TB");
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3, root }).ram < 100, "singularity at SF4 L3 is under 100 GB");
 
 // --- coding-contract solvers -------------------------------------------------
 // A contract has limited attempts, so a wrong solver costs a real reward. Every
@@ -431,9 +431,21 @@ for (const plain of ["aaaaabbbbbbbbbbbbbbbbbbbbbbccccc", "abcabcabcabcabc", "x",
     assert.equal(solvers["Compression II: LZ Decompression"](compressed), plain, `LZ round-trip for ${plain}`);
 }
 
-// contracts.js must only attempt types it can actually solve.
-assert.match(read("matrix/services/contracts.js"), /if \(!solver\) \{ skipped\+\+; continue; \}/,
-    "an unknown contract type must be skipped, never guessed at");
+// The solver must never consume one of a contract's limited attempts on a type
+// it does not know, or on a solver that threw.
+const contractWorker = read("matrix/workers/contract.js");
+assert.match(contractWorker, /if \(!solver\) return;/, "an unknown contract type must be skipped, never guessed at");
+assert.match(contractWorker, /catch \{ return; \}/, "a throwing solver must not attempt the contract");
+assert.ok(
+    contractWorker.indexOf("if (!solver) return;") < contractWorker.indexOf("codingcontract.attempt"),
+    "the unknown-type guard must come before the attempt",
+);
+// The expensive half must stay off home: 20 of its 21.6 GB is contract API.
+const solverRam = scriptRam(contractWorker, { root }).ram;
+const finderRam = scriptRam(read("matrix/services/contracts.js"), { root }).ram;
+assert.ok(solverRam > 20, `the solver carries the contract API (${solverRam} GB)`);
+assert.ok(finderRam < 6, `the finder must stay cheap enough to run early (${finderRam} GB)`);
+assert.match(read("matrix/early.js"), /dispatchContracts/, "the 16 GB stage must dispatch contracts too");
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
 console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);

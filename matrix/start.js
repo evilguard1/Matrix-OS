@@ -18,17 +18,20 @@ const UPDATE_SCRIPT = "/matrix/update.js";
 // services that are only realistically reachable at SF4 level 3 - ensureOne()
 // still checks the true runtime cost, this table just avoids pointless retries.
 export const SERVICES = [
-    // 32 GB: 6.6 + 11.65 + 3.35 + 2.4 + 1.9 + 2.45 = 28.35, + 1.6 reserve = 29.95
+    // 32 GB: 6.7 + 12.75 + 4.05 + 1.9 + 2.45 = 27.85, + 1.6 reserve = 29.45.
+    // Import RAM is billed to the importer, so these include their libs.
     { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
     { file: DASHBOARD, ui: true, minRam: 32 },
-    { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
+
     { file: "/matrix/services/telemetry.js", minRam: 32 },
     { file: "/matrix/services/coordinator.js", key: "progression", minRam: 32 },
     // 64 GB: + 8.6 + 5.5
+    // 64 GB: the worm already roots continuously, so root.js is redundant below here
+    { file: "/matrix/services/root.js", key: "rooting", minRam: 64 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
     // 128 GB: + 21.8 + 33.2
-    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
+    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 64 },
     { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
     { file: "/matrix/services/progression.js", key: "progression", minRam: 128, sf: 4 },
     // 256 GB: + 38.2 + 66.1

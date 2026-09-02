@@ -64,7 +64,11 @@ export function createMockNs({
     const log = [];
     const home = server("home");
     for (const file of crackers) home.files.add(file);
-    for (const file of ["/matrix/worm/spread.js", "/matrix/worm/drone.js", "/matrix/worm/seed.js"]) home.files.add(file);
+    // The installer puts every manifest file on home, so the mock must too -
+    // otherwise scp() fails for reasons the real game would never produce.
+    for (const entry of JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8")).files) {
+        if (entry.path.endsWith(".js") || entry.path.endsWith(".jsx")) home.files.add(`/${entry.path}`);
+    }
 
     const ns = {
         args,
@@ -83,6 +87,7 @@ export function createMockNs({
         getHackingLevel: () => hackingLevel,
         fileExists: (file, host = hostname) => server(host).files.has(file),
         getScriptRam: file => ramOf(file),
+        ls: (host, ext) => [...server(host).files].filter(f => !ext || f.endsWith(ext)),
 
         brutessh: host => { if (!home.files.has("BruteSSH.exe")) throw new Error("no BruteSSH"); server(host).opened++; },
         ftpcrack: () => { throw new Error("no FTPCrack.exe"); },
@@ -145,6 +150,7 @@ export function createMockNs({
         _used: name => usedRam(server(name)),
         _free: name => server(name).ram - usedRam(server(name)),
         _ports: ports,
+        _addContract: (host, file) => server(host).files.add(file),
         // The same world, viewed from another host - this is how a worm instance
         // running on foodnstuff sees things.
         _as: other => ({ ...ns, getHostname: () => other, fileExists: (f, h = other) => server(h).files.has(f) }),

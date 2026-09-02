@@ -2,11 +2,15 @@ import { config, event, fetchLatestInstaller, writeState, getDirectives } from "
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
 import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
+import { dispatchContracts } from "/matrix/lib/dispatch.js";
 
 const EARLY = "/matrix/workers/early.js";
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
+
+// Contracts already dispatched, so one is never attempted twice.
+const dispatchedContracts = new Set();
 
 function scoreTarget(ns, host, mode = "money") {
     if (!ns.hasRootAccess(host) || ns.getServerMaxMoney(host) <= 0) return -1;
@@ -91,6 +95,9 @@ function draw(ns, state) {
     ns.print(row("🌐", "NETWORK", `[${bar(state.rooted / Math.max(1, state.discovered))}] ${state.rooted}/${state.discovered} rooted`));
     ns.print(row("💻", "HOME RAM", `${ns.format.ram(ns.getServerMaxRam("home"))}  │  HACK SKILL: ${ns.getHackingLevel()}`));
     ns.print(row("🔑", "NEXT CRACK", state.crackerLine));
+    ns.print(row("📜", "CONTRACTS", state.contracts?.found
+        ? `${state.contracts.found} found  │  ${state.contracts.sent} solver(s) dispatched`
+        : "none on the network right now"));
     ns.print(rule("B O T N E T"));
     if (worm) {
         ns.print(row("🐛", "SPREAD", `[${bar(worm.infected / Math.max(1, worm.rooted))}] ${worm.infected}/${worm.rooted} INFECTED`));
@@ -172,6 +179,15 @@ export async function main(ns) {
             const worm = readWorm(ns);
             const threads = worm ? 0 : await deploy(ns, hosts, target);
 
+            // Coding contracts are among the best early income in the game and
+            // this stage already owns scp and exec, so finding them costs only ls.
+            // The 21.6 GB solver runs out on the network, never on home.
+            let contracts = { found: 0, sent: 0 };
+            if (cfg.automation?.contracts !== false) {
+                try { contracts = dispatchContracts(ns, hosts, dispatchedContracts); } catch {}
+                if (contracts.sent) await event(ns, "early", `Dispatched ${contracts.sent} contract solver(s)`, "success");
+            }
+
             const singularity = singularityReady(ns.getResetInfo());
             const owned = PORT_PROGRAMS.filter(p => ns.fileExists(p.file, "home")).map(p => p.file);
             const hackingLevel = ns.getHackingLevel();
@@ -189,7 +205,7 @@ export async function main(ns) {
             const state = {
                 status: "online", phase: "early", target, threads,
                 discovered: hosts.length, rooted,
-                worm, wormOwned: Boolean(worm), singularity, actions, crackerLine,
+                worm, wormOwned: Boolean(worm), singularity, actions, crackerLine, contracts,
             };
             await writeState(ns, "early", state);
             draw(ns, state);

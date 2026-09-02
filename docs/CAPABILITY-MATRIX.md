@@ -17,6 +17,7 @@ reference · **Missing** = not implemented.
 
 | Area | File | Notes |
 | --- | --- | --- |
+| Coding contracts | `matrix/lib/dispatch.js`, `matrix/workers/contract.js` | 28 solvers, all known-answer tested; the 21.6 GB solver runs off-home so contracts work from 16 GB - see below |
 | Self-propagating 8 GB botnet | `matrix/worm/` | Worm seeds itself onto the network and grows without home RAM - see below |
 | Staged manifest install / update | `install.js` | SHA-pinned downloads, config preservation, atomic download-then-swap, recover-to-previous-version on any failed download |
 | Kernel stage selection | `matrix/kernel.js` | Picks the RAM-appropriate stage, kills stale stage processes, clears the bootstrap lock |
@@ -41,7 +42,6 @@ reference · **Missing** = not implemented.
 | Bladeburner | EV action scoring, stamina/chaos handling, BlackOp at >=90%, skill priority; no population/estimate actions, no city hopping | alain `bladeburner.js` | advanced / SF6-7 |
 | Corporation | Agriculture-only bootstrap, fixed job ratios, accepts investment rounds <=2; no product division, no second industry | jjclark corp; alain | advanced / SF3 or $150B self-fund |
 | Hacknet | Cheapest upgrade within the budget fraction; sells hashes for money at 80% capacity only | alain `hacknet-upgrade-manager`, `spend-hacknet-hashes` | full / 32 GB |
-| Contracts | 20 solvers, unknown types skipped safely; ~10 types unsolved | jjclark solvers | advanced / 128 GB |
 | Cloud (pserv) | Buy within the budget fraction, double the weakest server; no purchase-curve tuning | alain `host-manager` | operations / 64 GB |
 | `progression.js` | Only plans the next BitNode and (opt-in) destroys the World Daemon | alain `autopilot.js` reset logic | advanced / 128 GB |
 
@@ -265,6 +265,58 @@ process sweep retires the worm.
 The tails pad and clip on **display width**, because emoji occupy two columns in
 the tail font. `tests/validate.mjs` asserts every box line renders to exactly the
 same width and that no manual action can overflow its column.
+
+---
+
+## Coding contracts: the best early income in the game
+
+`CodingContractBaseMoneyGain` is **$75,000,000**, multiplied by the contract's
+difficulty and the BitNode multiplier. Roughly one reward in four is money (the
+rest is faction or company reputation). A single money contract early on is worth
+more than hours of hacking.
+
+The obstacle is RAM. Solving one costs 20 GB of API:
+
+| Function | RAM |
+| --- | ---: |
+| `codingcontract.attempt` | 10 |
+| `codingcontract.getData` | 5 |
+| `codingcontract.getContractType` | 5 |
+
+Keeping that resident on home would put contracts behind a 128 GB home, which is
+most of a run. So it is split the same way the worm splits propagation:
+
+| File | RAM | Role |
+| --- | ---: | --- |
+| `matrix/lib/dispatch.js` | 4.45 GB | Finds `.cct` files (`ls` is 0.2 GB), picks a host, sends a solver |
+| `matrix/workers/contract.js` | 21.6 GB | One-shot. Solves exactly one contract on a network host, then exits |
+
+`early.js` already owns `scp` and `exec`, so it picks up contract dispatch for
+the price of `ls` alone - **contracts work from the 16 GB stage**, not 128 GB.
+
+### The worm and the solver compete for RAM
+
+The worm saturates the network by design, so in practice *no host has 21.6 GB
+free*. The integration harness caught this before it shipped:
+
+```text
+result: { found: 2, sent: 0, waiting: 2, need: 21.6 }
+```
+
+`makeRoom()` therefore evicts drones from the largest capable host so the solver
+can land; the worm refills it on its next 20 s cycle. A contract pays $75m x
+difficulty, so a few seconds of drone time is not a real cost. Verified in
+`tests/integration.mjs`: 36 drones -> solver lands on `zer0` -> 25 drones.
+
+### Attempts are finite
+
+A contract allows a limited number of attempts, and a wrong answer burns one. The
+worker therefore returns *without attempting* when the type is unknown or the
+solver throws, and `dispatchContracts` tracks what it has already sent so one
+contract is never attempted twice. Both rules are asserted by tests.
+
+28 solver types are implemented, each with a known-answer test; HammingCodes and
+LZ additionally round-trip, and HammingCodes is tested against a flipped bit.
 
 ---
 
