@@ -438,7 +438,7 @@ function App({ ns }) {
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.clearLog();
-    const self = ns.self().pid;
+    const self = ns.pid;
     const sameScript = process => String(process.filename).replace(/^\/+/, "") === "matrix/dashboard.jsx";
     const older = ns.ps("home").some(process => sameScript(process) && process.pid !== self && process.pid < self);
     if (older) {
