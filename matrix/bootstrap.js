@@ -59,6 +59,8 @@ let lastCash = 0;
 let lastTime = 0;
 let cashRate = 0;
 
+const WORKER = "/matrix/workers/early.js";
+
 function draw(ns, state) {
     ns.clearLog();
     const spin = SPINNER[(tick++) % SPINNER.length];
@@ -104,8 +106,8 @@ function draw(ns, state) {
     ns.print(`║  M A T R I X  //  F R E S H - S A V E   K E R N E L      ║`);
     ns.print(`╠══════════════════════════════════════════════════════════╣`);
     ns.print(`║  ${spin} STAGE       : BOOTSTRAP / 8 GB                         ║`);
-    ns.print(`║  ${spin} ACTION      : ${state.action.toUpperCase().padEnd(10)}                       ║`);
     ns.print(`║  🎯 TARGET      : ${state.target.padEnd(20)}                   ║`);
+    ns.print(`║  ⚙️ BOTNET WORK : ${String(state.threads ?? 0).padEnd(5)} THREADS                    ║`);
     ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
     ns.print(`║  🌐 NETWORK     : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
     ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}  │  HACK SKILL: ${String(hackLvl).padEnd(6)}  ║`);
@@ -154,13 +156,39 @@ export async function main(ns) {
                 if (ns.hasRootAccess(host)) rooted++;
             }
             const target = chooseTarget(ns, hosts);
+
+            let threads = 0;
+            if (ns.fileExists(WORKER, "home")) {
+                const ram = ns.getScriptRam(WORKER, "home");
+                for (const host of hosts) {
+                    if (host === "home" || !ns.hasRootAccess(host)) continue;
+                    const max = ns.getServerMaxRam(host);
+                    if (max < ram) continue;
+                    if (!ns.fileExists(WORKER, host)) {
+                        try { await ns.scp(WORKER, host, "home"); } catch {}
+                    }
+                    for (const process of ns.ps(host)) {
+                        if (String(process.filename).endsWith("early.js") && String(process.args[0]) !== target) {
+                            ns.kill(process.pid);
+                        }
+                    }
+                    const existing = ns.ps(host).filter(proc => String(proc.filename).endsWith("early.js") && String(proc.args[0]) === target);
+                    if (existing.length) {
+                        threads += existing.reduce((sum, proc) => sum + proc.threads, 0);
+                        continue;
+                    }
+                    const count = Math.floor((max - ns.getServerUsedRam(host)) / ram);
+                    if (count > 0 && ns.exec(WORKER, host, count, target)) threads += count;
+                }
+            }
+
             const security = ns.getServerSecurityLevel(target);
             const minSecurity = ns.getServerMinSecurityLevel(target);
             const money = ns.getServerMoneyAvailable(target);
             const maxMoney = ns.getServerMaxMoney(target);
             const action = chooseStarterAction(money, maxMoney, security, minSecurity);
             const state = {
-                status: "online", phase: "bootstrap", action, target,
+                status: "online", phase: "bootstrap", action, target, threads,
                 discovered: hosts.length, rooted, homeRam: ns.getServerMaxRam("home"), updated: Date.now(),
             };
             await ns.write(STATE, JSON.stringify(state), "w");

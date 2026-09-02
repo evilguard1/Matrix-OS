@@ -16,7 +16,7 @@
     { "path": "matrix/kernel.js", "stage": "bootstrap" },
     { "path": "matrix/update.js", "stage": "bootstrap" },
     { "path": "matrix/early.js", "stage": "early" },
-    { "path": "matrix/workers/early.js", "stage": "early" },
+    { "path": "matrix/workers/early.js", "stage": "bootstrap" },
     { "path": "matrix/start.js", "stage": "full" },
     { "path": "matrix/dashboard.jsx", "stage": "full" },
     { "path": "matrix/lib/common.js", "stage": "early" },
