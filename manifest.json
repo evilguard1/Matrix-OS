@@ -1,5 +1,5 @@
 {
-  "version": "0.9.4",
+  "version": "0.9.5",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
@@ -27,6 +27,7 @@
     { "path": "matrix/lib/capabilities.js", "stage": "early" },
     { "path": "matrix/lib/hud.js", "stage": "early" },
     { "path": "matrix/lib/singleton.js", "stage": "early" },
+    { "path": "matrix/lib/factions.js", "stage": "early" },
     { "path": "matrix/lib/solvers.js", "stage": "early" },
     { "path": "matrix/lib/dispatch.js", "stage": "early" },
     { "path": "matrix/workers/contract.js", "stage": "early" },

@@ -62,8 +62,17 @@ export async function main(ns) {
             } catch {}
 
             if (bought) await event(ns,"hacknet",`Purchased ${bought} Hacknet upgrade(s)`,"success");
+            // Netburners wants total hacknet levels/RAM/cores. This service
+            // already pays for the Hacknet API, so it publishes the totals and
+            // telemetry reads them for free instead of buying the API again.
+            const totals={levels:0,ram:0,cores:0};
+            for(let i=0;i<ns.hacknet.numNodes();i++){
+                const node=ns.hacknet.getNodeStats(i);
+                totals.levels+=node.level??0; totals.ram+=node.ram??0; totals.cores+=node.cores??0;
+            }
             await writeState(ns, "hacknet", {
-                status:"online", nodes:ns.hacknet.numNodes(), production, hashes, capacity, upgrades:bought
+                status:"online", nodes:ns.hacknet.numNodes(), production, hashes, capacity, upgrades:bought,
+                totals
             });
         } catch(e) {
             await writeState(ns,"hacknet",{status:"error",error:String(e)});

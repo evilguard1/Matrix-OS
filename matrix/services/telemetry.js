@@ -1,8 +1,30 @@
 import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/common.js";
 import { scanAll } from "/matrix/lib/network.js";
 import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
+import { factionDirectives, factionPlan, BACKDOOR_FACTIONS } from "/matrix/lib/factions.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
+
+// Which faction-gating servers the player can backdoor RIGHT NOW. Reading the
+// actual backdoor flag needs ns.getServer at 2 GB, which does not fit the 32 GB
+// stage - and is not needed: a backdoor produces an invitation immediately, so
+// "rooted, in level range, faction not joined" is the same instruction. Treating
+// an already-joined faction's server as done keeps it from nagging.
+function backdoorable(ns){
+    const out=[];
+    for(const host of Object.keys(BACKDOOR_FACTIONS)){
+        try{
+            if(ns.hasRootAccess(host)&&ns.getServerRequiredHackingLevel(host)<=ns.getHackingLevel())out.push(host);
+        }catch{}
+    }
+    return out;
+}
+
+// A backdoor produces its faction invitation immediately, so a joined faction
+// is proof its backdoor is done - without paying 2 GB for ns.getServer.
+function backdoorsDone(joined){
+    return Object.entries(BACKDOOR_FACTIONS).filter(([,f])=>joined.includes(f)).map(([host])=>host);
+}
 
 function eventLines(ns){
     const raw=ns.read(EVENTS);
@@ -43,6 +65,23 @@ export async function main(ns){
                 cloudAutomated:ns.getServerMaxRam("home")>=32&&cfg.automation?.cloud!==false,
             });
 
+            // Faction guidance. Joining needs Singularity, but KNOWING what each
+            // faction wants does not - so the deck can always point at the next
+            // real move even when the game will not let a script take it.
+            const factionInput={
+                skills:player.skills,money:player.money,city:player.city,karma:player.karma,
+                kills:player.numPeopleKilled,factions:player.factions,
+                backdoors:backdoorsDone(player.factions??[]),
+                reachable:backdoorable(ns),
+                augs:(player.augmentations??[]).length,
+                hacknet:serviceState.hacknet?.totals??{levels:0,ram:0,cores:0},
+            };
+            let factions=null,directives=[];
+            try{
+                factions=factionPlan(factionInput,{singularity});
+                directives=factionDirectives(factionInput,{singularity});
+            }catch{}
+
             await writeJson(ns,`${STATE_DIR}/overview.txt`,{
                 updated:Date.now(),config:cfg,game,
                 player:{money:player.money,city:player.city,karma:player.karma,skills:player.skills,factions:player.factions},
@@ -51,6 +90,12 @@ export async function main(ns){
                 network:{discovered:hosts.length,rooted,maxRam,usedRam,ramPct:maxRam?usedRam/maxRam:0},
                 income,
                 singularity,manual,ownedPrograms:owned,
+                factions:factions?{
+                    joined:factions.joined.map(f=>f.name),
+                    eligible:factions.eligible.map(f=>({name:f.name,how:f.how})),
+                    pending:factions.pending.slice(0,8).map(f=>({name:f.name,missing:f.missing,how:f.how})),
+                }:null,
+                directives,
                 services:serviceState,
                 events:eventLines(ns)
             });

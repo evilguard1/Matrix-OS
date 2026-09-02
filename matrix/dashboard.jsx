@@ -126,6 +126,7 @@ const css = `
 .mxGrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:11px}.mxPanel{position:relative;overflow:hidden;min-width:0;padding:14px;border:1px solid rgba(85,246,164,.2);background:linear-gradient(145deg,rgba(7,27,17,.93),rgba(2,13,8,.9));box-shadow:inset 0 1px rgba(255,255,255,.03),0 12px 30px rgba(0,0,0,.16)}.mxPanel:before{content:"";position:absolute;top:0;left:0;width:36px;height:2px;background:var(--green);box-shadow:0 0 12px var(--green)}.mxPanel:after{content:"";pointer-events:none;position:absolute;inset:0;opacity:.26;background:linear-gradient(135deg,rgba(85,246,164,.045),transparent 45%)}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:span 12}.mxPanelTitle{position:relative;z-index:1;display:flex;justify-content:space-between;gap:10px;color:var(--dim);font-size:10px;letter-spacing:.16em;text-transform:uppercase}.mxPanelTitle span:last-child{color:rgba(123,163,142,.72);white-space:nowrap}.mxValue{position:relative;z-index:1;margin:12px 0 4px;color:#e6fff3;font-size:clamp(22px,2.3vw,31px);line-height:1;font-weight:700;text-shadow:0 0 15px rgba(85,246,164,.2)}.mxHint{position:relative;z-index:1;color:var(--dim);font-size:10px;line-height:1.55}.mxMeter{position:relative;z-index:1;height:5px;margin-top:12px;overflow:hidden;background:#06180e}.mxMeter>i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--green));box-shadow:0 0 14px var(--green)}.mxMeter.cyan>i{background:linear-gradient(90deg,#257a8d,var(--cyan));box-shadow:0 0 14px var(--cyan)}.mxMeter.amber>i{background:linear-gradient(90deg,#8d6b25,var(--amber));box-shadow:0 0 14px var(--amber)}
 .mxRow{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:31px;padding:5px 0;border-bottom:1px solid rgba(85,246,164,.075);font-size:11px}.mxRow:last-child{border-bottom:0}.mxRow>span:last-child{color:#d7ffe9;text-align:right}.mxServiceName{display:flex;align-items:center;min-width:0}.mxDot{width:7px;height:7px;flex:0 0 auto;margin-right:9px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}.mxServiceStatus{color:var(--dim)!important;font-size:9px;letter-spacing:.1em}.mxHero{min-height:198px;display:flex;flex-direction:column;justify-content:space-between}.mxTarget{position:relative;z-index:1;display:flex;align-items:baseline;gap:11px;margin:10px 0}.mxTargetName{position:relative;z-index:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6fff3;font-size:clamp(28px,4.5vw,58px);font-weight:800;letter-spacing:-.045em;text-shadow:0 0 22px rgba(85,246,164,.26)}.mxTargetTag{position:relative;z-index:1;color:var(--cyan);font-size:10px;letter-spacing:.13em}.mxTargetFooter{position:relative;z-index:1;display:flex;justify-content:space-between;gap:12px;color:var(--dim);font-size:10px}.mxRadar{position:absolute;z-index:0;right:-23px;bottom:-41px;width:210px;height:210px;border:1px solid rgba(85,246,164,.2);border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 28px,rgba(85,246,164,.14) 29px 30px)}.mxRadar:before{content:"";position:absolute;left:50%;top:50%;width:1px;height:105px;transform-origin:bottom;background:linear-gradient(var(--green),transparent);box-shadow:0 0 14px var(--green);animation:matrixDrift 2.4s ease-in-out infinite alternate}.mxRadar:after{content:"";position:absolute;inset:45%;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}
 .mxCommand{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}.mxCommandCell{padding:9px;border-left:2px solid rgba(85,246,164,.34);background:rgba(0,0,0,.17)}.mxCommandCell b{display:block;color:#e6fff3;margin-top:4px;font-size:14px;font-weight:600}.mxCommandCell span{color:var(--dim);font-size:9px;letter-spacing:.12em}.mxEventFeed{position:relative;z-index:1;max-height:303px;overflow:hidden}.mxEvent{display:grid;grid-template-columns:62px 77px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid rgba(85,246,164,.065);color:#aac9b7;font-size:10px;line-height:1.45}.mxEvent time{color:var(--dim)}.mxEvent b{color:var(--cyan);font-weight:500;text-transform:uppercase}.mxEvent.warn b{color:var(--amber)}.mxEvent.error b{color:var(--red)}.mxEmpty{position:relative;z-index:1;padding:24px 0;color:var(--dim);font-size:10px;letter-spacing:.11em;text-align:center}.mxTable{position:relative;z-index:1;width:100%;border-collapse:collapse;font-size:11px}.mxTable th{padding:8px 7px;color:var(--dim);border-bottom:1px solid rgba(85,246,164,.17);text-align:left;font-size:9px;font-weight:500;letter-spacing:.12em}.mxTable td{padding:9px 7px;border-bottom:1px solid rgba(85,246,164,.065)}.mxTable td:last-child{text-align:right;color:#e6fff3}.mxSettings{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.mxWire{position:relative;z-index:1}.mxWireRow{display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(85,246,164,.075)}.mxWireRow:last-child{border-bottom:0}.mxWireRow.urgent .mxWireTag{color:var(--amber);border-color:rgba(255,211,106,.45)}.mxWireTag{padding:3px 5px;border:1px solid rgba(85,246,164,.3);color:var(--cyan);font-size:8px;letter-spacing:.11em;text-align:center}.mxWireBody{min-width:0}.mxWireBody b{display:block;color:#e6fff3;font-size:11px;font-weight:600;line-height:1.35}.mxWireBody em{display:block;margin-top:3px;color:var(--dim);font-size:9px;font-style:normal;line-height:1.5}
 .mxBadge{display:inline-block;padding:2px 6px;border-radius:2px;font-size:9px;letter-spacing:.08em;font-weight:600;text-transform:uppercase}.mxBadge.green{background:rgba(0,217,130,.15);color:var(--mint);border:1px solid rgba(0,217,130,.4)}.mxBadge.amber{background:rgba(255,211,106,.15);color:var(--amber);border:1px solid rgba(255,211,106,.4)}.mxBadge.red{background:rgba(255,93,121,.15);color:var(--red);border:1px solid rgba(255,93,121,.4)}
 @media(max-width:1000px){.mxRoot{padding:14px}.mxGrid{grid-template-columns:repeat(6,minmax(0,1fr))}.span-12,.span-8,.span-6{grid-column:span 6}.span-4,.span-3{grid-column:span 3}.mxLogo{letter-spacing:.07em}}@media(max-width:620px){.mxRoot{padding:11px}.mxHeader{flex-direction:column;gap:12px}.mxSignal{align-self:stretch;justify-content:center}.mxGrid{grid-template-columns:1fr;gap:8px}.span-12,.span-8,.span-6,.span-4,.span-3{grid-column:span 1}.mxPanel{padding:12px}.mxEvent{grid-template-columns:54px 64px 1fr;gap:5px}.mxTargetName{font-size:34px}.mxTabs{margin:12px 0}.mxBtn{flex:1 1 90px}}
 `;
@@ -176,6 +177,77 @@ function ManualActions({ data }) {
     );
 }
 function Toggle({ config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = () => { const next = JSON.parse(JSON.stringify(config ?? {})); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; store.send({ type: "config", value: next }); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
+
+// "Wake up, Neo." Everything the game will not let a script do yet arrives
+// here as an instruction, in priority order, so there is always one clear next
+// move on screen instead of a locked module and no explanation.
+function Transmission({ data }) {
+    const directives = (Array.isArray(data.directives) ? data.directives : []).filter(d => d && d.label);
+    const manual = (Array.isArray(data.manual) ? data.manual : []).filter(a => a && a.label);
+    // Faction moves lead: they gate augmentations, which gate everything else.
+    const feed = [...directives, ...manual.map(action => ({
+        id: action.id, tag: action.tag, label: action.label,
+        detail: action.detail ?? action.short, urgent: false, ready: action.ready,
+    }))].slice(0, 6);
+
+    if (!feed.length) return <div className="mxEmpty">NO OPERATOR INPUT REQUIRED</div>;
+    return (
+        <div className="mxWire">
+            {feed.map((item, index) => (
+                <div className={`mxWireRow${item.urgent ? " urgent" : ""}`} key={item.id ?? index}>
+                    <span className="mxWireTag">{item.tag ?? "DO"}</span>
+                    <span className="mxWireBody">
+                        <b>{item.label}</b>
+                        <em>{item.detail}</em>
+                    </span>
+                    <span className={`mxBadge ${item.urgent ? "amber" : item.ready ? "green" : ""}`}>
+                        {item.urgent ? "YOU" : item.ready ? "READY" : "LOCKED"}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// The full faction map: what is linked, what is waiting, and for everything else
+// the exact requirements still missing. This is knowledge, not an API call, so
+// it works with no Singularity at all.
+function FactionIntel({ data }) {
+    // Telemetry may be mid-write, from an older version, or reporting a service
+    // that failed - so every list is proved to be a list before it is mapped.
+    const factions = data.factions ?? null;
+    const list = value => (Array.isArray(value) ? value : []);
+    const joined = list(factions?.joined).length ? list(factions.joined) : list(data.player?.factions);
+    const eligible = list(factions?.eligible).filter(f => f && f.name);
+    const pending = list(factions?.pending).filter(f => f && f.name);
+    if (!joined.length && !eligible.length && !pending.length) {
+        return <div className="mxEmpty">NO FACTION INTELLIGENCE</div>;
+    }
+    return (
+        <>
+            {eligible.map(faction => (
+                <div className="mxRow" key={`e-${faction.name}`}>
+                    <span className="mxServiceName"><i className="mxDot" style={{ color: COLOR.amber }} />{faction.name}</span>
+                    <span style={{ color: COLOR.amber }}>INVITATION WAITING - JOIN IT</span>
+                </div>
+            ))}
+            {joined.map(faction => (
+                <div className="mxRow" key={`j-${faction}`}>
+                    <span className="mxServiceName"><i className="mxDot" style={{ color: COLOR.green }} />{faction}</span>
+                    <span style={{ color: COLOR.mint }}>CONNECTED</span>
+                </div>
+            ))}
+            {pending.map(faction => (
+                <div className="mxRow" key={`p-${faction.name}`}>
+                    <span className="mxServiceName"><i className="mxDot" style={{ color: COLOR.dim }} />{faction.name}</span>
+                    <span className="mxServiceStatus" style={{ color: COLOR.dim, textAlign: "right" }}>
+                        {(faction.missing ?? []).slice(0, 3).join(" · ") || "LOCKED"}
+                    </span>
+                </div>
+            ))}
+        </>
+    );
+}
 
 function Overview({ data }) {
     const services = data.services ?? {}, network = data.network ?? {}, hacking = services.hacking ?? {}, player = data.player ?? {}, income = data.income ?? {}, coord = services.coordinator ?? {}, target = hacking.target ?? "SCANNING", phase = hacking.phase ?? hacking.status ?? "BOOTSTRAP", rootRate = network.discovered ? network.rooted / network.discovered : 0;
@@ -274,8 +346,8 @@ function Overview({ data }) {
             <Panel title="Automation mesh" right={`${SERVICE_ORDER.length} MODULES`} span={4}>
                 {SERVICE_ORDER.map(name => <Service key={name} name={name} value={services[name]} sourceFiles={data.reset?.sourceFiles} />)}
             </Panel>
-            <Panel title={data.singularity ? "Automation status" : "Manual actions required"} right={data.singularity ? "AUTONOMOUS" : "PLAYER"} span={4}>
-                <ManualActions data={data} />
+            <Panel title="Incoming transmission" right={data.singularity ? "AUTONOMOUS" : "OPERATOR INPUT REQUIRED"} span={4}>
+                <Transmission data={data} />
             </Panel>
             <Panel title="Live event stream" right={`${data.events?.length ?? 0} BUFFERED`} span={8}>
                 <div className="mxEventFeed">
@@ -436,17 +508,8 @@ function Progress({ data }) {
                     </div>
                 ) : null}
             </Panel>
-            <Panel title="Connected factions" right={`${player.factions?.length ?? 0} LINKED`} span={12}>
-                {player.factions?.length ? (
-                    player.factions.map(faction => (
-                        <div className="mxRow" key={faction}>
-                            <span>{faction}</span>
-                            <span style={{ color: COLOR.mint }}>CONNECTED</span>
-                        </div>
-                    ))
-                ) : (
-                    <div className="mxEmpty">NO FACTION LINKS ESTABLISHED</div>
-                )}
+            <Panel title="Faction network" right={`${data.factions?.joined?.length ?? player.factions?.length ?? 0} LINKED / ${data.factions?.eligible?.length ?? 0} WAITING`} span={12}>
+                <FactionIntel data={data} />
             </Panel>
         </div>
     );
