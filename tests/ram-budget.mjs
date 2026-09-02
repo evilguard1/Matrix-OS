@@ -39,7 +39,7 @@ export const RAM_COSTS = {
     writePort: 0, readPort: 0, clearPort: 0, peek: 0, getPortHandle: 0,
     nextPortWrite: 0, tail: 0, printRaw: 0, alert: 0, toast: 0,
     // cheap server queries
-    hasRootAccess: 0.05, getHostname: 0.05, getHackingLevel: 0.05,
+    hasRootAccess: 0.05, getHostname: 0.05, getHackingLevel: 0.05, hasTorRouter: 0.05,
     getServerMaxRam: 0.05, getServerUsedRam: 0.05,
     getHackTime: 0.05, getGrowTime: 0.05, getWeakenTime: 0.05,
     nuke: 0.05, brutessh: 0.05, ftpcrack: 0.05, relaysmtp: 0.05,

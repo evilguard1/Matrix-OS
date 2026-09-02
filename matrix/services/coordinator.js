@@ -1,5 +1,5 @@
 import { config, writeState, writeJson, readJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
-import { homeRamUpgradeCost as homeRamCost } from "/matrix/lib/capabilities.js";
+import { homeRamUpgradeCost as homeRamCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
@@ -49,8 +49,11 @@ export function evaluateObjective(data) {
     } = data;
 
     const totalAssets = cash + stockPortfolioValue;
-    const sf2 = (resetInfo.currentNode === 2) || ((resetInfo.ownedSF?.get?.(2) ?? 0) > 0);
-    const sf3 = (resetInfo.currentNode === 3) || ((resetInfo.ownedSF?.get?.(3) ?? 0) > 0);
+    // A destructuring default only fires on undefined; an explicit null still
+    // lands here, and a stale or half-written state file supplies exactly that.
+    const reset = resetInfo ?? {};
+    const sf2 = (reset.currentNode === 2) || ((reset.ownedSF?.get?.(2) ?? 0) > 0);
+    const sf3 = (reset.currentNode === 3) || ((reset.ownedSF?.get?.(3) ?? 0) > 0);
 
     const calcEta = (reqCash) => {
         if (cash >= reqCash) return "READY";
@@ -153,7 +156,10 @@ export function evaluateObjective(data) {
     // 7. Port programs acquisition
     if (!hasTor && cash >= TOR_COST * 0.5) {
         return {
-            id: "BUY_PROGRAMS",
+            // Was "BUY_PROGRAMS" - two different objectives shared one id, so the
+            // phase and the per-manager directives derived from it were wrong
+            // while this milestone was active.
+            id: "BUY_TOR",
             title: "Purchase TOR Router",
             reason: "Buying TOR Router to unlock Darkweb port-opening programs",
             liquidateStocks: false,
@@ -359,9 +365,24 @@ export async function main(ns) {
             // Home RAM price comes from Bitburner's own formula, not an API.
             const homeRamUpgradeCost = homeRamCost(homeRam);
 
-            const hasTor = Boolean(singState.hasTor);
-            const missingPrograms = Array.isArray(singState.missingPrograms) ? singState.missingPrograms : [];
-            const programCosts = Number(singState.programCosts ?? 0);
+            // ns.hasTorRouter() is a top-level 0.05 GB call, NOT Singularity.
+            // Reading this from singularity.txt meant it was false forever below
+            // SF4, so the TOR milestone could never clear and the coordinator sat
+            // on "Reaching $200k for TOR Router" with the router already bought.
+            let hasTor = Boolean(singState.hasTor);
+            try { hasTor = ns.hasTorRouter(); } catch {}
+            let missingPrograms = Array.isArray(singState.missingPrograms) ? singState.missingPrograms : [];
+            let programCosts = Number(singState.programCosts ?? 0);
+            // Same fix as hasTor: the Singularity darkweb listing is unavailable
+            // below SF4, but fileExists is free and the port-program prices are
+            // fixed constants - so this milestone works without Singularity too.
+            if (!missingPrograms.length && hasTor) {
+                const missing = PORT_PROGRAMS.filter(program => {
+                    try { return !ns.fileExists(program.file, "home"); } catch { return false; }
+                });
+                missingPrograms = missing.map(program => program.file);
+                programCosts = missing.reduce((sum, program) => sum + program.price, 0);
+            }
             const queuedAugs = Number(singState.queuedAugs ?? 0);
             const hasRedPill = Boolean(singState.hasRedPill);
 

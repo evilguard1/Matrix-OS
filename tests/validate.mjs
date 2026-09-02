@@ -177,7 +177,13 @@ assert.equal(objAugs.id, "INSTALL_AUGMENTATIONS");
 assert.equal(objAugs.liquidateStocks, true);
 
 const objTor = evaluateObjective({ cash: 300_000, hasTor: false });
-assert.equal(objTor.id, "BUY_PROGRAMS");
+// This asserted "BUY_PROGRAMS" and so locked in a copy-paste bug: the TOR and
+// port-program objectives shared one id, and planDirectives switches every
+// per-manager directive on it.
+assert.equal(objTor.id, "BUY_TOR");
+assert.notEqual(objTor.id, evaluateObjective({
+    cash: 300_000, hasTor: true, missingPrograms: ["BruteSSH.exe"], programCosts: 500_000,
+}).id, "two different objectives must not share an id");
 
 // --- planDirectives: the per-manager directive/budget protocol ---------------
 // Every branch that a consumer reads has a deterministic scenario here.
