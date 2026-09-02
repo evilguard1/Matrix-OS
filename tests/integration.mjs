@@ -155,12 +155,22 @@ console.log("MATRIX-OS integration passed: contracts dispatch off-home, once eac
 {
     const fs = await import("node:fs");
     const deck = fs.readFileSync("matrix/dashboard.jsx", "utf8");
-    assert.match(deck, /holdSingleton/, "the deck must enforce its own singleton");
-    // The deck must re-check ownership inside its main loop, not only at startup:
-    // a startup-only check is exactly what let racing supervisors leave decks behind.
-    const deckLoop = deck.slice(deck.lastIndexOf("while (true)"));
-    assert.ok(deckLoop.includes("holdSingleton"),
-        "the deck must re-check ownership inside its loop, not only at startup");
+    // The deck arbitrates ownership through a lease, and a CHALLENGER MUST NEVER
+    // WRITE IT. Every instance writing the shared file every 2s is what made
+    // ownership thrash for seven releases.
+    assert.match(deck, /leaseDecision/, "the deck must arbitrate ownership through the lease");
+    const deckLoopBody = deck.slice(deck.lastIndexOf("while (true)"));
+    assert.ok(deckLoopBody.includes("leaseDecision"),
+        "the lease must be re-checked in the loop, not only at startup");
+    assert.ok(deckLoopBody.indexOf("leaseDecision") < deckLoopBody.indexOf("writeLease"),
+        "the lease must be checked BEFORE renewing it");
+    // Standing down must be reported to the terminal, never written to the lease.
+    const lostAt = deck.indexOf("LOST LEASE");
+    const standDown = deck.slice(lostAt, deck.indexOf("return;", lostAt));
+    assert.ok(!standDown.includes("writeLease"),
+        "a challenger must not write the lease on its way out");
+    assert.ok(deck.includes("STANDING DOWN AT START") && deck.includes("LOST LEASE"),
+        "a voluntary exit must be visible in the terminal, so silence means an external kill");
 
     // A stage transition restarts everything, so the installer spawn must sit
     // behind a time gate. Unthrottled, it is an infinite restart loop that leaves
@@ -228,49 +238,39 @@ console.log("MATRIX-OS integration passed: stage transitions cannot loop.");
     const fs = await import("node:fs");
     const deck = fs.readFileSync("matrix/dashboard.jsx", "utf8");
 
-    // Must be CALLED, not merely defined: definition + both guard sites.
-    assert.ok((deck.match(/anotherDeckAlive/g) ?? []).length >= 3,
-        "the deck must actually consult its heartbeat guard at startup and in its loop");
-    const deckLoopBody = deck.slice(deck.lastIndexOf("while (true)"));
-    assert.ok(deckLoopBody.includes("anotherDeckAlive"),
-        "the heartbeat guard must be re-checked in the loop, not only at startup");
     assert.match(deck, /dashboard\.txt/, "the deck must publish a heartbeat");
 
-    // The heartbeat must be written before rendering and refreshed in the loop,
-    // or a stale file would lock every future deck out permanently.
-    const beats = deck.match(/beat\(ns, "[a-z-]+"/g) ?? [];
-    assert.ok(beats.includes('beat(ns, "rendering"'), "the deck must record that it reached rendering");
-    assert.ok(beats.includes('beat(ns, "alive"'), "the deck must record that it is alive");
-    assert.ok(beats.length >= 3, "the heartbeat must be refreshed, not written once");
+    // The lease must be taken before rendering and renewed in the loop, so a
+    // duplicate never opens a window and a live deck never looks stale.
+    const writes = deck.match(/writeLease\(ns, "[a-z-]+"/g) ?? [];
+    assert.ok(writes.includes('writeLease(ns, "rendering"'), "the deck must claim the lease before rendering");
+    assert.ok(writes.includes('writeLease(ns, "alive"'), "the deck must renew the lease once up");
+    assert.ok(writes.length >= 3, "the lease must be renewed, not written once");
 
-    // Ownership MUST be antisymmetric. Every deck writes the same heartbeat file,
-    // so an unordered "someone else is beating" test makes A stand down for B and
-    // B stand down for A - both die. That killed a deck every 10 seconds in game
-    // ("Recently Killed: dashboard.jsx died 0/10/20 seconds ago").
-    const { heartbeatOwner } = await import("../matrix/lib/singleton.js");
+    // Lease arbitration must be antisymmetric AND single-writer. Concurrent
+    // behaviour over time is covered exhaustively in tests/concurrency.mjs.
+    const { leaseDecision } = await import("../matrix/lib/singleton.js");
     const now = 1_000_000;
-    const alive = pid => ({ pid, phase: "alive", updated: now });
+    const held = pid => ({ pid, phase: "alive", updated: now });
 
-    for (const [a, b] of [[100, 105], [1, 2], [7, 99], [40, 41]]) {
-        const aOwns = heartbeatOwner(alive(b), a, now);
-        const bOwns = heartbeatOwner(alive(a), b, now);
-        assert.ok(aOwns !== bOwns, `ownership between ${a} and ${b} must not be symmetric`);
-        assert.equal(aOwns, true, "the lower PID keeps the window");
-        assert.equal(bOwns, false, "the higher PID stands down");
-    }
+    assert.equal(leaseDecision(held(100), 100, now), "renew", "the holder renews");
+    assert.equal(leaseDecision(held(100), 105, now), "stand-down", "a challenger stands down");
+    assert.equal(leaseDecision(held(105), 100, now), "stand-down",
+        "and stands down regardless of PID order - only the holder matters");
+    assert.equal(leaseDecision(null, 50, now), "claim", "a free lease may be claimed");
+    assert.equal(leaseDecision(held(10), 50, now + 60_000), "claim", "a stale lease may be taken over");
+    // A holder still rendering has legitimately just claimed the lease, so a
+    // challenger defers to it; if it dies mid-render the lease simply goes stale.
+    assert.equal(leaseDecision({ pid: 10, phase: "rendering", updated: now }, 50, now), "stand-down",
+        "a holder that is still starting up keeps the lease");
+    assert.equal(leaseDecision({ pid: 10, phase: "rendering", updated: now }, 50, now + 60_000), "claim",
+        "but only until it goes stale");
 
-    // Nobody may be locked out by a heartbeat that is absent, stale, or unfinished.
-    assert.equal(heartbeatOwner(null, 50, now), true, "no heartbeat means the window is free");
-    assert.equal(heartbeatOwner(alive(10), 50, now + 60_000), true, "a stale heartbeat must expire");
-    assert.equal(heartbeatOwner({ pid: 10, phase: "rendering", updated: now }, 50, now), true,
-        "a deck that never reached alive does not own the window");
-    assert.equal(heartbeatOwner(alive(50), 50, now), true, "our own heartbeat is not a rival");
-
-    // And it must converge: from any set of live PIDs, exactly one survives.
+    // Exactly one holder, and every other instance stands down.
     const pids = [88, 12, 45, 103, 7];
-    const owners = pids.filter(pid =>
-        pids.every(other => other === pid || heartbeatOwner(alive(other), pid, now)));
-    assert.deepEqual(owners, [7], "exactly the lowest PID may survive");
+    const record = held(45);
+    const survivors = pids.filter(pid => leaseDecision(record, pid, now) !== "stand-down");
+    assert.deepEqual(survivors, [45], "only the lease holder may keep running");
 
     // The supervisor must stop respawning something that will not stay up.
     const start = fs.readFileSync("matrix/start.js", "utf8");
@@ -282,11 +282,26 @@ console.log("MATRIX-OS integration passed: stage transitions cannot loop.");
     // The supervisor must decide the deck is alive from the heartbeat, not ns.ps.
     // This project already learned that lesson once: bootstrap.js moved to a lock
     // file (8cb272a) and preventDuplicates was found to silently no-op (90f757a).
+    // The supervisor must never kill the deck: a killed script cannot close its
+    // own tail, and ns.ps order is not PID-ordered, so it killed a different deck
+    // every cycle. This, not any ownership rule, caused the 10-second cadence.
+    assert.ok(start.includes("kill: !service.ui"),
+        "the supervisor must not kill a windowed service");
+    // early.js is spawned once by the kernel and then the kernel is gone. The deck
+    // is the only thing launched from a loop, so the same one-shot discipline has
+    // to be imposed explicitly: cooldown checked, and it must gate the spawn.
+    const cooldownAt = start.indexOf("Date.now() - lastDeckSpawn < DECK_SPAWN_COOLDOWN");
+    assert.ok(cooldownAt > 0, "the deck spawn must be rate-limited like the kernel's one-shot launch");
+    assert.ok(start.includes('state: "settling"'), "a deck inside its cooldown must be reported, not respawned");
+    assert.ok(cooldownAt < start.indexOf("ensureOne(ns, service.file, report,"),
+        "the cooldown must gate the spawn, not follow it");
+    assert.ok(start.includes("if (service.ui && launched) lastDeckSpawn = Date.now();"),
+        "the cooldown clock must actually be set when the deck launches");
     assert.match(start, /function deckAlive/, "the supervisor needs heartbeat-based liveness for the deck");
     assert.ok(start.includes("if (service.ui && deckAlive(ns))"),
         "the supervisor must consult the heartbeat before respawning the deck");
     const uiGuard = start.indexOf("service.ui && deckAlive(ns)");
-    const uiSpawn = start.indexOf("ensureOne(ns, service.file, report)");
+    const uiSpawn = start.indexOf("ensureOne(ns, service.file, report,");
     assert.ok(uiGuard > 0 && uiGuard < uiSpawn,
         "the heartbeat check must come before the respawn, or it spawns one every cycle anyway");
     assert.ok(start.includes('via: "heartbeat"'), "heartbeat-sourced liveness must be visible in the report");

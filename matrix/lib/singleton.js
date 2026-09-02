@@ -32,22 +32,25 @@ export function holdSingleton(ns, script) {
 }
 
 /**
- * Does this process own the window, judged by a shared heartbeat file?
+ * Lease arbitration over a shared file.
  *
- * MUST be antisymmetric. Every instance writes the same file, so a naive
- * "someone else is beating" test is symmetric: A sees B, B sees A, and both
- * stand down. That mutual annihilation killed a command deck every 10 seconds.
- * Ownership is therefore ordered by PID, exactly like isSingletonOwner().
+ * Every previous attempt had EVERY instance writing the lock every 2 s. That is
+ * not a lock, it is a shared mutable variable with concurrent writers: whichever
+ * process wrote last wins the next read, so ownership thrashes and instances
+ * take turns standing down forever. Adding PID ordering did not help - it only
+ * changed who won the race.
  *
- * Pure so the ordering property can be proven rather than assumed.
+ * bootstrap.js has always done it correctly and is the model here: a challenger
+ * NEVER writes the lock. Only the holder renews it, and a lease is taken over
+ * solely when it has gone stale.
  *
- * @param {{pid:number,phase:string,updated:number}|null} beat
- * @returns {boolean} true when `selfPid` may keep running.
+ * Pure, so the concurrent behaviour can be simulated rather than assumed.
+ *
+ * @returns {"claim"|"renew"|"stand-down"}
  */
-export function heartbeatOwner(beat, selfPid, now = Date.now(), maxAgeMs = 6000) {
-    if (!beat) return true;                                  // nobody has claimed it
-    if (beat.pid === selfPid) return true;                   // our own heartbeat
-    if (beat.phase !== "alive") return true;                 // they never got up
-    if (now - Number(beat.updated ?? 0) >= maxAgeMs) return true;  // stale: they are gone
-    return beat.pid > selfPid;                               // only an older PID outranks us
+export function leaseDecision(record, selfPid, now = Date.now(), maxAgeMs = 6000) {
+    if (!record || !record.pid) return "claim";              // nobody holds it
+    if (record.pid === selfPid) return "renew";              // we hold it
+    if (now - Number(record.updated ?? 0) >= maxAgeMs) return "claim";  // holder is gone
+    return "stand-down";                                     // someone else holds it
 }

@@ -1,5 +1,5 @@
 import { CONFIG, STATE_DIR, readJson, writeJson } from "/matrix/lib/common.js";
-import { holdSingleton, heartbeatOwner } from "/matrix/lib/singleton.js";
+import { leaseDecision } from "/matrix/lib/singleton.js";
 
 const DECK = "/matrix/dashboard.jsx";
 
@@ -490,23 +490,16 @@ function App({ ns }) {
     );
 }
 
-// A second, independent ownership check that does NOT rely on ns.ps.
-//
-// The supervisor reported the deck as "started" with a fresh PID on every cycle
-// while hacking/telemetry/coordinator stayed "running" on their original PIDs -
-// so either the deck dies instantly, or ns.ps does not report it and the
-// supervisor spawns another every 5s. This guard holds under both: a live deck
-// refreshes its heartbeat every 2s, and any newcomer that sees a fresh one from
-// a different PID stands down without even rendering.
-function anotherDeckAlive(ns) {
-    return !heartbeatOwner(readJson(ns, `${STATE_DIR}/dashboard.txt`, null), ns.pid);
+const LEASE = `${STATE_DIR}/dashboard.txt`;
+
+// Read the lease. A challenger must NOT write here - only the holder renews.
+function lease(ns) {
+    return readJson(ns, LEASE, null);
 }
 
-
-// Heartbeat: where the deck got to, and how long it survived. ns.write is free.
-async function beat(ns, phase, ticks, error) {
+async function writeLease(ns, phase, ticks, error) {
     try {
-        await writeJson(ns, `${STATE_DIR}/dashboard.txt`, {
+        await writeJson(ns, LEASE, {
             service: "dashboard", updated: Date.now(), pid: ns.pid, phase, ticks,
             ...(error ? { error: String(error) } : {}),
         });
@@ -520,18 +513,21 @@ export async function main(ns) {
     // Claim ownership now and keep re-claiming below, so duplicates collapse.
     // Stand down rather than being killed: a killed script cannot close its own
     // window, which is how orphaned decks pile up on screen.
-    if (!holdSingleton(ns, DECK) || anotherDeckAlive(ns)) {
+    // Take the lease before rendering, so a duplicate never opens a window.
+    const held = lease(ns);
+    if (leaseDecision(held, ns.pid) === "stand-down") {
+        ns.tprint(`MATRIX-OS // DECK ${ns.pid} STANDING DOWN AT START (lease held by ${held?.pid})`);
         try { ns.ui.closeTail(); } catch {}
         return;
     }
-    await beat(ns, "rendering", 0);
+    await writeLease(ns, "rendering", 0);
     // The deck was dying somewhere between launch and its first heartbeat, with
     // no trace. Record the cause and put it in the terminal, where it cannot be
     // missed, instead of silently leaving another orphaned window behind.
     try {
         ns.printRaw(<App ns={ns} />);
     } catch (error) {
-        await beat(ns, "render-failed", 0, error);
+        await writeLease(ns, "render-failed", 0, error);
         ns.tprint(`MATRIX-OS // COMMAND DECK RENDER FAILED: ${error}`);
         return;
     }
@@ -548,8 +544,8 @@ export async function main(ns) {
         } catch {}
     }
     ns.ui.openTail();
-    await beat(ns, "alive", 0);
-    ns.tprint("MATRIX-OS // COMMAND DECK ONLINE");
+    await writeLease(ns, "alive", 0);
+    ns.tprint(`MATRIX-OS // COMMAND DECK ONLINE (pid ${ns.pid})`);
     // Re-assert ownership rather than trusting the one check at startup, and
     // leave a heartbeat so a deck that dies is diagnosable rather than silent.
     let ticks = 0;
@@ -557,11 +553,18 @@ export async function main(ns) {
         // Never wrap ns.sleep: catching it would swallow the game's own
         // termination signal when the script is killed.
         await ns.sleep(2000);
-        if (!holdSingleton(ns, DECK) || anotherDeckAlive(ns)) {
-            await beat(ns, "stood-down", ticks);
+        // Only the holder renews. Losing the lease means another deck took over
+        // after ours went stale, so stand down WITHOUT writing - writing here is
+        // exactly what made every instance fight over the same file.
+        const current = lease(ns);
+        if (leaseDecision(current, ns.pid) === "stand-down") {
+            // Reported to the TERMINAL, not the lease: a challenger must never
+            // write it. If a deck vanishes without printing this, it did not
+            // choose to exit - something else killed it.
+            ns.tprint(`MATRIX-OS // DECK ${ns.pid} LOST LEASE TO ${current?.pid} AFTER ${ticks} TICKS`);
             try { ns.ui.closeTail(); } catch {}
             return;
         }
-        await beat(ns, "alive", ++ticks);
+        await writeLease(ns, "alive", ++ticks);
     }
 }

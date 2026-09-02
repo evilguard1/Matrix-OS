@@ -81,11 +81,18 @@ function processes(ns, file) {
 // just shows OFFLINE with no reason. ns.getScriptRam() is the authority on cost
 // (it knows the real Source-File multipliers a static analyser cannot), so
 // report its answer rather than discarding it.
-function ensureOne(ns, file, report) {
+function ensureOne(ns, file, report, { kill = true } = {}) {
     const matches = processes(ns, file);
-    for (const process of matches.slice(1)) {
-        try { ns.ui.closeTail(process.pid); } catch {}
-        try { ns.kill(process.pid); } catch {}
+    // NEVER kill a script that owns a window. A killed script cannot run its own
+    // closeTail(), so every kill leaves an orphaned tail behind - and ns.ps order
+    // is not guaranteed to be PID-ordered, so this killed a DIFFERENT deck each
+    // cycle. That, not any ownership rule, is what produced a dead deck every ten
+    // seconds. Windowed services stand down voluntarily through their lease.
+    if (kill) {
+        for (const process of matches.slice(1)) {
+            try { ns.ui.closeTail(process.pid); } catch {}
+            try { ns.kill(process.pid); } catch {}
+        }
     }
     if (matches.length) {
         report?.push({ file, state: "running", pid: matches[0].pid });
@@ -200,6 +207,12 @@ export async function main(ns) {
     // tail window each time. Give up after a few tries and report it instead.
     let deckRestarts = 0;
     const DECK_RESTART_LIMIT = 3;
+    // early.js works because the kernel spawns it ONCE and then the kernel is
+    // gone. The deck is the only thing launched from a loop that re-evaluates
+    // every 5s, so it needs the same one-shot discipline imposed explicitly:
+    // after launching, leave it alone long enough to take its lease.
+    let lastDeckSpawn = 0;
+    const DECK_SPAWN_COOLDOWN = 15_000;
 
     while (true) {
         if (!holdSingleton(ns, "/matrix/start.js")) {
@@ -255,6 +268,10 @@ export async function main(ns) {
                 report.push({ file: service.file, state: "restart-loop", restarts: deckRestarts });
                 continue;
             }
+            if (service.ui && Date.now() - lastDeckSpawn < DECK_SPAWN_COOLDOWN) {
+                report.push({ file: service.file, state: "settling" });
+                continue;
+            }
             if (service.sf !== undefined && !hasSourceFile(reset, service.sf)) {
                 report.push({ file: service.file, state: "needs-source-file", sf: service.sf });
                 continue;
@@ -268,7 +285,8 @@ export async function main(ns) {
                 report.push({ file: service.file, state: "needs-home-ram", minRam: service.minRam });
                 continue;
             }
-            ensureOne(ns, service.file, report);
+            const launched = ensureOne(ns, service.file, report, { kill: !service.ui });
+            if (service.ui && launched) lastDeckSpawn = Date.now();
         }
         const deckEntry = report.find(entry => entry.file === DASHBOARD);
         if (deckEntry?.state === "started") deckRestarts++;
