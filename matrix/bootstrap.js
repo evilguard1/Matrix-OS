@@ -120,11 +120,15 @@ function draw(ns, state) {
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
     const stamp = Date.now();
-    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) return false;
-    let sha = "";
-    try { sha = String(JSON.parse(ns.read(RELEASE_META)).sha ?? ""); } catch {}
-    if (!/^[a-f0-9]{40}$/i.test(sha)) return false;
-    if (!await ns.wget(`https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`, INSTALLER, "home")) return false;
+    let sha = "main";
+    if (await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) {
+        try {
+            const parsed = String(JSON.parse(ns.read(RELEASE_META)).sha ?? "");
+            if (/^[a-f0-9]{40}$/i.test(parsed)) sha = parsed;
+        } catch {}
+    }
+    const installerUrl = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
+    if (!await ns.wget(installerUrl, INSTALLER, "home")) return false;
     ns.rm(UPDATE_REQUEST, "home");
     ns.ui.closeTail();
     ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
@@ -133,8 +137,12 @@ async function handoffInstaller(ns, requested) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    // Validate the lock PID is actually running THIS script, not just any process
     const lockPid = Number(ns.read(LOCK));
-    if (lockPid && lockPid !== ns.pid && ns.isRunning(lockPid)) return;
+    if (lockPid && lockPid !== ns.pid) {
+        const isBootstrap = ns.ps("home").some(p => p.pid === lockPid && String(p.filename).includes("bootstrap"));
+        if (isBootstrap) return;
+    }
     await ns.write(LOCK, String(ns.pid), "w");
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // FRESH-SAVE KERNEL"); } catch {}
