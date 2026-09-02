@@ -8,19 +8,22 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "0.9.6",
+    version: "0.9.7",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
     automation: {
         rooting: true, hacking: true, cloud: true, hacknet: true,
-        contracts: true, stock: true, singularity: true, gang: true,
+        contracts: true, stock: true, singularity: true, gang: true, go: true,
         sleeves: true, bladeburner: true, corporation: true, progression: true,
     },
     economy: {
         cashReserve: 10_000_000, reserveFraction: 0.15,
         cloudBudgetFraction: 0.12, hacknetBudgetFraction: 0.04, stockBudgetFraction: 0.25,
     },
+    // Pin `opponent` to chase a specific bonus; null climbs the ladder by
+    // results, which is what actually maximises node power.
+    go: { opponent: null, boardSize: 5 },
     hacking: {
         homeReserveGb: 2, fullEngineHomeRam: 32, batchGapMs: 120,
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,

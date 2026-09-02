@@ -4,7 +4,7 @@ import { leaseDecision } from "/matrix/lib/singleton.js";
 const DECK = "/matrix/dashboard.jsx";
 
 const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
-const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "bladeburner", "corporation"];
+const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "bladeburner", "corporation"];
 
 function money(value) {
     if (!Number.isFinite(value)) return "--";
@@ -461,7 +461,7 @@ function Economy({ data }) {
 }
 
 function Progress({ data }) {
-    const player = data.player ?? {}, services = data.services ?? {}, goal = services.singularity?.goal, coord = services.coordinator ?? {};
+    const player = data.player ?? {}, services = data.services ?? {}, goal = services.singularity?.goal, coord = services.coordinator ?? {}, go = services.go ?? {};
     const skills = ["strength", "defense", "dexterity", "agility", "charisma", "intelligence"];
 
     return (
@@ -509,6 +509,18 @@ function Progress({ data }) {
                         <div className="mxMeter cyan"><i style={{ width: `${meter(coord.milestone.pct)}%` }} /></div>
                     </div>
                 ) : null}
+            </Panel>
+            <Panel title="Subnet control // IPvGO" right={go.status === "unavailable" ? "NOT IN THIS BITNODE" : (go.opponent ?? "STANDBY")} span={12}>
+                {go.status && go.status !== "unavailable" ? (
+                    <>
+                        <div className="mxRow"><span>opponent</span><span>{go.opponent ?? "-"}</span></div>
+                        <div className="mxRow"><span>permanent bonus</span><span style={{ color: COLOR.mint }}>{go.bonus ?? "-"}</span></div>
+                        <div className="mxRow"><span>routers held</span><span>{go.routers ?? 0} vs {go.enemyRouters ?? 0} · {go.open ?? 0} open</span></div>
+                        <div className="mxRow"><span>record</span><span>{go.totalWins ?? 0} won of {go.games ?? 0} · streak {go.wins ?? 0}</span></div>
+                    </>
+                ) : (
+                    <div className="mxEmpty">{go.status === "unavailable" ? "IPVGO NOT PRESENT IN THIS BITNODE" : "SUBNET ENGINE STANDING BY"}</div>
+                )}
             </Panel>
             <Panel title="Faction network" right={`${data.factions?.joined?.length ?? player.factions?.length ?? 0} LINKED / ${data.factions?.eligible?.length ?? 0} WAITING`} span={12}>
                 <FactionIntel data={data} />

@@ -54,6 +54,9 @@ export const SERVICES = [
     { file: "/matrix/services/root.js", key: "rooting", minRam: 64 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
+    // IPvGO needs no Source-File at all, and each opponent grants a permanent
+    // multiplier - hacking money and faster hack/grow/weaken among them.
+    { file: "/matrix/services/go.js", key: "go", minRam: 64 },
     // 128 GB: + 21.8 + 33.2
     { file: "/matrix/services/contracts.js", key: "contracts", minRam: 64 },
     { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
