@@ -52,6 +52,66 @@ Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
 
+### 0.9.3 verification status — the deck respawn is SOLVED
+
+Root cause, found by auditing what the React tree was allowed to touch:
+
+```js
+// matrix/dashboard.jsx, before 0.9.3
+React.useEffect(() => {
+    const id = setInterval(() => {
+        setData(state(ns));                    // ns.read, ns.getServerMoneyAvailable
+        setConfig(readJson(ns, CONFIG, {}));   // ns.read
+    }, refresh);
+}, [ns, refresh]);
+```
+
+Bitburner binds the `ns` API to the script's own execution context. That
+`setInterval` callback runs on the browser's timer, and the `Toggle` click
+handler ran on a DOM event — both outside that context. An `ns` call from there
+tears the script down **without running any of our error paths**: no terminal
+message, no `STANDING DOWN`, no `LOST LEASE`, no final heartbeat. The tail
+window is left on screen as a corpse with a ▶ restart button, and the supervisor
+launches a fresh deck ~10 s later once the heartbeat goes stale.
+
+That accounts for every observation that had ruled everything else out:
+- new deck pid with **no** voluntary-exit message printed (the exit never ran)
+- `deckRestarts: 0` and `stageStuck: false` (nothing in MATRIX was killing it)
+- the pile of windows (killed scripts do not close their own tails)
+- ▶ "refreshing" the deck (that button reruns the script)
+- income untouched — pids 76/78/79 stable (no other service calls ns off-context)
+
+It is also exactly what distinguishes `early.js`, which never had this bug:
+early.js draws with `ns.print` from **inside its own `while` loop**. The user
+said repeatedly that something differentiated early.js from the deck. That was it.
+
+**Fix.** `main()` is now the sole owner of every `ns` call. It publishes a plain
+snapshot into a module-level `store` and drains commands the UI queues; the
+React tree is a pure function of that snapshot and names `ns` nowhere. Config
+toggles post `{type:"config"}` to the store and are written by `main()`.
+
+**Verification.**
+- `tests/render-deck.mjs` now statically enforces the containment rule: only
+  `state`, `lease`, `writeLease`, `publish`, `applyCommands` and `main` may
+  reference `ns`. Reintroducing the old `useEffect` fails the test — checked by
+  actually reverting the fix, not by assuming.
+- The same test fuzzes 19 degenerate telemetry shapes × 5 tabs (1134 component
+  bodies). This found two real crashes that the previous single happy-path
+  render missed: `milestone.pct.toFixed()` on a milestone without `pct`, and
+  destructuring a non-pair `sourceFiles` entry. Both fixed and guarded.
+- A `DeckBoundary` error boundary now catches a bad frame and renders the stack
+  in-place instead of letting the render kill the script.
+- `dashboard.jsx` still costs 1.9 GB. `npm test` green, `git diff --check` clean.
+
+**Honest limits.** This was verified statically and against the mock harness, not
+by watching the game — the reasoning chain from the mechanism to every observed
+symptom is what supports it. Two of the three crashes fixed here (`pct`,
+`sourceFiles`) are hardening, not the live bug: the current coordinator always
+sets `pct`. If a deck still dies after this, the boundary and heartbeat now make
+it diagnosable rather than silent, and the remaining suspects — `kernel.js`
+`STAGE_SCRIPTS` and `install.js` `MATRIX_PROGRAMS` — were both audited here and
+only run on a stage change or an explicit update, neither of which was firing.
+
 ### 0.8.3 verification status
 
 0.8.2's singleton made the problem WORSE - six decks instead of three - and the

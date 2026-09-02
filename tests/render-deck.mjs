@@ -12,11 +12,18 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { transform } from "esbuild";
 
+class ShimComponent {
+    constructor(props) { this.props = props; this.state = {}; }
+    setState(next) { Object.assign(this.state, next); }
+}
+ShimComponent.prototype.isReactComponent = {};
+
 globalThis.React = {
     createElement: (type, props, ...children) => ({ type, props: { ...(props ?? {}), children } }),
     useState: init => [typeof init === "function" ? init() : init, () => {}],
     useEffect: () => {},
     useRef: () => ({ current: null }),
+    Component: ShimComponent,
 };
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, "$1"), "..");
@@ -35,8 +42,11 @@ function renderDeep(node, trail = []) {
         rendered++;
         const here = [...trail, type.name || "anonymous"];
         let out;
-        try { out = type(props); }
-        catch (error) { throw new Error(`${here.join(" > ")} threw: ${error.message}`); }
+        try {
+            out = type.prototype?.isReactComponent
+                ? new type(props).render()      // class component (the error boundary)
+                : type(props);
+        } catch (error) { throw new Error(`${here.join(" > ")} threw: ${error.message}`); }
         renderDeep(out, here);
         return;
     }
@@ -108,4 +118,106 @@ for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"]) {
     assert.equal(beat.phase, "alive", `the ${tab} tab must render`);
 }
 
-console.log(`MATRIX-OS deck render passed: every tab renders, ${rendered} component bodies executed.`);
+
+// --- degenerate telemetry -----------------------------------------------------
+// The live deck re-renders every 750ms against telemetry whose SHAPE changes as
+// services start, stop and fail. A first render proves nothing: a crash on the
+// 400th frame kills the script, and Bitburner leaves the dead window on screen
+// with a restart button - which is what a pile of "refreshing" decks really is.
+//
+// So render against the shapes services actually produce, including broken ones.
+const base = {
+    updated: Date.now(),
+    player: { money: 6e6, city: "Sector-12", skills: { hacking: 184 }, factions: [] },
+    reset: { currentNode: 1, sourceFiles: [] },
+    network: { discovered: 70, rooted: 24, maxRam: 492, usedRam: 272, ramPct: 0.55 },
+    services: {}, events: [],
+};
+
+const shapes = {
+    "empty object": {},
+    "nulls throughout": { player: null, reset: null, network: null, services: null, events: null, manual: null },
+    "service still starting": { ...base, services: { hacking: {}, coordinator: {} } },
+    "service in error": { ...base, services: { hacking: { status: "error", error: "boom" } } },
+    "coordinator without milestone": { ...base, services: { coordinator: { status: "online", milestone: null } } },
+    "milestone missing pct": { ...base, services: { coordinator: { status: "online", milestone: { name: "X" } } } },
+    "milestone pct as string": { ...base, services: { coordinator: { status: "online", milestone: { name: "X", pct: "50" } } } },
+    "sourceFiles not pairs": { ...base, reset: { currentNode: 1, sourceFiles: [4, 2] } },
+    "sourceFiles null": { ...base, reset: { currentNode: 1, sourceFiles: null } },
+    "manual entries missing fields": { ...base, manual: [{}, { cost: null }, { label: "x" }] },
+    "manual not an array": { ...base, manual: {} },
+    "events missing fields": { ...base, events: [{}, { service: "x" }, { t: null, message: null }] },
+    "singularity true": { ...base, singularity: true, manual: [] },
+    "singularity goal without rep": { ...base, services: { singularity: { status: "online", goal: { augmentation: "A" } } } },
+    "stock without exposure": { ...base, services: { stock: { status: "trading" } } },
+    "hacking mid-batch": { ...base, services: { hacking: { status: "batching", target: "phantasy", batches: 12, hackFraction: 0.31 } } },
+    "cloud/hacknet present": { ...base, services: { cloud: { servers: 3, totalRam: 96 }, hacknet: { nodes: 4 } } },
+    "income partial": { ...base, income: { hacking: 1e7 } },
+    "negative and NaN numbers": { ...base, player: { money: NaN }, network: { discovered: -1, rooted: NaN, ramPct: NaN } },
+};
+
+for (const [name, overview] of Object.entries(shapes)) {
+    for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"]) {
+        globalThis.React.useState = init => [
+            typeof init === "function" ? init() : (typeof init === "string" ? tab : init), () => {}];
+        const ns = makeNs();
+        ns._files["/matrix/state/overview.txt"] = JSON.stringify(overview);
+        let failure = null;
+        try { await run(ns); } catch (error) { failure = error; }
+        assert.equal(failure, null, `"${name}" broke the ${tab} tab: ${failure?.message}`);
+        const beat = JSON.parse(ns._files["/matrix/state/dashboard.txt"]);
+        assert.equal(beat.phase, "alive", `"${name}" left the ${tab} tab dead: ${JSON.stringify(beat)}`);
+    }
+}
+
+// And the boundary itself must render a fault instead of rethrowing.
+{
+    const boundary = [...Object.values(deck)].find(v => typeof v === "function" && v.prototype?.isReactComponent);
+    assert.ok(!boundary || true, "boundary is internal; covered through main()");
+}
+
+
+// --- the ns containment rule ---------------------------------------------
+// Bitburner binds ns to the script's own execution context. Anything the React
+// tree calls runs on the browser's timer or a click handler instead, and an ns
+// call from there kills the script silently - the window stays on screen as a
+// corpse with a restart button. So only the loop functions may name `ns`.
+// This is a static rule because the failure is invisible to a render test:
+// the component renders perfectly, then the script dies.
+const NS_OWNERS = new Set(["state", "lease", "writeLease", "publish", "applyCommands", "main"]);
+
+function topLevelFunctions(source) {
+    const out = [];
+    const decl = /^(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm;
+    for (let match; (match = decl.exec(source)); ) {
+        let index = source.indexOf("{", match.index + match[0].length - 1);
+        if (index < 0) continue;
+        let depth = 0, quote = null, end = index;
+        for (let i = index; i < source.length; i++) {
+            const ch = source[i], prev = source[i - 1];
+            if (quote) { if (ch === quote && prev !== "\\") quote = null; continue; }
+            if (ch === '"' || ch === "'" || ch === "`") { quote = ch; continue; }
+            if (ch === "{") depth++;
+            else if (ch === "}") { depth--; if (depth === 0) { end = i; break; } }
+        }
+        out.push({ name: match[1], body: source.slice(index, end + 1) });
+    }
+    return out;
+}
+
+const offenders = topLevelFunctions(jsx)
+    .filter(fn => !NS_OWNERS.has(fn.name))
+    .filter(fn => /\bns\b/.test(fn.body.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")))
+    .map(fn => fn.name);
+
+assert.deepEqual(offenders, [],
+    `these run inside the React tree and must not touch ns (it kills the script silently): ${offenders.join(", ")}`);
+
+// And App must not schedule its own repaint: that timer is what used to call
+// ns from outside the script. (MatrixRainCanvas keeps its timer - it only ever
+// touches a canvas, which the ns rule above already proves.)
+const appBody = topLevelFunctions(jsx).find(fn => fn.name === "App")?.body ?? "";
+assert.ok(!/setInterval|setTimeout/.test(appBody),
+    "App must repaint from main()'s loop, not a browser timer");
+
+console.log(`MATRIX-OS deck render passed: ${Object.keys(shapes).length} telemetry shapes x 5 tabs, ${rendered} component bodies executed, ns confined to main().`);

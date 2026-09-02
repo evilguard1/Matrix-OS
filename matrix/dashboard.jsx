@@ -14,6 +14,11 @@ function money(value) {
 }
 function ram(value) { if (!Number.isFinite(value)) return "--"; if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} PB`; if (value >= 1024) return `${(value / 1024).toFixed(1)} TB`; return `${value.toFixed(value < 10 ? 1 : 0)} GB`; }
 function percent(value) { return `${Math.max(0, Math.min(100, (value ?? 0) * 100)).toFixed(1)}%`; }
+// Percentages arrive from other services through state files, so any field can
+// be absent, null or a string for a frame. A bad number must degrade, never
+// throw: an exception here kills the deck script, and Bitburner leaves the dead
+// window on screen with a restart button rather than closing it.
+function meter(value) { const n = Number(value); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0; }
 function age(time) { if (!time) return "OFFLINE"; const seconds = Math.max(0, (Date.now() - time) / 1000); return seconds < 3 ? "LIVE" : seconds < 60 ? `${seconds.toFixed(0)} SEC AGO` : `${(seconds / 60).toFixed(0)} MIN AGO`; }
 
 function state(ns) {
@@ -22,6 +27,40 @@ function state(ns) {
     const bootstrap = readJson(ns, `${STATE_DIR}/bootstrap.txt`, {}), early = readJson(ns, `${STATE_DIR}/early.txt`, {});
     const boot = (early.updated ?? 0) > (bootstrap.updated ?? 0) ? early : bootstrap;
     return { updated: boot.updated ?? 0, player: { money: ns.getServerMoneyAvailable("home") }, network: { discovered: boot.discovered ?? 0, rooted: boot.rooted ?? 0, maxRam: boot.homeRam ?? 0, ramPct: 0 }, services: { bootstrap: { status: boot.status ?? "starting" }, hacking: { status: boot.phase ?? "bootstrap", target: boot.target ?? "n00dles" } }, events: [] };
+}
+
+// ---------------------------------------------------------------------------
+// The React tree must NEVER touch `ns`.
+//
+// Bitburner binds the ns API to the script's own execution context. Calling it
+// from a setInterval callback or a click handler runs it on the browser's timer
+// instead, and the game tears the script down without running any of our error
+// paths - no terminal message, no heartbeat, just a dead window left on screen
+// with a restart button. That is exactly the "deck respawns every ~10s" symptom,
+// and it is the one thing early.js - which draws from inside its own loop -
+// never did.
+//
+// So main() owns every ns call: it publishes a plain snapshot here and drains
+// commands the UI queues. The UI is a pure function of that snapshot.
+// ---------------------------------------------------------------------------
+const store = {
+    snapshot: { data: {}, config: {} },
+    listeners: new Set(),
+    commands: [],
+    publish(snapshot) {
+        store.snapshot = snapshot;
+        // One broken subscriber must not stop the others, or stop main().
+        for (const listener of [...store.listeners]) { try { listener(); } catch {} }
+    },
+    subscribe(listener) { store.listeners.add(listener); return () => store.listeners.delete(listener); },
+    send(command) { store.commands.push(command); },
+    drain() { const pending = store.commands; store.commands = []; return pending; },
+};
+
+function useStore() {
+    const [, force] = React.useState(0);
+    React.useEffect(() => store.subscribe(() => force(n => n + 1)), []);
+    return store.snapshot;
 }
 
 // Deliberately does NOT touch window or document. Bitburner charges 25 GB
@@ -96,7 +135,10 @@ function serviceColor(status) { if (["online", "batching", "preparing", "trading
 const SF_REQUIRED = { singularity: 4, progression: 4, gang: 2, sleeves: 10, bladeburner: 6, corporation: 3 };
 function Service({ name, value, sourceFiles }) {
     const need = SF_REQUIRED[name];
-    const owned = need ? (sourceFiles ?? []).some(([n]) => n === need) : true;
+    // Telemetry serialises ownedSF as [n, lvl] pairs, but accept the {n, lvl}
+    // shape too and skip anything else rather than destructuring a non-array.
+    const owned = need ? (Array.isArray(sourceFiles) ? sourceFiles : []).some(entry =>
+        Number(Array.isArray(entry) ? entry[0] : entry?.n) === need) : true;
     const status = value?.status ?? (need && !owned ? `needs SF${need}` : "offline");
     const color = need && !owned && !value ? COLOR.dim : serviceColor(value?.status ?? "offline");
     return <div className="mxRow"><span className="mxServiceName"><i className="mxDot" style={{ color }} />{name}</span><span className="mxServiceStatus" style={{ color }}>{String(status).toUpperCase()}</span></div>;
@@ -133,7 +175,7 @@ function ManualActions({ data }) {
         </>
     );
 }
-function Toggle({ ns, config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = async () => { const next = JSON.parse(JSON.stringify(config)); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; await ns.write(CONFIG, JSON.stringify(next, null, 2), "w"); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
+function Toggle({ config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = () => { const next = JSON.parse(JSON.stringify(config ?? {})); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; store.send({ type: "config", value: next }); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
 
 function Overview({ data }) {
     const services = data.services ?? {}, network = data.network ?? {}, hacking = services.hacking ?? {}, player = data.player ?? {}, income = data.income ?? {}, coord = services.coordinator ?? {}, target = hacking.target ?? "SCANNING", phase = hacking.phase ?? hacking.status ?? "BOOTSTRAP", rootRate = network.discovered ? network.rooted / network.discovered : 0;
@@ -222,9 +264,9 @@ function Overview({ data }) {
                     <div style={{ marginTop: 10 }}>
                         <div className="mxRow" style={{ padding: "2px 0", border: 0 }}>
                             <span style={{ fontSize: 9, color: COLOR.dim }}>{milestone.name}</span>
-                            <span style={{ fontSize: 9, color: COLOR.mint }}>{milestone.pct.toFixed(1)}%</span>
+                            <span style={{ fontSize: 9, color: COLOR.mint }}>{meter(milestone.pct).toFixed(1)}%</span>
                         </div>
-                        <div className="mxMeter"><i style={{ width: `${Math.min(100, milestone.pct)}%` }} /></div>
+                        <div className="mxMeter"><i style={{ width: `${meter(milestone.pct)}%` }} /></div>
                     </div>
                 ) : null}
             </Panel>
@@ -388,9 +430,9 @@ function Progress({ data }) {
                     <div style={{ marginTop: 10 }}>
                         <div className="mxRow" style={{ border: 0, padding: 0 }}>
                             <span style={{ fontSize: 10, color: COLOR.dim }}>{coord.milestone.name}</span>
-                            <span style={{ fontSize: 10, color: COLOR.mint }}>{coord.milestone.pct.toFixed(1)}%</span>
+                            <span style={{ fontSize: 10, color: COLOR.mint }}>{meter(coord.milestone.pct).toFixed(1)}%</span>
                         </div>
-                        <div className="mxMeter cyan"><i style={{ width: `${Math.min(100, coord.milestone.pct)}%` }} /></div>
+                        <div className="mxMeter cyan"><i style={{ width: `${meter(coord.milestone.pct)}%` }} /></div>
                     </div>
                 ) : null}
             </Panel>
@@ -410,19 +452,19 @@ function Progress({ data }) {
     );
 }
 
-function Settings({ ns, config }) {
+function Settings({ config }) {
     return (
         <div className="mxGrid">
             <Panel title="Autopilot authority" right="PERSISTENT CONFIGURATION" span={12}>
                 <div className="mxSettings">
-                    <Toggle ns={ns} config={config} path="masterEnabled" label="AUTOPILOT" />
+                    <Toggle config={config} path="masterEnabled" label="AUTOPILOT" />
                 </div>
                 <div className="mxHint" style={{ marginTop: 16 }}>
                     Every control is saved to /matrix/config.json. The running managers read it on their next cycle.
                 </div>
                 <div className="mxSettings">
                     {Object.keys(config.automation ?? {}).map(key => (
-                        <Toggle key={key} ns={ns} config={config} path={`automation.${key}`} label={key.toUpperCase()} />
+                        <Toggle key={key} config={config} path={`automation.${key}`} label={key.toUpperCase()} />
                     ))}
                 </div>
             </Panel>
@@ -430,19 +472,41 @@ function Settings({ ns, config }) {
     );
 }
 
-function App({ ns }) {
-    const [data, setData] = React.useState(() => state(ns));
-    const [config, setConfig] = React.useState(() => readJson(ns, CONFIG, {}));
-    const [tab, setTab] = React.useState("OVERVIEW");
-    const refresh = Math.max(350, config.ui?.refreshMs ?? 750);
+// The deck re-renders every 750ms against telemetry that changes shape as
+// services come and go. A render that throws on the 400th tick would kill the
+// script - and Bitburner leaves the dead window on screen with a restart button,
+// which is exactly what a pile of "refreshing" decks turns out to be.
+//
+// An error boundary makes a bad frame survivable: the deck shows what broke
+// instead of dying and orphaning its window.
+class DeckBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { error: null };
+    }
+    static getDerivedStateFromError(error) {
+        return { error };
+    }
+    render() {
+        if (!this.state.error) return this.props.children;
+        return (
+            <div className="mxRoot" style={{ padding: 24 }}>
+                <div className="mxLogo">COMMAND DECK FAULT</div>
+                <div className="mxHint" style={{ marginTop: 12, color: COLOR.amber }}>
+                    A panel threw while rendering. The deck stayed up so the fault is visible
+                    instead of leaving a dead window behind.
+                </div>
+                <pre style={{ marginTop: 16, color: COLOR.red, fontSize: 11, whiteSpace: "pre-wrap" }}>
+                    {String(this.state.error?.stack ?? this.state.error)}
+                </pre>
+            </div>
+        );
+    }
+}
 
-    React.useEffect(() => {
-        const id = setInterval(() => {
-            setData(state(ns));
-            setConfig(readJson(ns, CONFIG, {}));
-        }, refresh);
-        return () => clearInterval(id);
-    }, [ns, refresh]);
+function App() {
+    const { data, config } = useStore();
+    const [tab, setTab] = React.useState("OVERVIEW");
 
     const tabs = ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"];
     const content =
@@ -453,7 +517,7 @@ function App({ ns }) {
         ) : tab === "PROGRESS" ? (
             <Progress data={data} />
         ) : tab === "SETTINGS" ? (
-            <Settings ns={ns} config={config} />
+            <Settings config={config} />
         ) : (
             <Overview data={data} />
         );
@@ -506,6 +570,27 @@ async function writeLease(ns, phase, ticks, error) {
     } catch {}
 }
 
+// Every ns call in the deck happens here, in the script's own context.
+function publish(ns) {
+    let data = {}, settings = {};
+    try { data = state(ns) ?? {}; } catch {}
+    try { settings = readJson(ns, CONFIG, {}); } catch {}
+    store.publish({ data, config: settings });
+}
+
+// Config toggles are queued by the UI and applied here, never in the handler.
+async function applyCommands(ns) {
+    for (const command of store.drain()) {
+        if (command?.type !== "config") continue;
+        try { await ns.write(CONFIG, JSON.stringify(command.value, null, 2), "w"); } catch {}
+    }
+}
+
+function refreshMs(settings) {
+    const value = Number(settings?.ui?.refreshMs);
+    return Math.max(350, Number.isFinite(value) && value > 0 ? value : 750);
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.clearLog();
@@ -524,8 +609,10 @@ export async function main(ns) {
     // The deck was dying somewhere between launch and its first heartbeat, with
     // no trace. Record the cause and put it in the terminal, where it cannot be
     // missed, instead of silently leaving another orphaned window behind.
+    // The tree renders from the snapshot, so fill it before mounting.
+    publish(ns);
     try {
-        ns.printRaw(<App ns={ns} />);
+        ns.printRaw(<DeckBoundary><App /></DeckBoundary>);
     } catch (error) {
         await writeLease(ns, "render-failed", 0, error);
         ns.tprint(`MATRIX-OS // COMMAND DECK RENDER FAILED: ${error}`);
@@ -549,10 +636,19 @@ export async function main(ns) {
     // Re-assert ownership rather than trusting the one check at startup, and
     // leave a heartbeat so a deck that dies is diagnosable rather than silent.
     let ticks = 0;
+    let lastBeat = 0;
     while (true) {
         // Never wrap ns.sleep: catching it would swallow the game's own
         // termination signal when the script is killed.
-        await ns.sleep(2000);
+        await ns.sleep(refreshMs(store.snapshot.config));
+        await applyCommands(ns);
+        // Drives the UI from OUR context. The tree never calls ns itself.
+        publish(ns);
+
+        // The lease is a 2s concern; the repaint is a 750ms one. Keep them
+        // apart so a fast refresh does not hammer the state file.
+        if (Date.now() - lastBeat < 2000) continue;
+        lastBeat = Date.now();
         // Only the holder renews. Losing the lease means another deck took over
         // after ours went stale, so stand down WITHOUT writing - writing here is
         // exactly what made every instance fight over the same file.
