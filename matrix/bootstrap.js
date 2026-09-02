@@ -53,20 +53,30 @@ export function chooseStarterAction(money, maxMoney, security, minSecurity) {
     return "hack";
 }
 
+const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+let tick = 0;
+
 function draw(ns, state) {
     ns.clearLog();
-    ns.print("MATRIX // FRESH-SAVE KERNEL");
-    ns.print("========================================");
-    ns.print("PHASE       : BOOTSTRAP / 8 GB");
-    ns.print(`STATUS      : ${state.action.toUpperCase()}`);
-    ns.print(`TARGET      : ${state.target}`);
-    ns.print(`MONEY       : ${ns.format.number(ns.getServerMoneyAvailable("home"), 2)}`);
-    ns.print(`NETWORK     : ${state.rooted}/${state.discovered} ROOTED`);
-    ns.print(`HOME RAM    : ${ns.format.ram(ns.getServerMaxRam("home"))}`);
-    ns.print(`HACK LEVEL  : ${ns.getHackingLevel()}`);
-    ns.print("----------------------------------------");
-    ns.print("MATRIX is actively hacking while this window is open.");
-    ns.print("16 GB unlocks distributed workers; 32 GB unlocks full MATRIX.");
+    const spin = SPINNER[(tick++) % SPINNER.length];
+    const moneyStr = ns.format.number(ns.getServerMoneyAvailable("home"), 2);
+    const maxRam = ns.format.ram(ns.getServerMaxRam("home"));
+    const hackLvl = ns.getHackingLevel();
+    const rootPct = Math.floor((state.rooted / Math.max(1, state.discovered)) * 16);
+    const bar = "█".repeat(rootPct) + "░".repeat(16 - rootPct);
+
+    ns.print(`╔══════════════════════════════════════════════════════════╗`);
+    ns.print(`║  M A T R I X  //  F R E S H - S A V E   K E R N E L      ║`);
+    ns.print(`╠══════════════════════════════════════════════════════════╣`);
+    ns.print(`║  ${spin} STAGE       : BOOTSTRAP / 8 GB                         ║`);
+    ns.print(`║  ${spin} ACTION      : ${state.action.toUpperCase().padEnd(10)}                       ║`);
+    ns.print(`║  🎯 TARGET      : ${state.target.padEnd(20)}                   ║`);
+    ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
+    ns.print(`║  🌐 NETWORK     : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
+    ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}  │  HACK SKILL: ${String(hackLvl).padEnd(6)}  ║`);
+    ns.print(`╠══════════════════════════════════════════════════════════╣`);
+    ns.print(`║  16 GB -> Distributed Workers │ 32 GB -> Full MATRIX Deck ║`);
+    ns.print(`╚══════════════════════════════════════════════════════════╝`);
 }
 
 async function handoffInstaller(ns, requested) {

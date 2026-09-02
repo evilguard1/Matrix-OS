@@ -39,18 +39,29 @@ async function deploy(ns, hosts, target) {
     return threads;
 }
 
+const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+let tick = 0;
+
 function draw(ns, state) {
     ns.clearLog();
-    ns.print("MATRIX // DISTRIBUTED EARLY ENGINE");
-    ns.print("========================================");
-    ns.print("PHASE       : EARLY / 16 GB");
-    ns.print(`TARGET      : ${state.target}`);
-    ns.print(`WORKERS     : ${state.threads} THREADS`);
-    ns.print(`NETWORK     : ${state.rooted}/${state.discovered} ROOTED`);
-    ns.print(`MONEY       : ${ns.format.number(ns.getServerMoneyAvailable("home"), 2)}`);
-    ns.print(`HOME RAM    : ${ns.format.ram(ns.getServerMaxRam("home"))}`);
-    ns.print("----------------------------------------");
-    ns.print("32 GB unlocks HWGW, telemetry, and the full dashboard.");
+    const spin = SPINNER[(tick++) % SPINNER.length];
+    const moneyStr = ns.format.number(ns.getServerMoneyAvailable("home"), 2);
+    const maxRam = ns.format.ram(ns.getServerMaxRam("home"));
+    const rootPct = Math.floor((state.rooted / Math.max(1, state.discovered)) * 16);
+    const bar = "█".repeat(rootPct) + "░".repeat(16 - rootPct);
+
+    ns.print(`╔══════════════════════════════════════════════════════════╗`);
+    ns.print(`║  M A T R I X  //  E A R L Y   E N G I N E (1 6 G B)     ║`);
+    ns.print(`╠══════════════════════════════════════════════════════════╣`);
+    ns.print(`║  ${spin} STAGE       : DISTRIBUTED EARLY                        ║`);
+    ns.print(`║  🎯 TARGET      : ${state.target.padEnd(20)}                   ║`);
+    ns.print(`║  ⚙️ WORKERS     : ${String(state.threads).padEnd(6)} THREADS                    ║`);
+    ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
+    ns.print(`║  🌐 BOTNET      : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
+    ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}                              ║`);
+    ns.print(`╠══════════════════════════════════════════════════════════╣`);
+    ns.print(`║  32 GB -> Unlocks HWGW Scheduler & React Command Deck     ║`);
+    ns.print(`╚══════════════════════════════════════════════════════════╝`);
 }
 
 async function handoffInstaller(ns, requested) {
