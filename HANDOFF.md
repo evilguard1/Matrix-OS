@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.5.1`
+Current release/version: `0.6.0`
 
 ## Quick Start
 
@@ -51,6 +51,17 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.6.0 verification status
+
+`matrix/lib/capabilities.js` computes Home RAM and purchased-server prices from
+Bitburner's own formulas; `tests/validate.mjs` pins them against known values and
+asserts no manual action can overflow its HUD column, that every box line renders
+to an identical width, and that `bestServerBuy` never returns a server too small
+to host a worker. Singularity is feature-detected through `getResetInfo()` (0 GB).
+The relaxed service gates rely on `ensureOne()`'s existing RAM-fit check; that
+path is unchanged but the wider set of services it now admits has NOT been
+runtime-tested on a save with Source Files.
 
 ### 0.5.0 verification status
 

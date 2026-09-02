@@ -185,6 +185,89 @@ its own local default, so removing the coordinator is always safe.
 
 ---
 
+## The automation ceiling, and how MATRIX handles it
+
+Bitburner hard-gates a large slice of automation behind **Singularity**
+(Source-File 4, or being inside BitNode 4). Without it, *no script* can:
+
+buy Home RAM · buy or create programs · buy the TOR router · travel ·
+work for factions or companies · commit crimes · install backdoors ·
+join factions · purchase or install augmentations · destroy the World Daemon
+
+That is a game restriction, not a gap in MATRIX. So the design is:
+
+1. **Automate everything the API actually permits**, at the earliest RAM level
+   it fits - rooting, the worm botnet, target selection, HWGW, purchased
+   servers, hacknet, coding contracts, stocks.
+2. **Feature-detect Singularity for free.** `ns.getResetInfo()` costs 0 GB and
+   exposes `ownedSF`, so `singularityReady()` never pays the 5 GB a Singularity
+   getter would cost just to discover it is unavailable.
+3. **Tell the player exactly what is left for them**, with the real price and
+   the exact place to click - and hide that list the moment Singularity makes it
+   automatic.
+
+`matrix/lib/capabilities.js` owns this. Every cost is computed from Bitburner's
+own formulas rather than read through an API, so it is free to call anywhere:
+
+| Quantity | Formula | Example |
+| --- | --- | --- |
+| Home RAM upgrade | `ram * 32000 * 1.58^log2(ram)` | 8->16 GB = $1.01m |
+| Purchased server | `ram * 55000` (flat, forever) | 8 GB = $440k |
+
+Those two formulas are why servers are the better buy: home RAM escalates from
+$199k/GB to $787k/GB across the run, while servers stay at $55k/GB. Home RAM is
+bought for **capability** (it is the only thing that advances a MATRIX stage);
+servers are bought for **throughput**.
+
+`bestServerBuy()` refuses anything under 8 GB. A MATRIX worker is 2.4 GB, so the
+2 GB server the in-game store offers cannot host a single one - it is $110k for
+zero throughput, and both the advisor and `cloud.js` now decline it.
+
+### Catch-22 gates removed
+
+`ensureOne()` in `start.js` already refuses to launch a service that does not fit
+in free Home RAM alongside the update reserve, so it was always the real gate.
+The additional `homeRam >= 128` guards meant the service that buys Home RAM could
+not run until you had already bought Home RAM. They are gone; every manager is
+now gated on its Source File and on actually fitting.
+
+| Service | Old gate | New gate |
+| --- | --- | --- |
+| `cloud.js` (buys servers) | 64 GB | 32 GB |
+| `contracts.js` | 128 GB | 32 GB |
+| `stock.js` | 128 GB | 64 GB |
+| `coordinator.js` | 64 GB | fits |
+| `singularity.js`, `progression.js` | 128 GB + SF4 | SF4 + fits |
+| `gang.js` | 128 GB + SF2 | SF2 + fits |
+| `sleeves.js` | 128 GB + SF10 | SF10 + fits |
+| `bladeburner.js` | 128 GB + SF6/7 | SF6/7 + fits |
+| `corporation.js` | 256 GB + SF3 | SF3 + fits |
+
+### Worm now covers the 16 GB stage
+
+The worm runs below **32 GB** rather than below 16 GB, so the botnet survives the
+early-stage transition. `early.js` defers to it whenever a fresh worm report is on
+port 1 and only orchestrates from home as a fallback, so a dead worm can never
+mean dead income. From 32 GB the HWGW batcher takes over and the installer's
+process sweep retires the worm.
+
+### Every UI renders the same truth
+
+`telemetry.js` is the single writer: it computes the manual-action list once into
+`overview.txt`, and the lite tails compute it locally from the same pure module.
+
+- **8 GB bootstrap tail** - BOTNET panel + MANUAL ACTIONS panel with live prices
+- **16 GB early tail** - the same, plus whether the worm or home owns the botnet
+- **32 GB+ React deck** - a Manual actions panel that flips to "FULLY AUTONOMOUS"
+  once Singularity is available, and module rows that read `NEEDS SF2` / `NEEDS
+  SF10` instead of a misleading `OFFLINE`
+
+The tails pad and clip on **display width**, because emoji occupy two columns in
+the tail font. `tests/validate.mjs` asserts every box line renders to exactly the
+same width and that no manual action can overflow its column.
+
+---
+
 ## Recommended next work (in priority order)
 
 1. **`ns.share()` faction-rep mode** in `hacking.js`, driven by a new

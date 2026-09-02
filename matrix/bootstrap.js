@@ -79,6 +79,17 @@ function readWorm(ns) {
     }
 }
 
+// Duplicated from matrix/lib/capabilities.js on purpose: bootstrap must stay
+// import-free because Bitburner bills an import's RAM to the importer, and
+// this whole file has to fit an 8 GB home.
+function homeRamUpgradeCost(ram) { return ram * 32000 * Math.pow(1.58, Math.log2(ram)); }
+function serverCost(ram) { return ram * 55000; }
+function money(n) {
+    const a = Math.abs(n);
+    for (const [s, v] of [["b", 1e9], ["m", 1e6], ["k", 1e3]]) if (a >= v) return `$${(a / v).toFixed(2)}${s}`;
+    return `$${Math.round(a)}`;
+}
+
 const WIDTH = 58;
 function cols(text) {
     let n = 0;
@@ -144,12 +155,10 @@ function draw(ns, state) {
     lastCash = currentCash;
     lastTime = now;
 
-    let targetCash = 1_000_000;
-    let nextStep = "16 GB RAM Upgrade";
-    if (currentCash >= 1_000_000) {
-        targetCash = 3_000_000;
-        nextStep = "32 GB Full Deck Upgrade";
-    }
+    // Track the real Home RAM price, not a hardcoded round number, and say who
+    // has to buy it. MATRIX cannot: that needs Singularity (Source-File 4).
+    const targetCash = homeRamUpgradeCost(ns.getServerMaxRam("home"));
+    const nextStep = `${ns.getServerMaxRam("home") * 2} GB Home RAM (manual)`;
 
     let etaStr = "READY";
     if (currentCash < targetCash) {
@@ -184,6 +193,17 @@ function draw(ns, state) {
         ? `${worm.drones} drones  │  ${ns.format.ram(worm.botnetUsed)} / ${ns.format.ram(worm.botnetRam)}`
         : "awaiting first worm report";
     const swarmStr = worm ? `${worm.target} via ${worm.nodes} relay node(s)` : "--";
+
+    // Nothing on an 8 GB save can buy Home RAM or programs for you: those need
+    // Singularity (Source-File 4). Say so plainly and give the exact price.
+    const cash = ns.getServerMoneyAvailable("home");
+    const homeRam = ns.getServerMaxRam("home");
+    const ramCost = homeRamUpgradeCost(homeRam);
+    const serverBuy = serverCost(8);
+    const buyLine = `${money(serverBuy)}  8GB server @ Alpha Ent.`;
+    const ramLine = `${money(ramCost)}  ${homeRam * 2}GB home @ Alpha Ent.`;
+    const buyIcon = cash >= serverBuy ? "🟢" : "⚪";
+    const ramIcon = cash >= ramCost ? "🟢" : "⚪";
     ns.print(`╔${"═".repeat(WIDTH)}╗`);
     ns.print(`║${center("M A T R I X  //  F R E S H - S A V E   K E R N E L")}║`);
     ns.print(rule());
@@ -199,6 +219,9 @@ function draw(ns, state) {
     ns.print(row("🐛", "SPREAD", `[${wormBar}] ${wormCount}`));
     ns.print(row("🤖", "DRONES", droneStr));
     ns.print(row("🕸️", "SWARM TGT", swarmStr));
+    ns.print(rule("M A N U A L   A C T I O N S"));
+    ns.print(row(buyIcon, "BUY SERVER", buyLine));
+    ns.print(row(ramIcon, "HOME RAM", ramLine));
     ns.print(rule());
     ns.print(row("⏱️", "NEXT STEP", nextLine));
     ns.print(row("⏳", "EST. TIME", etaStr));
@@ -235,7 +258,7 @@ export async function main(ns) {
     await ns.write(LOCK, String(ns.pid), "w");
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // FRESH-SAVE KERNEL"); } catch {}
-    try { ns.ui.resizeTail(640, 470); } catch {}
+    try { ns.ui.resizeTail(640, 560); } catch {}
     try { ns.ui.openTail(); } catch {}
 
     while (true) {

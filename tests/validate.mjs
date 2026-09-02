@@ -254,6 +254,72 @@ for (const name of ["seed", "spread", "drone"]) {
     assert.ok(read("install.js").includes(`matrix/worm/${name}.js`), `installer must sweep matrix/worm/${name}.js`);
 }
 
+// --- capabilities + hud: what MATRIX cannot automate, and rendering it --------
+const cap = await import(pathToFileURL(path.join(root, "matrix/lib/capabilities.js")));
+const hud = await import(pathToFileURL(path.join(root, "matrix/lib/hud.js")));
+
+// Bitburner's own formulas. If these drift, every cost MATRIX shows is a lie.
+const near = (actual, expected, label) =>
+    assert.ok(Math.abs(actual - expected) / expected < 1e-6, `${label}: got ${actual}, expected ~${expected}`);
+near(cap.homeRamUpgradeCost(8), 1_009_743.872, "8->16GB Home RAM price");
+near(cap.homeRamUpgradeCost(16), 3_190_790.63552, "16->32GB Home RAM price");
+near(cap.homeRamUpgradeCost(64), 31_861_958.97, "64->128GB Home RAM price");
+assert.equal(cap.serverCost(8), 440_000, "purchased servers are $55k/GB");
+
+// A server too small to host a worker is money set on fire.
+assert.equal(cap.bestServerBuy(100_000), 0, "cannot afford the smallest useful server");
+assert.equal(cap.bestServerBuy(439_999), 0, "8GB is the floor, never buy 2GB or 4GB");
+assert.equal(cap.bestServerBuy(440_000), 8);
+assert.equal(cap.bestServerBuy(1_000_000), 16);
+assert.ok(cap.bestServerBuy(1e12, 2.4) * 1 >= 8, "floor holds at any budget");
+
+// Singularity detection must be free (getResetInfo is 0 GB) and correct.
+assert.equal(cap.singularityReady({ currentNode: 1, ownedSF: new Map() }), false);
+assert.equal(cap.singularityReady({ currentNode: 4, ownedSF: new Map() }), true, "inside BN4");
+assert.equal(cap.singularityReady({ currentNode: 1, ownedSF: new Map([[4, 1]]) }), true, "owns SF4");
+
+const nextProgram = cap.nextPortProgram(["BruteSSH.exe"], 92);
+assert.equal(nextProgram.file, "FTPCrack.exe");
+assert.equal(nextProgram.canCreate, false);
+assert.equal(nextProgram.levelsToGo, 8);
+assert.equal(cap.nextPortProgram(["BruteSSH.exe"], 100).canCreate, true, "free to create at the level gate");
+assert.equal(cap.nextPortProgram(cap.PORT_PROGRAMS.map(p => p.file), 999), null, "nothing left to get");
+
+// With Singularity there is nothing left for the player to do by hand.
+assert.deepEqual(cap.manualActions({ singularity: true }), []);
+
+// Every manual action must render inside the tail without clipping. This is the
+// regression guard for the HUD: a long label used to punch through the border.
+const labelWidth = hud.cols("  🟢 BUY SERVER  : ");
+for (const scenario of [
+    { homeRam: 8, cash: 0, hackingLevel: 1, ownedPrograms: [] },
+    { homeRam: 16, cash: 367_415, hackingLevel: 92, ownedPrograms: ["BruteSSH.exe"] },
+    { homeRam: 64, cash: 2e8, hackingLevel: 760, ownedPrograms: ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe"] },
+    { homeRam: 512, cash: 5e9, hackingLevel: 900, ownedPrograms: cap.PORT_PROGRAMS.map(p => p.file) },
+]) {
+    for (const action of cap.manualActions(scenario)) {
+        assert.ok(action.tag && hud.cols(action.tag) <= 11, `tag "${action.tag}" must fit the label column`);
+        assert.ok(action.short, `${action.id} needs a short form`);
+        const value = `${action.cost > 0 ? cap.formatCost(action.cost) + "  " : ""}${action.short}`;
+        assert.ok(hud.cols(value) <= hud.WIDTH - labelWidth,
+            `manual action "${value}" is ${hud.cols(value)} cols, only ${hud.WIDTH - labelWidth} available`);
+    }
+}
+
+// Every box line is exactly the same rendered width, whatever is thrown at it.
+const boxLines = [
+    hud.top(), hud.bottom(), hud.rule(), hud.rule("B O T N E T"),
+    hud.center("M A T R I X"), hud.row("🎯", "TARGET", "n00dles"),
+    hud.row("🕸️", "SWARM TGT", "x".repeat(400)),
+    hud.row("⏳", "EST. TIME", ""),
+];
+for (const line of boxLines) {
+    assert.equal(hud.cols(line), hud.WIDTH + 2, `box line drifted: ${JSON.stringify(line)}`);
+}
+assert.equal(hud.cols("🎯"), 2, "emoji are two columns wide in the tail font");
+assert.equal(hud.cols("⠹"), 1, "braille spinner is one column");
+assert.equal(hud.bar(0.5, 16), "████████░░░░░░░░");
+
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
 console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
 console.log(`  bootstrap.js: ${bootstrapRam.ram} GB of the 8 GB fresh-save home.`);

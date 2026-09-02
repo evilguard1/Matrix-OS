@@ -1,5 +1,6 @@
 import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/common.js";
 import { scanAll } from "/matrix/lib/network.js";
+import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
 
@@ -28,6 +29,20 @@ export async function main(ns){
             let game={version:"3.x"};
             try{game=ns.ui.getGameInfo();}catch{}
 
+            // Single writer: telemetry computes what the player still has to do by
+            // hand so every UI renders the same list instead of each recomputing it.
+            const singularity=singularityReady(reset);
+            const owned=PORT_PROGRAMS.filter(p=>ns.fileExists(p.file,"home")).map(p=>p.file);
+            const manual=manualActions({
+                homeRam:ns.getServerMaxRam("home"),
+                cash:player.money,
+                hackingLevel:player.skills?.hacking??1,
+                ownedPrograms:owned,
+                singularity,
+                // From 32 GB the cloud service buys servers itself.
+                cloudAutomated:ns.getServerMaxRam("home")>=32&&cfg.automation?.cloud!==false,
+            });
+
             await writeJson(ns,`${STATE_DIR}/overview.txt`,{
                 updated:Date.now(),config:cfg,game,
                 player:{money:player.money,city:player.city,karma:player.karma,skills:player.skills,factions:player.factions},
@@ -35,6 +50,7 @@ export async function main(ns){
                     sourceFiles:[...(reset.ownedSF?.entries?.()??[])]},
                 network:{discovered:hosts.length,rooted,maxRam,usedRam,ramPct:maxRam?usedRam/maxRam:0},
                 income,
+                singularity,manual,ownedPrograms:owned,
                 services:serviceState,
                 events:eventLines(ns)
             });

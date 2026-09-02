@@ -1,10 +1,8 @@
 import { config, managerBudget, writeState, event } from "/matrix/lib/common.js";
+import { bestServerBuy } from "/matrix/lib/capabilities.js";
 
-function powersUpTo(limit) {
-    const out = [];
-    for (let r = 2; r <= limit; r *= 2) out.push(r);
-    return out;
-}
+// Largest MATRIX worker (matrix/workers/early.js and matrix/worm/drone.js).
+const WORKER_RAM = 2.4;
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -24,11 +22,12 @@ export async function main(ns) {
             let action = "hold";
 
             if (spendable > 0 && names.length < limit) {
-                let chosen = 0;
-                for (const ram of powersUpTo(ramLimit)) {
-                    if (ns.cloud.getServerCost(ram) <= spendable / Math.max(1, Math.min(4, limit-names.length))) chosen = ram;
-                }
-                if (chosen >= 2) {
+                // Never buy a server too small to host a worker. MATRIX's worker is
+                // 2.4 GB, so anything under 8 GB is dead weight bought at full price.
+                // Pace the spend across the remaining server slots.
+                const slots = Math.max(1, Math.min(4, limit - names.length));
+                const chosen = bestServerBuy(spendable / slots, WORKER_RAM, ramLimit);
+                if (chosen > 0) {
                     const cost = ns.cloud.getServerCost(chosen);
                     const host = ns.cloud.purchaseServer("mx-node", chosen);
                     if (host) {

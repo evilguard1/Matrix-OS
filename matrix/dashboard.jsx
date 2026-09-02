@@ -95,7 +95,46 @@ const css = `
 
 function Panel({ title, right, span = 3, className = "", children }) { return <section className={`mxPanel span-${span} ${className}`}><div className="mxPanelTitle"><span>{title}</span><span>{right}</span></div>{children}</section>; }
 function serviceColor(status) { if (["online", "batching", "preparing", "trading"].includes(status)) return COLOR.green; if (status === "liquidating") return COLOR.amber; if (status === "error") return COLOR.red; if (status === "paused") return COLOR.amber; return COLOR.dim; }
-function Service({ name, value }) { const status = value?.status ?? "offline", color = serviceColor(status); return <div className="mxRow"><span className="mxServiceName"><i className="mxDot" style={{ color }} />{name}</span><span className="mxServiceStatus" style={{ color }}>{status.toUpperCase()}</span></div>; }
+const SF_REQUIRED = { singularity: 4, progression: 4, gang: 2, sleeves: 10, bladeburner: 6, corporation: 3 };
+function Service({ name, value, sourceFiles }) {
+    const need = SF_REQUIRED[name];
+    const owned = need ? (sourceFiles ?? []).some(([n]) => n === need) : true;
+    const status = value?.status ?? (need && !owned ? `needs SF${need}` : "offline");
+    const color = need && !owned && !value ? COLOR.dim : serviceColor(value?.status ?? "offline");
+    return <div className="mxRow"><span className="mxServiceName"><i className="mxDot" style={{ color }} />{name}</span><span className="mxServiceStatus" style={{ color }}>{String(status).toUpperCase()}</span></div>;
+}
+
+function ManualActions({ data }) {
+    const actions = data.manual ?? [];
+    if (data.singularity) {
+        return (
+            <>
+                <div className="mxValue" style={{ fontSize: 17, color: COLOR.mint }}>FULLY AUTONOMOUS</div>
+                <div className="mxHint">Singularity is available - MATRIX buys RAM, programs and augmentations itself.</div>
+            </>
+        );
+    }
+    if (!actions.length) return <div className="mxEmpty">NOTHING OUTSTANDING</div>;
+    return (
+        <>
+            <div className="mxHint" style={{ marginBottom: 8 }}>
+                Bitburner gates these behind Singularity (Source-File 4). No script can do them yet - you must.
+            </div>
+            {actions.map(action => (
+                <div className="mxRow" key={action.id}>
+                    <span className="mxServiceName">
+                        <i className="mxDot" style={{ color: action.ready ? COLOR.green : COLOR.dim }} />
+                        {action.label}
+                    </span>
+                    <span style={{ textAlign: "right" }}>
+                        <b style={{ color: action.ready ? "#e6fff3" : COLOR.dim }}>{action.cost > 0 ? money(action.cost) : "FREE"}</b>
+                        <div style={{ fontSize: 9, color: COLOR.dim }}>{action.where}</div>
+                    </span>
+                </div>
+            ))}
+        </>
+    );
+}
 function Toggle({ ns, config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = async () => { const next = JSON.parse(JSON.stringify(config)); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; await ns.write(CONFIG, JSON.stringify(next, null, 2), "w"); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
 
 function Overview({ data }) {
@@ -193,7 +232,10 @@ function Overview({ data }) {
             </Panel>
 
             <Panel title="Automation mesh" right={`${SERVICE_ORDER.length} MODULES`} span={4}>
-                {SERVICE_ORDER.map(name => <Service key={name} name={name} value={services[name]} />)}
+                {SERVICE_ORDER.map(name => <Service key={name} name={name} value={services[name]} sourceFiles={data.reset?.sourceFiles} />)}
+            </Panel>
+            <Panel title={data.singularity ? "Automation status" : "Manual actions required"} right={data.singularity ? "AUTONOMOUS" : "PLAYER"} span={4}>
+                <ManualActions data={data} />
             </Panel>
             <Panel title="Live event stream" right={`${data.events?.length ?? 0} BUFFERED`} span={8}>
                 <div className="mxEventFeed">

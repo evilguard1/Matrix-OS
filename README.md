@@ -41,9 +41,9 @@ run install.js --fresh
 | ---: | --- | --- |
 | 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken, plus a self-propagating worm botnet on the wider network |
 | 16 GB | Early | Distributed early workers and lite Matrix tail |
-| 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, full React dashboard |
-| 64 GB | Operations | Purchased-server cloud manager and the progression coordinator |
-| 128 GB+ | Advanced | Contracts, stocks, and feature-gated progression managers |
+| 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, auto server buying, contracts, full React dashboard |
+| 64 GB | Operations | Stock trading; every Source-File manager runs as soon as it fits |
+| 128 GB+ | Advanced | Bladeburner and corporation managers |
 
 Stage changes are automatic. When Home crosses a boundary, the current process downloads the newly eligible manifest files and restarts into the next stage. Services also check their exact script RAM before launch, so a Source-File API with a large RAM multiplier waits until it actually fits.
 
@@ -69,6 +69,11 @@ Stage changes are automatic. When Home crosses a boundary, the current process d
   `gang`, `stock`, `singularity`, and the hacking/economy managers consume so
   they stop competing for cash, RAM, and player actions
 - Central telemetry, event history, settings, and full Matrix dashboard
+- An explicit **manual actions** list on every UI. Bitburner gates Home RAM,
+  program purchases, travel, faction work and augmentation installs behind
+  Singularity (Source-File 4). Until you have it, no script can do those, so
+  MATRIX shows exactly what to buy, what it costs and where - and hides the
+  list entirely once Singularity makes it all automatic.
 
 Bitburner does not expose player-action automation on a truly fresh account until Singularity access is unlocked through Source-File 4 or the current BitNode. MATRIX automates everything the installed game APIs permit and keeps unavailable managers gated instead of calling locked APIs.
 
@@ -100,7 +105,7 @@ matrix/start.js            32 GB+ service supervisor
 matrix/dashboard.jsx       full Matrix dashboard
 matrix/update.js           low-RAM update request
 matrix/config.json         preserved user configuration
-matrix/lib/                shared utilities
+matrix/lib/                shared utilities (config, network, HUD, capabilities)
 matrix/services/           autonomous managers
 matrix/workers/            hacking workers
 matrix/worm/               self-propagating 8 GB botnet (seed, spread, drone)

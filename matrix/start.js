@@ -11,10 +11,10 @@ const CORE = [
     { file: DASHBOARD, ui: true, minRam: 32 },
     { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
     { file: "/matrix/services/telemetry.js", minRam: 32 },
-    { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
+    { file: "/matrix/services/cloud.js", key: "cloud", minRam: 32 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 32 },
-    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
-    { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
+    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 32 },
+    { file: "/matrix/services/stock.js", key: "stock", minRam: 64 },
 ];
 
 function sameScript(a, b) {
@@ -93,16 +93,18 @@ export async function main(ns) {
         }
 
         const reset = ns.getResetInfo();
-        // The coordinator publishes the directive/budget protocol the economy and
-        // advanced managers consume, so start it as early as it reliably fits
-        // rather than waiting for the full advanced stage.
-        if (homeRam >= 64 && cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
-        if (homeRam >= 128 && cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
-        if (homeRam >= 128 && cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
-        if (homeRam >= 128 && cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");
-        if (homeRam >= 128 && cfg.automation?.sleeves !== false && hasSourceFile(reset, 10)) ensureOne(ns, "/matrix/services/sleeves.js");
-        if (homeRam >= 128 && cfg.automation?.bladeburner !== false && (hasSourceFile(reset, 6) || hasSourceFile(reset, 7))) ensureOne(ns, "/matrix/services/bladeburner.js");
-        if (homeRam >= 256 && cfg.automation?.corporation !== false && hasSourceFile(reset, 3)) ensureOne(ns, "/matrix/services/corporation.js");
+        // ensureOne() already refuses to launch anything that does not fit in free
+        // Home RAM alongside the update reserve, so it is the real gate. The old
+        // homeRam >= 128 guards were pure obstruction: they meant the service that
+        // buys Home RAM could not run until you had already bought Home RAM. Every
+        // manager below is gated on its Source File and on actually fitting.
+        if (cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
+        if (cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
+        if (cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
+        if (cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");
+        if (cfg.automation?.sleeves !== false && hasSourceFile(reset, 10)) ensureOne(ns, "/matrix/services/sleeves.js");
+        if (cfg.automation?.bladeburner !== false && (hasSourceFile(reset, 6) || hasSourceFile(reset, 7))) ensureOne(ns, "/matrix/services/bladeburner.js");
+        if (cfg.automation?.corporation !== false && hasSourceFile(reset, 3)) ensureOne(ns, "/matrix/services/corporation.js");
         await ns.sleep(5000);
     }
 }

@@ -1,5 +1,7 @@
 import { config, event, fetchLatestInstaller, writeState, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
+import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
+import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 
 const EARLY = "/matrix/workers/early.js";
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
@@ -47,54 +49,75 @@ let lastCash = 0;
 let lastTime = 0;
 let cashRate = 0;
 
+function etaFor(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "CALCULATING...";
+    if (seconds < 60) return `~${Math.ceil(seconds)}s`;
+    if (seconds < 3600) return `~${Math.floor(seconds / 60)}m ${Math.ceil(seconds % 60)}s`;
+    return `~${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+}
+
 function draw(ns, state) {
     ns.clearLog();
     const spin = SPINNER[(tick++) % SPINNER.length];
     const currentCash = ns.getServerMoneyAvailable("home");
-    const moneyStr = ns.format.number(currentCash, 2);
-    const maxRam = ns.format.ram(ns.getServerMaxRam("home"));
-    const rootPct = Math.floor((state.rooted / Math.max(1, state.discovered)) * 16);
-    const bar = "█".repeat(rootPct) + "░".repeat(16 - rootPct);
 
     const now = Date.now();
     if (lastTime > 0 && now > lastTime) {
         const dt = (now - lastTime) / 1000;
         const diff = currentCash - lastCash;
         if (dt > 0 && diff >= 0) {
-            const currentRate = diff / dt;
-            cashRate = cashRate === 0 ? currentRate : (cashRate * 0.7 + currentRate * 0.3);
+            const rate = diff / dt;
+            cashRate = cashRate === 0 ? rate : (cashRate * 0.7 + rate * 0.3);
         }
     }
     lastCash = currentCash;
     lastTime = now;
 
-    const targetCash = 3_000_000;
-    const nextStep = "32 GB RAM Full Deck Upgrade";
-    let etaStr = "READY";
-    if (currentCash < targetCash) {
-        if (cashRate > 0) {
-            const secs = Math.ceil((targetCash - currentCash) / cashRate);
-            etaStr = secs < 60 ? `~${secs}s` : `~${Math.floor(secs / 60)}m ${secs % 60}s`;
-        } else {
-            etaStr = "CALCULATING...";
+    const worm = state.worm;
+    const actions = state.actions ?? [];
+    // The milestone is whatever the player has to buy next, so the countdown is
+    // an ETA to an action they can actually take.
+    const goal = actions.find(a => !a.ready) ?? actions[0] ?? null;
+    const etaStr = !goal || currentCash >= goal.cost ? "READY"
+        : cashRate > 0 ? etaFor((goal.cost - currentCash) / cashRate)
+        : "CALCULATING...";
+
+    ns.print(top());
+    ns.print(center("M A T R I X  //  E A R L Y   E N G I N E"));
+    ns.print(rule());
+    ns.print(row(spin, "STAGE", state.wormOwned ? "DISTRIBUTED EARLY / WORM-FED" : "DISTRIBUTED EARLY"));
+    ns.print(row("🎯", "TARGET", state.target));
+    ns.print(row("💵", "CAPITAL", `$${ns.format.number(currentCash, 2)}`));
+    ns.print(row("🌐", "NETWORK", `[${bar(state.rooted / Math.max(1, state.discovered))}] ${state.rooted}/${state.discovered} rooted`));
+    ns.print(row("💻", "HOME RAM", `${ns.format.ram(ns.getServerMaxRam("home"))}  │  HACK SKILL: ${ns.getHackingLevel()}`));
+    ns.print(row("🔑", "NEXT CRACK", state.crackerLine));
+    ns.print(rule("B O T N E T"));
+    if (worm) {
+        ns.print(row("🐛", "SPREAD", `[${bar(worm.infected / Math.max(1, worm.rooted))}] ${worm.infected}/${worm.rooted} INFECTED`));
+        ns.print(row("🤖", "DRONES", `${worm.drones} drones  │  ${ns.format.ram(worm.botnetUsed)} / ${ns.format.ram(worm.botnetRam)}`));
+        ns.print(row("🕸️", "SWARM TGT", `${worm.target} via ${worm.nodes} relay node(s)`));
+    } else {
+        ns.print(row("⚙️", "WORKERS", `${state.threads} threads deployed from home`));
+        ns.print(row("🐛", "SPREAD", "worm offline - home is orchestrating"));
+        ns.print(row("🕸️", "SWARM TGT", state.target));
+    }
+
+    ns.print(rule(state.singularity ? "A U T O M A T E D" : "M A N U A L   A C T I O N S"));
+    if (state.singularity) {
+        ns.print(row("✅", "SINGULARITY", "available - MATRIX buys these itself"));
+    } else if (!actions.length) {
+        ns.print(row("✅", "NOTHING", "no player action outstanding"));
+    } else {
+        for (const action of actions.slice(0, 3)) {
+            ns.print(row(action.ready ? "🟢" : "⚪", action.tag,
+                `${action.cost > 0 ? formatCost(action.cost) + "  " : ""}${action.short}`));
         }
     }
 
-    const nextLine = `Reaching $${ns.format.number(targetCash, 2)} for ${nextStep}`;
-
-    ns.print(`╔══════════════════════════════════════════════════════════╗`);
-    ns.print(`║  M A T R I X  //  E A R L Y   E N G I N E (1 6 G B)     ║`);
-    ns.print(`╠══════════════════════════════════════════════════════════╣`);
-    ns.print(`║  ${spin} STAGE       : DISTRIBUTED EARLY                        ║`);
-    ns.print(`║  🎯 TARGET      : ${state.target.padEnd(20)}                   ║`);
-    ns.print(`║  ⚙️ WORKERS     : ${String(state.threads).padEnd(6)} THREADS                    ║`);
-    ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
-    ns.print(`║  🌐 BOTNET      : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
-    ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}                              ║`);
-    ns.print(`╠══════════════════════════════════════════════════════════╣`);
-    ns.print(`║  ⏱️ NEXT STEP   : ${nextLine.slice(0, 38).padEnd(38)} ║`);
-    ns.print(`║  ⏳ EST. TIME   : ${etaStr.padEnd(38)} ║`);
-    ns.print(`╚══════════════════════════════════════════════════════════╝`);
+    ns.print(rule());
+    ns.print(row("⏱️", "NEXT STEP", goal ? `${goal.label} - ${goal.detail}` : "accumulating capital"));
+    ns.print(row("⏳", "EST. TIME", etaStr));
+    ns.print(bottom());
 }
 
 async function handoffInstaller(ns, requested) {
@@ -117,7 +140,7 @@ export async function main(ns) {
     }
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // DISTRIBUTED EARLY ENGINE"); } catch {}
-    try { ns.ui.resizeTail(620, 390); } catch {}
+    try { ns.ui.resizeTail(640, 520); } catch {}
     try { ns.ui.openTail(); } catch {}
     await event(ns, "early", "Distributed early engine online", "success");
 
@@ -131,17 +154,43 @@ export async function main(ns) {
             if (ns.getServerMaxRam("home") >= 32) {
                 if (await handoffInstaller(ns, true)) return;
             }
+
             const { hosts } = scanAll(ns);
             let rooted = 0;
             for (const host of hosts) {
                 if (cfg.automation?.rooting !== false) tryRoot(ns, host);
                 if (ns.hasRootAccess(host)) rooted++;
             }
+
             const mode = getDirectives(ns)?.directives?.hacking === "xp" ? "xp" : "money";
             const target = hosts.map(host => ({ host, score: scoreTarget(ns, host, mode) })).filter(item => item.score > 0)
                 .sort((a, b) => b.score - a.score)[0]?.host ?? "n00dles";
-            const threads = await deploy(ns, hosts, target);
-            const state = { status: "online", phase: "early", target, threads, discovered: hosts.length, rooted };
+
+            // The worm owns the botnet whenever it is alive: it places drones from
+            // inside the network and costs home nothing. Home only orchestrates as a
+            // fallback, so a dead worm can never mean dead income.
+            const worm = readWorm(ns);
+            const threads = worm ? 0 : await deploy(ns, hosts, target);
+
+            const singularity = singularityReady(ns.getResetInfo());
+            const owned = PORT_PROGRAMS.filter(p => ns.fileExists(p.file, "home")).map(p => p.file);
+            const hackingLevel = ns.getHackingLevel();
+            const nextCracker = nextPortProgram(owned, hackingLevel);
+            const crackerLine = !nextCracker ? "all port crackers owned"
+                : nextCracker.canCreate ? `CREATE ${nextCracker.file} NOW (free)`
+                : `${nextCracker.file} @ Hacking ${nextCracker.level} (${nextCracker.levelsToGo} to go)`;
+
+            const actions = manualActions({
+                homeRam: ns.getServerMaxRam("home"),
+                cash: ns.getServerMoneyAvailable("home"),
+                hackingLevel, ownedPrograms: owned, singularity, cloudAutomated: false,
+            });
+
+            const state = {
+                status: "online", phase: "early", target, threads,
+                discovered: hosts.length, rooted,
+                worm, wormOwned: Boolean(worm), singularity, actions, crackerLine,
+            };
             await writeState(ns, "early", state);
             draw(ns, state);
             await ns.sleep(5000);
