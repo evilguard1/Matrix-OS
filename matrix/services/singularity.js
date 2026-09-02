@@ -1,4 +1,4 @@
-import { baselineReserveMoney, config, writeJson, writeState, event, getDirectives } from "/matrix/lib/common.js";
+import { baselineReserveMoney, reserveMoney, config, writeJson, writeState, event, getDirectives } from "/matrix/lib/common.js";
 
 const NFG="NeuroFlux Governor";
 const RED="The Red Pill";
@@ -158,7 +158,19 @@ export async function main(ns){
             try{
                 const cash=ns.getServerMoneyAvailable("home");
                 const ramCost=ns.singularity.getUpgradeHomeRamCost();
-                if(ramCost>0&&ramCost<cash*0.10&&cash-ramCost>baselineReserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
+                // Home is a worker host (max RAM minus hacking.homeReserveGb), so
+                // home RAM is a direct income multiplier, not a convenience. The
+                // old rule needed 10x the price in cash, which past ~64 GB meant
+                // it never fired again: at 1 TB the next upgrade costs billions,
+                // so it demanded tens of billions idle. Buy it whenever it fits
+                // above whatever the coordinator is actually reserving for -
+                // reserveMoney() returns the augmentation/milestone reserve when
+                // the coordinator is live, so augs still outrank RAM.
+                //
+                // Cores are deliberately NOT bought: they only scale grow/weaken
+                // on home by 1+(cores-1)/16, so 1->2 is +6.25% on a subset of
+                // threads, and it costs more than doubling home RAM.
+                if(ramCost>0&&cash-ramCost>reserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
             }catch{}
 
             const q=queued(ns);

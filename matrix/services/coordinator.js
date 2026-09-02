@@ -192,7 +192,13 @@ export function evaluateObjective(data) {
     }
 
     // 9. Home RAM expansion
-    if (homeRam < 64 && Number.isFinite(homeRamUpgradeCost) && homeRamUpgradeCost > 0 && cash >= homeRamUpgradeCost * 0.5) {
+    // No upper RAM cap: home is a worker host, so every doubling roughly doubles
+    // the home half of the batcher. The old `homeRam < 64` cut-off treated home
+    // RAM as a staging requirement, which left it unreported forever afterwards.
+    // The half-price gate still keeps this from hijacking the goal display while
+    // the next upgrade is out of reach, and it sits below augmentations, the Red
+    // Pill, Daedalus, gang karma, TOR and programs in this list.
+    if (Number.isFinite(homeRamUpgradeCost) && homeRamUpgradeCost > 0 && cash >= homeRamUpgradeCost * 0.5) {
         return {
             id: "EXPAND_RAM",
             title: `Upgrade Home RAM (${homeRam * 2}GB)`,
