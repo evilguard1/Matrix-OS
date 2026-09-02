@@ -112,6 +112,7 @@ export const MODULE_LOCKS = {
     corporation: { sf: 3, what: "running a corporation" },
     bladeburner: { sf: 6, what: "Bladeburner contracts and black operations" },
     sleeves: { sf: 10, what: "duplicate sleeve tasking" },
+    stanek: { sf: 13, what: "keeping Stanek's Gift fragments charged" },
 };
 
 /**

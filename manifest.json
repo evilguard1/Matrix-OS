@@ -1,5 +1,5 @@
 {
-  "version": "0.9.8",
+  "version": "0.9.9",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
@@ -30,6 +30,9 @@
     { "path": "matrix/lib/factions.js", "stage": "early" },
     { "path": "matrix/lib/goban.js", "stage": "full" },
     { "path": "matrix/lib/voice.js", "stage": "full" },
+    { "path": "matrix/lib/hashes.js", "stage": "full" },
+    { "path": "matrix/lib/gift.js", "stage": "advanced" },
+    { "path": "matrix/workers/stanek-charge.js", "stage": "advanced" },
     { "path": "matrix/lib/solvers.js", "stage": "early" },
     { "path": "matrix/lib/dispatch.js", "stage": "early" },
     { "path": "matrix/workers/contract.js", "stage": "early" },
@@ -50,6 +53,7 @@
     { "path": "matrix/services/singularity.js", "stage": "full" },
     { "path": "matrix/services/gang.js", "stage": "full" },
     { "path": "matrix/services/sleeves.js", "stage": "full" },
+    { "path": "matrix/services/stanek.js", "stage": "advanced" },
     { "path": "matrix/services/bladeburner.js", "stage": "advanced" },
     { "path": "matrix/services/corporation.js", "stage": "advanced" }
   ]

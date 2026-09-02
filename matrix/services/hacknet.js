@@ -1,4 +1,5 @@
-import { config, managerBudget, writeState, event } from "/matrix/lib/common.js";
+import { config, managerBudget, writeState, event, readJson, STATE_DIR, hasSF } from "/matrix/lib/common.js";
+import { hashPlan } from "/matrix/lib/hashes.js";
 
 function cheapestUpgrade(ns) {
     const options = [];
@@ -23,8 +24,13 @@ function execute(ns, x) {
     return false;
 }
 
+const UPGRADE_COUNT = `${STATE_DIR}/hacknet-server-upgrades.txt`;
+
 export async function main(ns) {
     ns.disableLog("ALL");
+    // The per-server hash upgrade cap is a lifetime count, not a per-run one, so
+    // it has to survive restarts or MATRIX would buy past the cap and waste them.
+    let serverUpgrades = Number(readJson(ns, UPGRADE_COUNT, {}).count ?? 0) || 0;
     while (true) {
         const cfg = config(ns);
         if (cfg.masterEnabled === false || cfg.automation?.hacknet === false) {
@@ -44,22 +50,47 @@ export async function main(ns) {
                 bought++;
             }
 
+            const spent = [];
             let production = 0;
             let capacity = null;
             let hashes = null;
             for (let i=0;i<ns.hacknet.numNodes();i++) production += ns.hacknet.getNodeStats(i).production ?? 0;
+            // Hashes are a compounding resource; selling them for cash spends
+            // that compounding once. Improving the server the batcher already
+            // farms pays out on every batch for the rest of the BitNode.
             try {
                 hashes = ns.hacknet.numHashes();
                 capacity = ns.hacknet.hashCapacity();
-                if (capacity > 0 && hashes > capacity*0.80) {
-                    const upgrades = ns.hacknet.getHashUpgrades();
-                    if (upgrades.includes("Sell for Money")) {
-                        for (let i=0;i<50 && ns.hacknet.numHashes() > capacity*0.50;i++) {
-                            if (!ns.hacknet.spendHashes("Sell for Money")) break;
-                        }
-                    }
+                const reset = ns.getResetInfo();
+                const target = readJson(ns, `${STATE_DIR}/hacking.txt`, {})?.target ?? null;
+                for (let i = 0; i < 40; i++) {
+                    const plan = hashPlan({
+                        hashes: ns.hacknet.numHashes(),
+                        capacity,
+                        available: ns.hacknet.getHashUpgrades(),
+                        target,
+                        serverUpgrades,
+                        costOf: name => ns.hacknet.hashCost(name),
+                        bladeburner: hasSF(reset, 6) || hasSF(reset, 7),
+                        corporation: hasSF(reset, 3),
+                    });
+                    const next = plan[0];
+                    if (!next) break;
+                    if (!ns.hacknet.spendHashes(next.upgrade, next.target ?? undefined)) break;
+                    if (next.target) serverUpgrades++;
+                    spent.push(next);
                 }
+                hashes = ns.hacknet.numHashes();
             } catch {}
+            if (spent.some(entry => entry.target)) {
+                await ns.write(UPGRADE_COUNT, JSON.stringify({ count: serverUpgrades }), "w");
+            }
+            if (spent.length) {
+                const first = spent[0];
+                await event(ns, "hacknet",
+                    `Spent hashes: ${spent.length}x - ${first.upgrade}${first.target ? ` on ${first.target}` : ""} (${first.why})`,
+                    "success");
+            }
 
             if (bought) await event(ns,"hacknet",`Purchased ${bought} Hacknet upgrade(s)`,"success");
             // Netburners wants total hacknet levels/RAM/cores. This service
@@ -72,6 +103,7 @@ export async function main(ns) {
             }
             await writeState(ns, "hacknet", {
                 status:"online", nodes:ns.hacknet.numNodes(), production, hashes, capacity, upgrades:bought,
+                hashSpends:spent.slice(0,4), serverUpgrades,
                 totals
             });
         } catch(e) {

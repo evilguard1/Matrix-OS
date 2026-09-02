@@ -4,7 +4,7 @@ import { leaseDecision } from "/matrix/lib/singleton.js";
 const DECK = "/matrix/dashboard.jsx";
 
 const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
-const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "bladeburner", "corporation"];
+const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "go", "contracts", "stock", "progression", "coordinator", "singularity", "gang", "sleeves", "stanek", "bladeburner", "corporation"];
 
 function money(value) {
     if (!Number.isFinite(value)) return "--";
@@ -135,7 +135,7 @@ const css = `
 
 function Panel({ title, right, span = 3, className = "", children }) { return <section className={`mxPanel span-${span} ${className}`}><div className="mxPanelTitle"><span>{title}</span><span>{right}</span></div>{children}</section>; }
 function serviceColor(status) { if (["online", "batching", "preparing", "trading"].includes(status)) return COLOR.green; if (status === "liquidating") return COLOR.amber; if (status === "error") return COLOR.red; if (status === "paused") return COLOR.amber; return COLOR.dim; }
-const SF_REQUIRED = { singularity: 4, progression: 4, gang: 2, sleeves: 10, bladeburner: 6, corporation: 3 };
+const SF_REQUIRED = { singularity: 4, progression: 4, gang: 2, sleeves: 10, bladeburner: 6, corporation: 3, stanek: 13 };
 function Service({ name, value, sourceFiles }) {
     const need = SF_REQUIRED[name];
     // Telemetry serialises ownedSF as [n, lvl] pairs, but accept the {n, lvl}
