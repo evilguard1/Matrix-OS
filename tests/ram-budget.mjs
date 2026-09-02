@@ -142,7 +142,16 @@ const GO_COSTS = {
     removeRouter: 8, playTwoMoves: 8, repairOfflineNode: 8, destroyNode: 8,
 };
 
+// Purchased servers moved to ns.cloud in v3. Without these the analyser fell
+// through to its default and mispriced every server-buying script.
+const CLOUD_COSTS = {
+    purchaseServer: 2.25, deleteServer: 2.25, getServerNames: 1.05,
+    getServerCost: 0.25, upgradeServer: 0.25, getServerUpgradeCost: 0.1,
+    getServerLimit: 0.05, getRamLimit: 0.05, renameServer: 0,
+};
+
 export const NAMESPACE_COST = {
+    cloud: fn => CLOUD_COSTS[fn] ?? 0,
     gang: () => GANG,
     sleeve: () => SLEEVE,
     bladeburner: () => BLADE,

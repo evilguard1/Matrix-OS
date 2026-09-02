@@ -19,7 +19,9 @@ export const SERVER_UPGRADE_LIMIT = 12;
  * actually offers - `available` comes from ns.hacknet.getHashUpgrades() - so an
  * upgrade absent from this BitNode is simply never proposed.
  */
-export function hashPlan({
+export function hashPlan(options = {}) {
+    // A parameter default fires only on undefined; state files supply null.
+    const {
     hashes = 0,
     capacity = 0,
     available = [],
@@ -29,7 +31,7 @@ export function hashPlan({
     wantContracts = true,
     bladeburner = false,
     corporation = false,
-} = {}) {
+} = options ?? {};
     const offered = new Set(Array.isArray(available) ? available : []);
     const plan = [];
     const affordable = name => {
@@ -76,5 +78,6 @@ export function hashPlan({
 
 /** The single next purchase, or null when nothing is worth buying yet. */
 export function nextHashSpend(state) {
+    state = state ?? {};
     return hashPlan(state)[0] ?? null;
 }

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.1",
+  "version": "1.2.0",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
@@ -17,6 +17,7 @@
     { "path": "matrix/update.js", "stage": "bootstrap" },
     { "path": "matrix/early.js", "stage": "early" },
     { "path": "matrix/workers/early.js", "stage": "bootstrap" },
+    { "path": "matrix/lib/earlyloop.js", "stage": "bootstrap" },
     { "path": "matrix/worm/seed.js", "stage": "bootstrap" },
     { "path": "matrix/worm/spread.js", "stage": "bootstrap" },
     { "path": "matrix/worm/drone.js", "stage": "bootstrap" },

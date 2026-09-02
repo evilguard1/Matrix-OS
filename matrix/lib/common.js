@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "1.1.1",
+    version: "1.2.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -87,10 +87,50 @@ export function getCoordinatorState(ns) {
     return raw;
 }
 
+/**
+ * The flat cash reserve protects whatever milestone the coordinator is saving
+ * for. Applied literally it reserves $10m from a player who owns $1m, which
+ * zeroes every infrastructure budget for the entire early game - exactly when
+ * infrastructure compounds hardest. A $440k purchased server pays for itself in
+ * minutes and then keeps paying, and under the old rule MATRIX could not buy one
+ * until $50m of cash.
+ *
+ * So the flat floor scales in: hold a fraction of the balance early, and only
+ * honour the full flat reserve once it is small relative to what you have.
+ */
+export function reserveFloor(cash, cfg = {}) {
+    const econ = cfg.economy ?? {};
+    const balance = Math.max(0, Number(cash) || 0);
+    const flat = Math.max(0, Number(econ.cashReserve ?? 10_000_000) || 0);
+    const fraction = Math.max(0, Number(econ.reserveFraction ?? 0.15) || 0);
+    // Never hold more than a quarter of the balance as the flat component.
+    const scaled = Math.min(flat, balance * 0.25);
+    return Math.max(scaled, balance * fraction);
+}
+
+/**
+ * How much of the spendable balance a manager may use.
+ *
+ * Below `fullEngineHomeRam` there is nothing worth saving for that beats more
+ * worker RAM, so the cloud manager is allowed most of the balance. The
+ * conservative configured fractions take over once home is large enough to run
+ * the real engine, and an explicit coordinator directive always wins.
+ */
+export function managerFraction(name, { configured = 0, homeRam = 8, directive = null, aggressiveBelowRam = 128 } = {}) {
+    // Number(null) is 0 and 0 is finite, so testing the coercion alone would
+    // treat "no directive" as "spend nothing" and zero every budget.
+    if (directive != null && directive !== "") {
+        const override = Number(directive);
+        if (Number.isFinite(override)) return Math.max(0, override);
+    }
+    const base = Math.max(0, Number(configured) || 0);
+    if (name !== "cloud") return base;
+    return Number(homeRam) < aggressiveBelowRam ? Math.max(base, 0.75) : base;
+}
+
 export function reserveMoney(ns, cfg = config(ns)) {
     const cash = ns.getServerMoneyAvailable("home");
-    const econ = cfg.economy ?? {};
-    const baseline = Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));
+    const baseline = reserveFloor(cash, cfg);
 
     const coord = getCoordinatorState(ns);
     if (coord && coord.budgets) {
@@ -112,9 +152,7 @@ export function reserveMoney(ns, cfg = config(ns)) {
 }
 
 export function baselineReserveMoney(ns, cfg = config(ns)) {
-    const cash = ns.getServerMoneyAvailable("home");
-    const econ = cfg.economy ?? {};
-    return Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));
+    return reserveFloor(ns.getServerMoneyAvailable("home"), cfg);
 }
 
 // Live per-manager directive protocol published by the coordinator. Returns null
@@ -138,11 +176,13 @@ export function managerBudget(ns, name, cfg = config(ns)) {
         cloud: "cloudBudgetFraction",
         stock: "stockBudgetFraction",
     }[name];
-    let fraction = econKey ? Number(cfg.economy?.[econKey] ?? 0) : 0;
     const dir = getDirectives(ns);
-    const override = Number(dir?.budgets?.[name]);
-    if (Number.isFinite(override)) fraction = override;
-    if (!Number.isFinite(fraction) || fraction < 0) fraction = 0;
+    const fraction = managerFraction(name, {
+        configured: econKey ? cfg.economy?.[econKey] : 0,
+        homeRam: ns.getServerMaxRam("home"),
+        directive: dir?.budgets?.[name],
+        aggressiveBelowRam: cfg.economy?.aggressiveCloudBelowRam ?? 128,
+    });
     return Math.max(0, Math.min(cash - reserve, cash * fraction));
 }
 

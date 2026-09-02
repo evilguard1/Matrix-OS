@@ -9,6 +9,7 @@
 
 /** The fragment most in need of charge, ignoring malformed entries. */
 export function weakestFragment(fragments = []) {
+    fragments = fragments ?? [];
     // Number(null) is 0, which is finite - so a null coordinate would sail
     // through a bare isFinite check and get handed to chargeFragment.
     const coord = value => value != null && value !== "" && Number.isFinite(Number(value));
@@ -24,6 +25,7 @@ export function weakestFragment(fragments = []) {
  * threads, so one wide host beats several narrow ones.
  */
 export function chargeHosts(hosts = [], scriptRam = 2.0) {
+    hosts = hosts ?? [];
     const ram = Number(scriptRam) > 0 ? Number(scriptRam) : 2.0;
     return (Array.isArray(hosts) ? hosts : [])
         .filter(h => h && typeof h.host === "string")

@@ -27,6 +27,7 @@ export function gridSize(grid) {
 }
 
 export function neighbours(grid, x, y) {
+    if (!Array.isArray(grid)) return [];
     const size = gridSize(grid);
     const out = [];
     if (x > 0) out.push([x - 1, y]);
@@ -41,6 +42,7 @@ export function neighbours(grid, x, y) {
  * liberties. A dead node is a wall: it is neither a stone nor a liberty.
  */
 export function group(grid, x, y) {
+    if (!Array.isArray(grid)) return { colour: undefined, stones: [], liberties: 0 };
     const colour = grid[x]?.[y];
     if (colour !== US && colour !== THEM) return { colour, stones: [], liberties: 0 };
     const stack = [[x, y]];
@@ -69,6 +71,7 @@ export function group(grid, x, y) {
  * placed router would otherwise have no liberties.
  */
 export function play(grid, x, y, colour = US) {
+    if (!Array.isArray(grid) || !Array.isArray(grid[x])) return { grid: grid ?? [], captured: 0, liberties: 0, size: 0 };
     const next = grid.map(column => column.slice());
     next[x][y] = colour;
     const enemy = colour === US ? THEM : US;
@@ -84,6 +87,7 @@ export function play(grid, x, y, colour = US) {
 }
 
 export function serialise(grid) {
+    if (!Array.isArray(grid)) return "";
     return grid.map(column => column.join("")).join("|");
 }
 
@@ -93,6 +97,8 @@ export function serialise(grid) {
  * free to obtain, unlike the validity API.
  */
 export function isLegal(grid, x, y, colour = US, history = []) {
+    if (!Array.isArray(grid)) return false;
+    history = history ?? [];
     if (grid[x]?.[y] !== EMPTY) return false;
     const result = play(grid, x, y, colour);
     if (result.captured === 0 && result.liberties === 0) return false;
@@ -101,6 +107,7 @@ export function isLegal(grid, x, y, colour = US, history = []) {
 
 /** A point enclosed entirely by our own routers. Filling it destroys an eye. */
 export function isOwnEye(grid, x, y, colour = US) {
+    if (!Array.isArray(grid)) return false;
     if (grid[x]?.[y] !== EMPTY) return false;
     const around = neighbours(grid, x, y);
     if (!around.length) return false;
@@ -113,6 +120,7 @@ export function isOwnEye(grid, x, y, colour = US) {
  * breathe, connect and enclose space.
  */
 export function scoreMove(grid, x, y, colour = US) {
+    if (!Array.isArray(grid) || !Array.isArray(grid[x])) return -Infinity;
     const enemy = colour === US ? THEM : US;
     const before = new Map();
     for (const [nx, ny] of neighbours(grid, x, y)) {
@@ -169,7 +177,8 @@ export function scoreMove(grid, x, y, colour = US) {
  * constructive is left: filling our own eyes at the end of a game hands back
  * territory we already control.
  */
-export function bestMove(board, { colour = US, history = [], threshold = 0 } = {}) {
+export function bestMove(board, options = {}) {
+    const { colour = US, history = [], threshold = 0 } = options ?? {};
     const grid = toGrid(board);
     const size = gridSize(grid);
     let best = null;
@@ -219,7 +228,8 @@ export const OPPONENTS = [
  * power at all, so a hard opponent we lose to is strictly worse than an easy one
  * we beat. `preferred` pins a tier when the player wants a specific bonus.
  */
-export function chooseOpponent({ index = 0, wins = 0, losses = 0, preferred = null } = {}) {
+export function chooseOpponent(options = {}) {
+    const { index = 0, wins = 0, losses = 0, preferred = null } = options ?? {};
     if (preferred) {
         const pinned = OPPONENTS.findIndex(o => o.name.toLowerCase() === String(preferred).toLowerCase());
         if (pinned >= 0) return { index: pinned, ...OPPONENTS[pinned], pinned: true };

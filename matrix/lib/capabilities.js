@@ -41,13 +41,64 @@ export function serverCost(ram) {
  * worker is 2.4 GB, so a 2 GB server cannot run a single one.
  */
 export function bestServerBuy(spendable, workerRam = 2.4, ramLimit = 1_048_576) {
-    const floor = Math.pow(2, Math.ceil(Math.log2(workerRam * 2)));
+    // ns.getScriptRam returns 0 when the file is not on that host, and
+    // Math.log2(0) is -Infinity, so the floor became 0 and `ram *= 2` never
+    // advanced past it - an infinite loop inside a live service.
+    const worker = Number(workerRam) > 0 ? Number(workerRam) : 2.4;
+    const cap = Number(ramLimit) > 0 ? Number(ramLimit) : 1_048_576;
+    const budget = Number(spendable);
+    if (!Number.isFinite(budget) || budget <= 0) return 0;
+    const floor = Math.max(2, Math.pow(2, Math.ceil(Math.log2(worker * 2))));
     let best = 0;
-    for (let ram = floor; ram <= ramLimit; ram *= 2) {
-        if (serverCost(ram) <= spendable) best = ram;
+    for (let ram = floor; ram <= cap; ram *= 2) {
+        if (serverCost(ram) <= budget) best = ram;
         else break;
     }
     return best;
+}
+
+/**
+ * What to buy with the cloud budget, given the fleet already owned.
+ *
+ * Early on the correct answer is almost always "another server, now": a
+ * purchased server is pure worker RAM, it pays for itself within minutes of
+ * hacking, and every one bought raises the rate at which the next is afforded.
+ * Waiting to afford a bigger one costs more than it gains, so this buys the
+ * largest size the budget allows and buys again next cycle.
+ *
+ * Once the fleet is full, the only way forward is replacing the smallest server
+ * with a bigger one - and that is only worth doing when the upgrade is a real
+ * multiple, not a marginal step.
+ */
+export function serverPurchasePlan(options = {}) {
+    // Destructuring an argument defaults only on undefined, so a null caller
+    // would throw here rather than degrade.
+    const {
+        budget = 0,
+        owned = [],
+        limit = 25,
+        workerRam = 2.4,
+        ramLimit = 1_048_576,
+        upgradeMultiple = 4,
+    } = options ?? {};
+    const spendable = Math.max(0, Number(budget) || 0);
+    const fleet = (Array.isArray(owned) ? owned : [])
+        .map(server => ({ host: String(server?.host ?? ""), ram: Number(server?.ram) || 0 }))
+        .filter(server => server.host);
+    const affordable = bestServerBuy(spendable, workerRam, ramLimit);
+    if (affordable <= 0) return { action: "wait", reason: "budget below the smallest useful server" };
+
+    if (fleet.length < Math.max(0, limit)) {
+        return { action: "buy", ram: affordable, cost: serverCost(affordable) };
+    }
+
+    // Fleet is full: the only gain left is replacing the weakest machine, and
+    // only when the replacement is worth the disruption of killing its work.
+    const weakest = fleet.reduce((worst, server) => server.ram < worst.ram ? server : worst, fleet[0]);
+    if (affordable >= weakest.ram * upgradeMultiple) {
+        return { action: "replace", host: weakest.host, from: weakest.ram, ram: affordable, cost: serverCost(affordable) };
+    }
+    return { action: "wait", reason: `fleet full; next upgrade needs ${upgradeMultiple}x the smallest (${weakest.ram} GB)` };
 }
 
 /** Singularity is free to detect through getResetInfo(), which costs 0 GB. */
@@ -57,12 +108,14 @@ export function singularityReady(reset) {
 
 /** The next port cracker the player does not own yet. */
 export function nextPortProgram(owned, hackingLevel) {
-    const missing = PORT_PROGRAMS.find(program => !owned.includes(program.file));
+    const have = Array.isArray(owned) ? owned : [];
+    const level = Number(hackingLevel) || 0;
+    const missing = PORT_PROGRAMS.find(program => !have.includes(program.file));
     if (!missing) return null;
     return {
         ...missing,
-        canCreate: hackingLevel >= missing.level,
-        levelsToGo: Math.max(0, missing.level - hackingLevel),
+        canCreate: level >= missing.level,
+        levelsToGo: Math.max(0, missing.level - level),
     };
 }
 
@@ -72,7 +125,9 @@ export function nextPortProgram(owned, hackingLevel) {
  *
  * @returns {{id:string,label:string,detail:string,cost:number,where:string,ready:boolean}[]}
  */
-export function manualActions({
+export function manualActions(options = {}) {
+    // A parameter default fires only on undefined; state files supply null.
+    const {
     homeRam = 8,
     cash = 0,
     hackingLevel = 1,
@@ -80,7 +135,7 @@ export function manualActions({
     singularity = false,
     cloudAutomated = false,
     workerRam = 2.4,
-} = {}) {
+} = options ?? {};
     if (singularity) return [];
     const out = [];
 

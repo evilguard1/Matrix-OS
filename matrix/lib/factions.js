@@ -121,6 +121,7 @@ function money(value) {
  * never make the guidance panel throw.
  */
 export function playerSnapshot(raw = {}) {
+    raw = raw ?? {};
     const skills = raw.skills ?? {};
     return {
         hacking: Number(skills.hacking ?? 0) || 0,
@@ -165,6 +166,7 @@ const COMBAT = [["str", "STR"], ["def", "DEF"], ["dex", "DEX"], ["agi", "AGI"]];
 
 /** Requirements this player does NOT yet meet, as short human strings. */
 export function unmetRequirements(req = {}, p) {
+    req = req ?? {}; p = p ?? playerSnapshot({});
     const missing = [];
     if (req.hacking && p.hacking < req.hacking) missing.push(`Hacking ${p.hacking}/${req.hacking}`);
     if (req.combat) {
@@ -202,7 +204,8 @@ export function unmetRequirements(req = {}, p) {
  * is closest. `eligible` factions are the actionable ones - in game they show
  * up as a pending invitation.
  */
-export function factionPlan(rawPlayer, { singularity = false } = {}) {
+export function factionPlan(rawPlayer, options = {}) {
+    const { singularity = false } = options ?? {};
     const p = playerSnapshot(rawPlayer);
     const rows = FACTIONS.map(faction => {
         const joined = p.factions.has(faction.name);
@@ -226,7 +229,8 @@ export function factionPlan(rawPlayer, { singularity = false } = {}) {
  * Only emits what is actually actionable - a faction blocked behind six stats
  * is not an instruction, it is noise.
  */
-export function factionDirectives(rawPlayer, { singularity = false, limit = 4 } = {}) {
+export function factionDirectives(rawPlayer, options = {}) {
+    const { singularity = false, limit = 4 } = options ?? {};
     const plan = factionPlan(rawPlayer, { singularity });
     const reachable = plan.player.reachable;
     const out = [];

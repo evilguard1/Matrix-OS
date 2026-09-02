@@ -88,6 +88,7 @@ const LINES = {
  * "do this now" from "this is why you cannot".
  */
 export function speak(directive = {}) {
+    directive = directive ?? {};
     const tag = String(directive.tag ?? "").toUpperCase();
     const id = directive.id ?? directive.label ?? tag;
     let key = "DEFAULT";
@@ -107,6 +108,7 @@ export function speak(directive = {}) {
 
 /** Attaches the voice without disturbing anything the deck already reads. */
 export function narrate(directives = []) {
+    directives = directives ?? [];
     if (!Array.isArray(directives)) return [];
     return directives.filter(Boolean).map(directive => ({ ...directive, voice: speak(directive) }));
 }
@@ -130,7 +132,8 @@ export const MODULE_LOCKS = {
  * in reserve and exactly which BitNode releases it. Only emitted for modules
  * whose Source-File is genuinely absent.
  */
-export function moduleDirectives(ownedSF = [], { limit = 3 } = {}) {
+export function moduleDirectives(ownedSF = [], options = {}) {
+    const { limit = 3 } = options ?? {};
     const owned = new Set();
     for (const entry of Array.isArray(ownedSF) ? ownedSF : []) {
         const n = Number(Array.isArray(entry) ? entry[0] : entry?.n ?? entry);

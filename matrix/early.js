@@ -1,10 +1,13 @@
-import { config, event, fetchLatestInstaller, writeState, getDirectives } from "/matrix/lib/common.js";
+import { config, event, fetchLatestInstaller, writeState, getDirectives, managerBudget } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
-import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
+import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS, serverPurchasePlan } from "/matrix/lib/capabilities.js";
 import { dispatchContracts } from "/matrix/lib/dispatch.js";
 
 const EARLY = "/matrix/workers/early.js";
+const FLEET_PREFIX = "mx-early";
+// The worker imports its decision policy, so both files have to travel.
+const EARLY_FILES = [EARLY, "/matrix/lib/earlyloop.js"];
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
@@ -31,7 +34,7 @@ async function deploy(ns, hosts, target) {
         if (!ns.hasRootAccess(host)) continue;
         const max = ns.getServerMaxRam(host);
         if (max < ram) continue;
-        if (host !== "home") await ns.scp(EARLY, host, "home");
+        if (host !== "home") await ns.scp(EARLY_FILES, host, "home");
         for (const process of ns.ps(host)) {
             if (sameScript(process.filename, EARLY) && String(process.args[0]) !== target) ns.kill(process.pid);
         }
@@ -136,6 +139,39 @@ async function handoffInstaller(ns, requested) {
     return true;
 }
 
+/**
+ * Buy worker RAM as fast as the budget allows.
+ *
+ * This is the highest-return action available in the early game and MATRIX was
+ * not taking it: cloud.js only runs from 64 GB of home RAM, so between the
+ * first root and the full engine nothing bought a single server. One 8 GB box
+ * costs $440k and is pure additional throughput from the moment it boots.
+ */
+async function expandFleet(ns, cfg) {
+    if (cfg.automation?.cloud === false) return null;
+    let owned = [];
+    try {
+        owned = ns.cloud.getServerNames().map(host => ({ host, ram: ns.getServerMaxRam(host) }));
+    } catch { return null; }
+
+    let limit = 25, ramLimit = 1_048_576;
+    try { limit = ns.cloud.getServerLimit(); } catch {}
+    try { ramLimit = ns.cloud.getRamLimit(); } catch {}
+
+    const plan = serverPurchasePlan({
+        budget: managerBudget(ns, "cloud", cfg),
+        owned, limit, ramLimit,
+        workerRam: ns.getScriptRam(EARLY, "home"),
+    });
+    if (plan.action !== "buy") return plan;
+    try {
+        const host = ns.cloud.purchaseServer(FLEET_PREFIX, plan.ram);
+        if (!host) return { action: "wait", reason: "purchase refused" };
+        await event(ns, "early", `Bought ${ns.format.ram(plan.ram)} server ${host}`, "success");
+        return { ...plan, host };
+    } catch { return { action: "wait", reason: "purchase failed" }; }
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     // Same fragile pattern the dashboard suffered from - ns.ps liveness. Kept
@@ -164,6 +200,9 @@ export async function main(ns) {
             if (ns.getServerMaxRam("home") >= 32) {
                 if (await handoffInstaller(ns, true)) return;
             }
+
+            // Before anything else: convert spare cash into worker RAM.
+            const fleet = await expandFleet(ns, cfg);
 
             const { hosts } = scanAll(ns);
             let rooted = 0;
@@ -208,7 +247,7 @@ export async function main(ns) {
             const state = {
                 status: "online", phase: "early", target, threads,
                 discovered: hosts.length, rooted,
-                worm, wormOwned: Boolean(worm), singularity, actions, crackerLine, contracts,
+                worm, wormOwned: Boolean(worm), singularity, actions, crackerLine, contracts, fleet,
             };
             await writeState(ns, "early", state);
             draw(ns, state);

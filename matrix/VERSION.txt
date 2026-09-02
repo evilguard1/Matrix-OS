@@ -1,2 +1,2 @@
-MATRIX-OS 1.1.1
+MATRIX-OS 1.2.0
 Target: Bitburner 3.0.1+

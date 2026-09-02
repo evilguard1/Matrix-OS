@@ -87,13 +87,15 @@ export const NEUROFLUX = "NeuroFlux Governor";
  * augmentation is reported as "needs rep" rather than being hidden - naming the
  * requirement is the whole point.
  */
-export function augmentationPlan({
+export function augmentationPlan(options = {}) {
+    // A parameter default fires only on undefined; state files supply null.
+    const {
     owned = [],
     factions = [],
     factionRep = {},
     money = 0,
     limit = 6,
-} = {}) {
+} = options ?? {};
     const have = new Set(Array.isArray(owned) ? owned : []);
     const joined = new Set(Array.isArray(factions) ? factions : []);
     const rep = factionRep && typeof factionRep === "object" ? factionRep : {};
@@ -132,7 +134,9 @@ export function augmentationPlan({
  * total value the player cannot buy yet. Grinding rep is the long pole before
  * SF4, so pointing at the right faction is worth more than any single implant.
  */
-export function bestFactionToGrind({ owned = [], factions = [], factionRep = {} } = {}) {
+export function bestFactionToGrind(options = {}) {
+    // A parameter default fires only on undefined; state files supply null.
+    const { owned = [], factions = [], factionRep = {} } = options ?? {};
     const have = new Set(Array.isArray(owned) ? owned : []);
     const joined = new Set(Array.isArray(factions) ? factions : []);
     const totals = new Map();
@@ -153,7 +157,10 @@ export function bestFactionToGrind({ owned = [], factions = [], factionRep = {} 
 }
 
 /** Directives for the transmission feed. */
-export function augmentationDirectives(state = {}, { singularity = false, limit = 3 } = {}) {
+export function augmentationDirectives(state = {}, options = {}) {
+    // A parameter default fires only on undefined; state files supply null.
+    state = state ?? {};
+    const { singularity = false, limit = 3 } = options ?? {};
     const plan = augmentationPlan({ ...state, limit });
     const out = [];
     for (const aug of plan.ready) {
