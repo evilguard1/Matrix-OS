@@ -8,6 +8,24 @@ const DASHBOARD = "/matrix/dashboard.jsx";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const UPDATE_SCRIPT = "/matrix/update.js";
 const STAGE_ATTEMPT = "/matrix/state/stage-attempt.txt";
+const DECK_BEAT = "/matrix/state/dashboard.txt";
+
+// ns.ps-based liveness has already failed once in this project: bootstrap.js had
+// to move to a lock file (8cb272a), and preventDuplicates was found to silently
+// no-op (90f757a). The supervisor reported the deck "started" with a new PID
+// every cycle while every other service stayed "running", which is the same
+// signature. So the deck's liveness comes from the heartbeat it writes, not from
+// ns.ps - exactly the pattern bootstrap.js already uses.
+function deckAlive(ns) {
+    try {
+        const raw = ns.read(DECK_BEAT);
+        if (!raw) return false;
+        const beat = JSON.parse(raw);
+        return beat.phase === "alive" && Date.now() - Number(beat.updated ?? 0) < 8000;
+    } catch {
+        return false;
+    }
+}
 // A stage transition restarts the whole system. If it does not take, retrying
 // every 5s is an infinite restart loop that spawns a command deck each time.
 const STAGE_RETRY_MS = 300_000;
@@ -152,6 +170,7 @@ function drawSupervisor(ns, homeRam, report, reason, stuck) {
             : entry.state === "needs-source-file" ? `needs Source-File ${entry.sf}`
             : entry.state === "needs-sf4-level-3" ? "needs SF4 level 3 (16x RAM below it)"
             : entry.state === "not-installed" ? "not downloaded"
+            : entry.state === "restart-loop" ? `DIES ON START - gave up after ${entry.restarts} tries`
             : entry.state === "launch-failed" ? "LAUNCH REFUSED by the game"
             : entry.state.toUpperCase();
         ns.print(row(icon, name.slice(0, 11), detail));
@@ -173,6 +192,10 @@ export async function main(ns) {
     if (!holdSingleton(ns, "/matrix/start.js")) return;
     await event(ns, "system", "MATRIX full supervisor online", "success");
     let tailOpen = false;
+    // A service that dies immediately and is respawned every cycle orphans a
+    // tail window each time. Give up after a few tries and report it instead.
+    let deckRestarts = 0;
+    const DECK_RESTART_LIMIT = 3;
 
     while (true) {
         if (!holdSingleton(ns, "/matrix/start.js")) return;
@@ -210,6 +233,16 @@ export async function main(ns) {
                 continue;
             }
             if (service.ui && cfg.ui?.autoOpen === false) continue;
+            // A live heartbeat means the deck is up even if ns.ps cannot see it.
+            if (service.ui && deckAlive(ns)) {
+                deckRestarts = 0;
+                report.push({ file: service.file, state: "running", via: "heartbeat" });
+                continue;
+            }
+            if (service.ui && deckRestarts >= DECK_RESTART_LIMIT) {
+                report.push({ file: service.file, state: "restart-loop", restarts: deckRestarts });
+                continue;
+            }
             if (service.sf !== undefined && !hasSourceFile(reset, service.sf)) {
                 report.push({ file: service.file, state: "needs-source-file", sf: service.sf });
                 continue;
@@ -225,8 +258,12 @@ export async function main(ns) {
             }
             ensureOne(ns, service.file, report);
         }
+        const deckEntry = report.find(entry => entry.file === DASHBOARD);
+        if (deckEntry?.state === "started") deckRestarts++;
+        else if (deckEntry?.state === "running") deckRestarts = 0;
+
         await writeState(ns, "supervisor", {
-            status: "online", homeRam, services: report,
+            status: "online", homeRam, services: report, deckRestarts,
             stage: haveStage, expectedStage: wantStage, stageStuck,
         });
 
@@ -241,6 +278,7 @@ export async function main(ns) {
             const reason = !deck ? "not attempted"
                 : deck.state === "ram-blocked" ? `needs ${deck.need}GB, only ${deck.free}GB free`
                 : deck.state === "not-installed" ? "dashboard.jsx not downloaded"
+                : deck.state === "restart-loop" ? `starts then dies immediately (${deck.restarts} tries)`
                 : deck.state === "launch-failed" ? "the game refused to run it"
                 : String(deck.state);
             if (!tailOpen) {

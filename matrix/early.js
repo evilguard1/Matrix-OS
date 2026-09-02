@@ -138,6 +138,9 @@ async function handoffInstaller(ns, requested) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    // Same fragile pattern the dashboard suffered from - ns.ps liveness. Kept
+    // here because early.js is spawned once by the kernel rather than polled
+    // every 5s by a supervisor, so a missed detection cannot compound.
     const older = ns.ps("home").some(process =>
         sameScript(process.filename, "/matrix/early.js") && process.pid !== ns.pid && process.pid < ns.pid
     );

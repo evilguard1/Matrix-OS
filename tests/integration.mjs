@@ -218,3 +218,53 @@ console.log("MATRIX-OS integration passed: exactly one command deck survives.");
 }
 
 console.log("MATRIX-OS integration passed: stage transitions cannot loop.");
+
+// --- the deck must not depend on ns.ps alone ---------------------------------
+// Evidence from a real save: hacking/telemetry/coordinator stayed "running" on
+// their original PIDs while the deck was reported "started" with a fresh PID
+// every 5s cycle. Either it dies instantly, or ns.ps does not report it. A
+// heartbeat file settles which, and guards against both.
+{
+    const fs = await import("node:fs");
+    const deck = fs.readFileSync("matrix/dashboard.jsx", "utf8");
+
+    // Must be CALLED, not merely defined: definition + both guard sites.
+    assert.ok((deck.match(/anotherDeckAlive/g) ?? []).length >= 3,
+        "the deck must actually consult its heartbeat guard at startup and in its loop");
+    const deckLoopBody = deck.slice(deck.lastIndexOf("while (true)"));
+    assert.ok(deckLoopBody.includes("anotherDeckAlive"),
+        "the heartbeat guard must be re-checked in the loop, not only at startup");
+    assert.match(deck, /dashboard\.txt/, "the deck must publish a heartbeat");
+
+    // The heartbeat must be written before rendering and refreshed in the loop,
+    // or a stale file would lock every future deck out permanently.
+    const beats = deck.match(/beat\(ns, "[a-z-]+"/g) ?? [];
+    assert.ok(beats.includes('beat(ns, "rendering"'), "the deck must record that it reached rendering");
+    assert.ok(beats.includes('beat(ns, "alive"'), "the deck must record that it is alive");
+    assert.ok(beats.length >= 3, "the heartbeat must be refreshed, not written once");
+
+    // Staleness matters: the guard must expire, or one crashed deck blocks all.
+    assert.match(deck, /Date\.now\(\) - Number\(beat\.updated \?\? 0\) < \d+/,
+        "the heartbeat guard must expire so a crashed deck cannot lock the UI out forever");
+
+    // The supervisor must stop respawning something that will not stay up.
+    const start = fs.readFileSync("matrix/start.js", "utf8");
+    assert.match(start, /DECK_RESTART_LIMIT/, "a deck that dies on start must not be respawned forever");
+    assert.ok(start.includes('state: "restart-loop"'), "a restart loop must be reported, not hidden");
+    assert.ok(start.indexOf("deckRestarts++") > 0 && start.includes('=== "running") deckRestarts = 0'),
+        "the restart counter must reset once the deck stays up");
+
+    // The supervisor must decide the deck is alive from the heartbeat, not ns.ps.
+    // This project already learned that lesson once: bootstrap.js moved to a lock
+    // file (8cb272a) and preventDuplicates was found to silently no-op (90f757a).
+    assert.match(start, /function deckAlive/, "the supervisor needs heartbeat-based liveness for the deck");
+    assert.ok(start.includes("if (service.ui && deckAlive(ns))"),
+        "the supervisor must consult the heartbeat before respawning the deck");
+    const uiGuard = start.indexOf("service.ui && deckAlive(ns)");
+    const uiSpawn = start.indexOf("ensureOne(ns, service.file, report)");
+    assert.ok(uiGuard > 0 && uiGuard < uiSpawn,
+        "the heartbeat check must come before the respawn, or it spawns one every cycle anyway");
+    assert.ok(start.includes('via: "heartbeat"'), "heartbeat-sourced liveness must be visible in the report");
+}
+
+console.log("MATRIX-OS integration passed: deck ownership survives an unreliable ns.ps.");

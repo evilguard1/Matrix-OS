@@ -1,4 +1,4 @@
-import { CONFIG, STATE_DIR, readJson } from "/matrix/lib/common.js";
+import { CONFIG, STATE_DIR, readJson, writeJson } from "/matrix/lib/common.js";
 import { holdSingleton } from "/matrix/lib/singleton.js";
 
 const DECK = "/matrix/dashboard.jsx";
@@ -490,6 +490,31 @@ function App({ ns }) {
     );
 }
 
+// A second, independent ownership check that does NOT rely on ns.ps.
+//
+// The supervisor reported the deck as "started" with a fresh PID on every cycle
+// while hacking/telemetry/coordinator stayed "running" on their original PIDs -
+// so either the deck dies instantly, or ns.ps does not report it and the
+// supervisor spawns another every 5s. This guard holds under both: a live deck
+// refreshes its heartbeat every 2s, and any newcomer that sees a fresh one from
+// a different PID stands down without even rendering.
+function anotherDeckAlive(ns) {
+    const beat = readJson(ns, `${STATE_DIR}/dashboard.txt`, null);
+    return Boolean(beat)
+        && beat.pid !== ns.pid
+        && beat.phase === "alive"
+        && Date.now() - Number(beat.updated ?? 0) < 6000;
+}
+
+// Heartbeat: where the deck got to, and how long it survived. ns.write is free.
+async function beat(ns, phase, ticks) {
+    try {
+        await writeJson(ns, `${STATE_DIR}/dashboard.txt`, {
+            service: "dashboard", updated: Date.now(), pid: ns.pid, phase, ticks,
+        });
+    } catch {}
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.clearLog();
@@ -497,7 +522,11 @@ export async function main(ns) {
     // Claim ownership now and keep re-claiming below, so duplicates collapse.
     // Stand down rather than being killed: a killed script cannot close its own
     // window, which is how orphaned decks pile up on screen.
-    if (!holdSingleton(ns, DECK)) return;
+    if (!holdSingleton(ns, DECK) || anotherDeckAlive(ns)) {
+        try { ns.ui.closeTail(); } catch {}
+        return;
+    }
+    await beat(ns, "rendering", 0);
     ns.printRaw(<App ns={ns} />);
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {}
@@ -512,10 +541,17 @@ export async function main(ns) {
         } catch {}
     }
     ns.ui.openTail();
-    // Re-assert ownership rather than trusting the one check at startup: a
-    // supervisor restart can spawn another deck at any moment.
+    await beat(ns, "alive", 0);
+    // Re-assert ownership rather than trusting the one check at startup, and
+    // leave a heartbeat so a deck that dies is diagnosable rather than silent.
+    let ticks = 0;
     while (true) {
         await ns.sleep(2000);
-        if (!holdSingleton(ns, DECK)) return;
+        if (!holdSingleton(ns, DECK) || anotherDeckAlive(ns)) {
+            await beat(ns, "stood-down", ticks);
+            try { ns.ui.closeTail(); } catch {}
+            return;
+        }
+        await beat(ns, "alive", ++ticks);
     }
 }
