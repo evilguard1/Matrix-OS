@@ -177,6 +177,8 @@ function drawSupervisor(ns, homeRam, report, reason, stuck) {
             : entry.state === "needs-source-file" ? `needs Source-File ${entry.sf}`
             : entry.state === "needs-sf4-level-3" ? "needs SF4 level 3 (16x RAM below it)"
             : entry.state === "not-installed" ? "not downloaded"
+            : entry.state === "gave-up" ? `KILLED REPEATEDLY - stopped after ${entry.launches} launches`
+            : entry.state === "settling" ? "just launched, waiting for its lease"
             : entry.state === "restart-loop" ? `DIES ON START - gave up after ${entry.restarts} tries`
             : entry.state === "launch-failed" ? "LAUNCH REFUSED by the game"
             : entry.state.toUpperCase();
@@ -207,6 +209,12 @@ export async function main(ns) {
     // tail window each time. Give up after a few tries and report it instead.
     let deckRestarts = 0;
     const DECK_RESTART_LIMIT = 3;
+    // deckRestarts resets whenever the deck reports healthy, so a deck that comes
+    // ONLINE and is then killed by something else never trips the limit - it just
+    // churns forever. Count total launches, which never resets, so an unexplained
+    // killer can cost at most a few windows before MATRIX stops feeding it.
+    let deckLaunches = 0;
+    const DECK_LAUNCH_BUDGET = 3;
     // early.js works because the kernel spawns it ONCE and then the kernel is
     // gone. The deck is the only thing launched from a loop that re-evaluates
     // every 5s, so it needs the same one-shot discipline imposed explicitly:
@@ -264,6 +272,10 @@ export async function main(ns) {
                 report.push({ file: service.file, state: "running", via: "heartbeat" });
                 continue;
             }
+            if (service.ui && deckLaunches >= DECK_LAUNCH_BUDGET) {
+                report.push({ file: service.file, state: "gave-up", launches: deckLaunches });
+                continue;
+            }
             if (service.ui && deckRestarts >= DECK_RESTART_LIMIT) {
                 report.push({ file: service.file, state: "restart-loop", restarts: deckRestarts });
                 continue;
@@ -286,7 +298,7 @@ export async function main(ns) {
                 continue;
             }
             const launched = ensureOne(ns, service.file, report, { kill: !service.ui });
-            if (service.ui && launched) lastDeckSpawn = Date.now();
+            if (service.ui && launched) { lastDeckSpawn = Date.now(); deckLaunches += 1; }
         }
         const deckEntry = report.find(entry => entry.file === DASHBOARD);
         if (deckEntry?.state === "started") deckRestarts++;
@@ -308,6 +320,8 @@ export async function main(ns) {
             const reason = !deck ? "not attempted"
                 : deck.state === "ram-blocked" ? `needs ${deck.need}GB, only ${deck.free}GB free`
                 : deck.state === "not-installed" ? "dashboard.jsx not downloaded"
+                : deck.state === "gave-up" ? `killed repeatedly - stopped after ${deck.launches} launches. Set ui.autoOpen=false in /matrix/config.json to silence this.`
+                : deck.state === "settling" ? "just launched, waiting for its lease"
                 : deck.state === "restart-loop" ? `starts then dies immediately (${deck.restarts} tries)`
                 : deck.state === "launch-failed" ? "the game refused to run it"
                 : String(deck.state);

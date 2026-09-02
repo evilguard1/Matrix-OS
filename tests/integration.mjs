@@ -295,8 +295,13 @@ console.log("MATRIX-OS integration passed: stage transitions cannot loop.");
     assert.ok(start.includes('state: "settling"'), "a deck inside its cooldown must be reported, not respawned");
     assert.ok(cooldownAt < start.indexOf("ensureOne(ns, service.file, report,"),
         "the cooldown must gate the spawn, not follow it");
-    assert.ok(start.includes("if (service.ui && launched) lastDeckSpawn = Date.now();"),
+    assert.ok(start.includes("lastDeckSpawn = Date.now();"),
         "the cooldown clock must actually be set when the deck launches");
+    // A deck that comes ONLINE and is then killed by something else resets
+    // deckRestarts, so it would churn forever. Total launches never resets.
+    assert.ok(start.includes("DECK_LAUNCH_BUDGET") && start.includes("deckLaunches += 1"),
+        "there must be a hard cap on total deck launches, not only consecutive failures");
+    assert.ok(start.includes('state: "gave-up"'), "giving up must be reported so the cause stays visible");
     assert.match(start, /function deckAlive/, "the supervisor needs heartbeat-based liveness for the deck");
     assert.ok(start.includes("if (service.ui && deckAlive(ns))"),
         "the supervisor must consult the heartbeat before respawning the deck");
