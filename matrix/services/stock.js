@@ -1,4 +1,4 @@
-import { config, reserveMoney, writeState, event } from "/matrix/lib/common.js";
+import { config, reserveMoney, writeState, event, getCoordinatorState } from "/matrix/lib/common.js";
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -12,6 +12,8 @@ export async function main(ns) {
         try {
             const cash = ns.getServerMoneyAvailable("home");
             const reserve = reserveMoney(ns,cfg);
+            const coord = getCoordinatorState(ns);
+            const liquidate = Boolean(coord?.liquidateStocks);
             const constants = ns.stock.getConstants();
 
             if (!ns.stock.hasTixApiAccess() && cash-reserve > constants.TixApiCost*1.5) {
@@ -53,6 +55,25 @@ export async function main(ns) {
                         exposure += shortShares*ask; positions++;
                         unrealized += shortShares*(shortPrice-ask);
                     }
+                }
+
+                if (liquidate) {
+                    let closedCount = 0;
+                    for (const x of snapshots) {
+                        if (x.longShares > 0) {
+                            ns.stock.sellStock(x.sym, x.longShares);
+                            closedCount++;
+                        }
+                        if (x.shortShares > 0) {
+                            try { ns.stock.sellShort(x.sym, x.shortShares); closedCount++; } catch {}
+                        }
+                    }
+                    if (closedCount > 0) {
+                        await event(ns, "stock", `Liquidated ${closedCount} position(s) for progression objective: ${coord?.title || "goal"}`, "warn");
+                    }
+                    await writeState(ns, "stock", { status: "liquidating", fourS: true, positions: 0, exposure: 0, unrealized: 0, reason: coord?.title || "liquidation" });
+                    await ns.stock.nextUpdate();
+                    continue;
                 }
 
                 // Exit weak positions first.

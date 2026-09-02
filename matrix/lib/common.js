@@ -74,10 +74,28 @@ export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-ins
     return await ns.wget(url, destination, "home") ? sha : null;
 }
 
+export function getCoordinatorState(ns) {
+    const raw = readJson(ns, `${STATE_DIR}/coordinator.txt`, null);
+    if (!raw || Date.now() - Number(raw.updated ?? 0) > 30_000) return null;
+    return raw;
+}
+
 export function reserveMoney(ns, cfg = config(ns)) {
     const cash = ns.getServerMoneyAvailable("home");
     const econ = cfg.economy ?? {};
     const baseline = Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));
+
+    const coord = getCoordinatorState(ns);
+    if (coord && coord.budgets) {
+        const coordTarget = Math.max(
+            Number(coord.budgets.augmentationReserve ?? 0),
+            Number(coord.budgets.milestoneReserve ?? 0)
+        );
+        if (Number.isFinite(coordTarget) && coordTarget > 0) {
+            return Math.max(baseline, coordTarget);
+        }
+    }
+
     // Singularity publishes a target augmentation budget here. Economy managers
     // honour it, while the singularity service itself uses the baseline reserve.
     const progression = readJson(ns, `${STATE_DIR}/spending-reserve.txt`, {});

@@ -30,7 +30,7 @@ const required = [
     "matrix/bootstrap.js", "matrix/early.js", "matrix/kernel.js", "matrix/start.js",
     "matrix/dashboard.jsx", "matrix/update.js", "matrix/config.json",
     "matrix/services/root.js", "matrix/services/hacking.js", "matrix/services/telemetry.js",
-    "matrix/services/progression.js",
+    "matrix/services/progression.js", "matrix/services/coordinator.js",
 ];
 for (const relative of required) assert.ok(fileStage.has(relative), `${relative} is missing from the manifest`);
 
@@ -135,8 +135,31 @@ assert.equal(reserveMoney(reserveMock), 80_000_000, "fresh augmentation reserve 
 reserveMock.read = file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: 0 }) : "";
 assert.equal(reserveMoney(reserveMock), 15_000_000, "stale augmentation reserve must not freeze economy spending");
 
+const coordSource = fs.readFileSync(path.join(root, "matrix/services/coordinator.js"), "utf8")
+    .replace(/from\s+["']\/matrix\/lib\/common\.js["']/g, `from "${pathToFileURL(path.join(root, "matrix/lib/common.js")).href}"`);
+const { evaluateObjective } = await import(`data:text/javascript;base64,${Buffer.from(coordSource).toString("base64")}`);
+
 const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
 assert.equal(plannedNextBitNode(reset, [4, 4, 4, 5]), 4);
 assert.equal(plannedNextBitNode({ currentNode: 1, ownedSF: new Map([[4, 3]]) }, [4, 4, 4, 5]), 5);
+
+const objGang = evaluateObjective({ karma: -10, resetInfo: { currentNode: 2 } });
+assert.equal(objGang.id, "GANG_KARMA");
+assert.equal(objGang.liquidateStocks, false);
+
+const objDaedalus = evaluateObjective({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
+assert.equal(objDaedalus.id, "RESERVE_MILESTONE");
+assert.equal(objDaedalus.liquidateStocks, true);
+
+const objDaemon = evaluateObjective({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
+assert.equal(objDaemon.id, "W0R1D_D43M0N");
+assert.equal(objDaemon.liquidateStocks, true);
+
+const objAugs = evaluateObjective({ queuedAugs: 12 });
+assert.equal(objAugs.id, "INSTALL_AUGMENTATIONS");
+assert.equal(objAugs.liquidateStocks, true);
+
+const objTor = evaluateObjective({ cash: 300_000, hasTor: false });
+assert.equal(objTor.id, "BUY_PROGRAMS");
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);

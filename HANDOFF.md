@@ -73,8 +73,11 @@ Important files:
 - `matrix/dashboard.jsx`: responsive full command deck, launched only at 32 GB+.
 - `matrix/services/telemetry.js`: writes the single `overview.txt` snapshot
   consumed by the dashboard.
+- `matrix/services/coordinator.js`: central cross-system progression coordinator.
+  Evaluates player state, BitNode, karma, augmentations, and income to publish global objectives,
+  reserve targets, and stock liquidation triggers.
 - `matrix/lib/common.js`: config merge, release resolution, state/events,
-  Source File helpers, cash reserves, and BitNode planner.
+  Source File helpers, coordinator state reader, cash reserves, and BitNode planner.
 
 ## Current UI
 
@@ -172,18 +175,11 @@ Highest-value missing behavior:
 Use proven public systems as references, but integrate deliberately rather than
 copying a monolithic script into a RAM-constrained staged design.
 
-1. Study and adapt Alain Bryden's `autopilot.js`, `work-for-factions.js`,
-   `faction-manager.js`, `daemon.js`, `stockmaster.js`, `gangs.js`, `sleeve.js`,
-   and `bladeburner.js`.
-2. Extract a compact `progression-coordinator` service for the advanced stage.
-   It should own global priorities and publish explicit budgets/objectives.
-3. Make existing managers consume those published priorities and budgets.
-   Avoid independent services competing for cash, RAM, player work, or reset
-   timing.
-4. Add deterministic unit tests for every extracted policy decision.
-5. Test one advanced manager at a time in a real compatible save before turning
+1. Progression Coordinator (`matrix/services/coordinator.js`) has been implemented and tested, publishing global objectives, reserve targets, and stock liquidation commands.
+2. Continue expanding manager policy consumption (e.g. Sleeve task assignment & Gang crime focus) based on `coordinator.txt` objectives.
+3. Test one advanced manager at a time in a real compatible save before turning
    on automatic destructive actions such as installation or World Daemon exit.
-6. Keep `progression.autoDestroyWorldDaemon` opt-in until the complete route
+4. Keep `progression.autoDestroyWorldDaemon` opt-in until the complete route
    planner is runtime-proven.
 
 Other useful reference repository:

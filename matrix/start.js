@@ -93,6 +93,7 @@ export async function main(ns) {
         }
 
         const reset = ns.getResetInfo();
+        if (homeRam >= 128 && cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
         if (homeRam >= 128 && cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
         if (homeRam >= 128 && cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
         if (homeRam >= 128 && cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");
