@@ -89,13 +89,13 @@ function parseManifest(ns) {
 }
 
 async function resolveRelease(ns, stamp) {
-    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_TEMP, "home")) return null;
-    try {
-        const sha = String(JSON.parse(ns.read(RELEASE_TEMP)).sha ?? "");
-        return /^[a-f0-9]{40}$/i.test(sha) ? sha : null;
-    } catch {
-        return null;
+    if (await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_TEMP, "home")) {
+        try {
+            const sha = String(JSON.parse(ns.read(RELEASE_TEMP)).sha ?? "");
+            if (/^[a-f0-9]{40}$/i.test(sha)) return sha;
+        } catch {}
     }
+    return "main";
 }
 
 export function stageLimit(manifest, homeRam) {

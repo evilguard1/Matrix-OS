@@ -66,10 +66,13 @@ export function config(ns) {
 
 export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-install.js`) {
     const stamp = Date.now();
-    if (!await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) return null;
-    let sha = "";
-    try { sha = String(JSON.parse(ns.read(RELEASE_META)).sha ?? ""); } catch {}
-    if (!/^[a-f0-9]{40}$/i.test(sha)) return null;
+    let sha = "main";
+    if (await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) {
+        try {
+            const parsed = String(JSON.parse(ns.read(RELEASE_META)).sha ?? "");
+            if (/^[a-f0-9]{40}$/i.test(parsed)) sha = parsed;
+        } catch {}
+    }
     const url = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
     return await ns.wget(url, destination, "home") ? sha : null;
 }
