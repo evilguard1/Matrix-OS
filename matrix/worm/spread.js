@@ -32,6 +32,10 @@ const PROPAGATE_MIN_RAM = 16;
 
 const CYCLE_MS = 20_000;
 
+// Netscript port the worm reports botnet status on. Ports are 0 GB and
+// global across hosts, so this is telemetry the worm can actually afford.
+const STATUS_PORT = 1;
+
 function scanAll(ns) {
     const seen = new Set(["home"]);
     const queue = ["home"];
@@ -93,8 +97,14 @@ export async function main(ns) {
         const retarget = target !== lastTarget;
         lastTarget = target;
 
+        let botnetRam = 0;
+        let botnetUsed = 0;
+        let infected = 0;
+        let nodes = 0;
+
         for (const host of rooted) {
             const maxRam = ns.getServerMaxRam(host);
+            botnetRam += maxRam;
             if (maxRam < DRONE_RAM) continue;
 
             // Carry the worm onward. scp is idempotent and cheap.
@@ -112,17 +122,42 @@ export async function main(ns) {
             // always has room to land.
             let reserved = 0;
             if (maxRam >= PROPAGATE_MIN_RAM) {
+                nodes++;
                 reserved = SPREAD_RAM;
                 if (host !== me) {
                     try { ns.exec(SPREAD, host, { threads: 1, preventDuplicates: true }); } catch {}
                 }
             }
 
-            const free = maxRam - ns.getServerUsedRam(host) - (host === me ? 0 : reserved);
+            const used = ns.getServerUsedRam(host);
+            botnetUsed += used;
+            if (used > 0) infected++;
+
+            const free = maxRam - used - (host === me ? 0 : reserved);
             const threads = Math.floor(free / DRONE_RAM);
             if (threads < 1) continue;
             try { ns.exec(DRONE, host, { threads, preventDuplicates: true }, target); } catch {}
         }
+
+        // Report home. Netscript ports cost 0 GB and are global across every
+        // host, so this is the only channel the worm can afford. Each spread
+        // instance scans the whole network, so any single report is a complete
+        // picture and last-writer-wins is correct.
+        try {
+            ns.clearPort(STATUS_PORT);
+            ns.writePort(STATUS_PORT, JSON.stringify({
+                updated: Date.now(),
+                origin: me,
+                discovered: hosts.length,
+                rooted: rooted.length,
+                infected,
+                nodes,
+                botnetRam,
+                botnetUsed,
+                drones: Math.floor(botnetUsed / DRONE_RAM),
+                target,
+            }));
+        } catch {}
 
         await ns.sleep(CYCLE_MS);
     }

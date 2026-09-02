@@ -106,6 +106,24 @@ Adding a single `ns.getServer()` (2.0 GB) to `spread.js` fails the suite with
 `spread + drone must fit 8 GB, is 9.45 GB`. The regression that cost the first
 attempt cannot recur silently.
 
+### Telemetry back to home
+
+`spread.js` runs on foreign hosts, so it cannot write to home's filesystem. It
+reports on **netscript port 1** instead: ports cost 0 GB and are global across
+every host, which is the only channel an 8 GB home can afford. Each spread
+instance scans the whole network, so any single report is a complete picture and
+last-writer-wins is correct.
+
+The payload is `{updated, origin, discovered, rooted, infected, nodes,
+botnetRam, botnetUsed, drones, target}`. `bootstrap.js` reads it with `ns.peek`
+(also 0 GB), renders the BOTNET panel on its tail, and stores it on the
+bootstrap state file so the React deck can consume it later. A report older than
+90 s is treated as "not up yet".
+
+The bootstrap tail also now pads on **display width** rather than code points -
+emoji occupy two columns in the game font, which is why the box borders used to
+drift - and `row()` clips values so no content can break the frame.
+
 ### Scope and lifecycle
 
 The worm is active **below 16 GB only**. From 16 GB `early.js` distributes

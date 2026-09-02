@@ -230,6 +230,12 @@ assert.ok(wormRam.spread + wormRam.drone <= 8, `spread + drone must fit 8 GB, is
 // The one-shot seeder must fit an 8 GB home on its own.
 assert.ok(wormRam.seed <= 8, `seed must fit an 8 GB home, is ${wormRam.seed} GB`);
 
+// The bootstrap controller shares the same 8 GB home and now renders worm
+// telemetry, so hold it to the hard game limit too.
+const bootstrapRam = scriptRam(read("matrix/bootstrap.js"));
+assert.deepEqual(bootstrapRam.unknown, [], `bootstrap.js uses NS functions with no known RAM cost: ${bootstrapRam.unknown.join(", ")}`);
+assert.ok(bootstrapRam.ram <= 8, `bootstrap.js must fit an 8 GB home, is ${bootstrapRam.ram} GB`);
+
 // The worm hardcodes these costs because ns.getScriptRam() is RAM it cannot
 // spare. Drift between the constants and reality would silently over-subscribe
 // every server in the botnet, so pin them.
@@ -250,3 +256,4 @@ for (const name of ["seed", "spread", "drone"]) {
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
 console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
+console.log(`  bootstrap.js: ${bootstrapRam.ram} GB of the 8 GB fresh-save home.`);

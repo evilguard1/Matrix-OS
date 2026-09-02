@@ -5,6 +5,8 @@ const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
 const RELEASE_META = "/matrix/state/release-metadata.txt";
+// Netscript port the worm publishes botnet status on (see matrix/worm/spread.js).
+const WORM_PORT = 1;
 
 export function scanNetwork(ns) {
     const seen = new Set(["home"]);
@@ -60,6 +62,66 @@ let lastTime = 0;
 let cashRate = 0;
 
 
+// The tail renders emoji two columns wide, but padEnd() counts code points, so
+// every emoji row used to overshoot the right border. Measure display width.
+// The worm reports botnet status on netscript port 1. Ports cost 0 GB and are
+// global across hosts, which is the only reason a worm running on foodnstuff
+// can tell an 8 GB home what it is doing. No report, or one older than 90s,
+// means the botnet is not up yet.
+function readWorm(ns) {
+    try {
+        const raw = ns.peek(WORM_PORT);
+        if (!raw || raw === "NULL PORT DATA") return null;
+        const parsed = JSON.parse(raw);
+        return Date.now() - Number(parsed.updated ?? 0) < 90_000 ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+const WIDTH = 58;
+function cols(text) {
+    let n = 0;
+    for (const ch of text) {
+        const cp = ch.codePointAt(0);
+        if (cp === 0xFE0F || cp === 0x200D) continue;
+        n += (cp >= 0x1F300 && cp <= 0x1FAFF)
+            || (cp >= 0x2600 && cp <= 0x27BF)
+            || (cp >= 0x23E9 && cp <= 0x23FA)
+            || (cp >= 0x2B00 && cp <= 0x2BFF) ? 2 : 1;
+    }
+    return n;
+}
+// Clip to display columns, never code points, so a long value can not punch a
+// hole in the right border.
+function clip(text, max) {
+    let out = "";
+    let n = 0;
+    for (const ch of text) {
+        const w = cols(ch);
+        if (n + w > max) break;
+        out += ch;
+        n += w;
+    }
+    return out;
+}
+function row(icon, label, value) {
+    const prefix = `  ${icon} ${label.padEnd(11)} : `;
+    const body = prefix + clip(String(value), WIDTH - cols(prefix));
+    return `║${body}${" ".repeat(Math.max(0, WIDTH - cols(body)))}║`;
+}
+function center(text) {
+    const pad = WIDTH - cols(text);
+    const left = Math.floor(pad / 2);
+    return " ".repeat(left) + text + " ".repeat(pad - left);
+}
+function rule(title) {
+    if (!title) return `╠${"═".repeat(WIDTH)}╣`;
+    const pad = WIDTH - cols(title) - 2;
+    const left = Math.floor(pad / 2);
+    return `╠${"═".repeat(left)} ${title} ${"═".repeat(pad - left)}╣`;
+}
+
 function draw(ns, state) {
     ns.clearLog();
     const spin = SPINNER[(tick++) % SPINNER.length];
@@ -114,20 +176,33 @@ function draw(ns, state) {
         ? (hackLvl >= nextCracker.lvl ? `CREATE ${nextCracker.file} NOW!` : `${nextCracker.file} @ Hack ${nextCracker.lvl} (${nextCracker.lvl - hackLvl} to go)`)
         : "ALL PORT CRACKERS OWNED";
 
-    ns.print(`╔══════════════════════════════════════════════════════════╗`);
-    ns.print(`║  M A T R I X  //  F R E S H - S A V E   K E R N E L      ║`);
-    ns.print(`╠══════════════════════════════════════════════════════════╣`);
-    ns.print(`║  ${spin} STAGE       : BOOTSTRAP / 8 GB                         ║`);
-    ns.print(`║  🎯 TARGET      : ${state.target.padEnd(20)}                   ║`);
-    ns.print(`║  ${spin} ACTION      : ${state.action.toUpperCase().padEnd(38)} ║`);
-    ns.print(`║  💵 CAPITAL     : $${moneyStr.padEnd(19)}                   ║`);
-    ns.print(`║  🌐 NETWORK     : [${bar}] ${String(state.rooted).padStart(2)}/${String(state.discovered).padEnd(2)} ║`);
-    ns.print(`║  💻 HOME RAM    : ${maxRam.padEnd(8)}  │  HACK SKILL: ${String(hackLvl).padEnd(6)}  ║`);
-    ns.print(`║  🔓 PORTS       : ${String(ports)}/5 crackers  │  ${crackerStr.slice(0, 26).padEnd(26)} ║`);
-    ns.print(`╠══════════════════════════════════════════════════════════╣`);
-    ns.print(`║  ⏱️ NEXT STEP   : ${nextLine.slice(0, 38).padEnd(38)} ║`);
-    ns.print(`║  ⏳ EST. TIME   : ${etaStr.padEnd(38)} ║`);
-    ns.print(`╚══════════════════════════════════════════════════════════╝`);
+    const worm = state.worm ?? null;
+    const wormFill = worm ? Math.floor((worm.infected / Math.max(1, worm.rooted)) * 16) : 0;
+    const wormBar = "█".repeat(wormFill) + "░".repeat(16 - wormFill);
+    const wormCount = worm ? `${worm.infected}/${worm.rooted} INFECTED` : "SEEDING...";
+    const droneStr = worm
+        ? `${worm.drones} drones  │  ${ns.format.ram(worm.botnetUsed)} / ${ns.format.ram(worm.botnetRam)}`
+        : "awaiting first worm report";
+    const swarmStr = worm ? `${worm.target} via ${worm.nodes} relay node(s)` : "--";
+    ns.print(`╔${"═".repeat(WIDTH)}╗`);
+    ns.print(`║${center("M A T R I X  //  F R E S H - S A V E   K E R N E L")}║`);
+    ns.print(rule());
+    ns.print(row(spin, "STAGE", "BOOTSTRAP / 8 GB"));
+    ns.print(row("🎯", "TARGET", state.target));
+    ns.print(row(spin, "ACTION", state.action.toUpperCase()));
+    ns.print(row("💵", "CAPITAL", `$${moneyStr}`));
+    ns.print(row("🌐", "NETWORK", `[${bar}] ${state.rooted}/${state.discovered} rooted`));
+    ns.print(row("💻", "HOME RAM", `${maxRam}  │  HACK SKILL: ${hackLvl}`));
+    ns.print(row("🔓", "PORTS", `${ports}/5 port crackers owned`));
+    ns.print(row("🔑", "NEXT CRACK", crackerStr));
+    ns.print(rule("B O T N E T"));
+    ns.print(row("🐛", "SPREAD", `[${wormBar}] ${wormCount}`));
+    ns.print(row("🤖", "DRONES", droneStr));
+    ns.print(row("🕸️", "SWARM TGT", swarmStr));
+    ns.print(rule());
+    ns.print(row("⏱️", "NEXT STEP", nextLine));
+    ns.print(row("⏳", "EST. TIME", etaStr));
+    ns.print(`╚${"═".repeat(WIDTH)}╝`);
 }
 
 
@@ -160,7 +235,7 @@ export async function main(ns) {
     await ns.write(LOCK, String(ns.pid), "w");
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // FRESH-SAVE KERNEL"); } catch {}
-    try { ns.ui.resizeTail(620, 390); } catch {}
+    try { ns.ui.resizeTail(640, 470); } catch {}
     try { ns.ui.openTail(); } catch {}
 
     while (true) {
@@ -188,6 +263,7 @@ export async function main(ns) {
             const state = {
                 status: "online", phase: "bootstrap", action, target,
                 discovered: hosts.length, rooted, homeRam: ns.getServerMaxRam("home"), updated: Date.now(),
+                worm: readWorm(ns),
             };
             await ns.write(STATE, JSON.stringify(state), "w");
             draw(ns, state);

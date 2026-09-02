@@ -18,6 +18,10 @@ export const RAM_COSTS = {
     args: 0, pid: 0, enums: 0, sleep: 0, print: 0, tprint: 0, printf: 0,
     clearLog: 0, disableLog: 0, enableLog: 0, read: 0, write: 0, wget: 0,
     getResetInfo: 0, atExit: 0, tprintf: 0,
+    // netscript ports are free, which is what makes worm -> home telemetry
+    // affordable on servers that cannot spare a tenth of a gigabyte
+    writePort: 0, readPort: 0, clearPort: 0, peek: 0, getPortHandle: 0,
+    nextPortWrite: 0, tail: 0,
     // cheap server queries
     hasRootAccess: 0.05, getHostname: 0.05, getHackingLevel: 0.05,
     getServerMaxRam: 0.05, getServerUsedRam: 0.05,
