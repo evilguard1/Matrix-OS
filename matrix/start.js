@@ -1,4 +1,4 @@
-import { config, sfLevel, event, fetchLatestInstaller } from "/matrix/lib/common.js";
+import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
@@ -6,15 +6,39 @@ const DASHBOARD = "/matrix/dashboard.jsx";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const UPDATE_SCRIPT = "/matrix/update.js";
 
-const CORE = [
+// Every managed service, with the Home RAM it genuinely needs.
+//
+// minRam values are DERIVED FROM MEASURED COST, not chosen. `npm test` asserts
+// each one still exceeds the script's real static RAM plus the update reserve,
+// so this table cannot drift away from reality.
+//
+// Costs verified against bitburner-src RamCostGenerator.ts. The headline is
+// Singularity: SF4Cost() multiplies every call by 16 below SF4 level 3, so
+// singularity.js is 1242 GB without it and 80 GB with it. sf4Level3 marks the
+// services that are only realistically reachable at SF4 level 3 - ensureOne()
+// still checks the true runtime cost, this table just avoids pointless retries.
+export const SERVICES = [
+    // 32 GB: 6.6 + 11.65 + 3.35 + 2.4 + 1.9 + 2.45 = 28.35, + 1.6 reserve = 29.95
     { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
     { file: DASHBOARD, ui: true, minRam: 32 },
     { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
     { file: "/matrix/services/telemetry.js", minRam: 32 },
-    { file: "/matrix/services/cloud.js", key: "cloud", minRam: 32 },
-    { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 32 },
-    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 32 },
-    { file: "/matrix/services/stock.js", key: "stock", minRam: 64 },
+    { file: "/matrix/services/coordinator.js", key: "progression", minRam: 32 },
+    // 64 GB: + 8.6 + 5.5
+    { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
+    { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
+    // 128 GB: + 21.8 + 33.2
+    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
+    { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
+    { file: "/matrix/services/progression.js", key: "progression", minRam: 128, sf: 4 },
+    // 256 GB: + 38.2 + 66.1
+    { file: "/matrix/services/sleeves.js", key: "sleeves", minRam: 256, sf: 10 },
+    { file: "/matrix/services/gang.js", key: "gang", minRam: 256, sf: 2 },
+    // 512 GB: + 77.6 + 79.7 (singularity only fits at SF4 level 3)
+    { file: "/matrix/services/bladeburner.js", key: "bladeburner", minRam: 512, sf: [6, 7] },
+    { file: "/matrix/services/singularity.js", key: "singularity", minRam: 512, sf: 4, sf4Level3: true },
+    // 1024 GB: corporation is 341.6 GB of CorporationAction calls
+    { file: "/matrix/services/corporation.js", key: "corporation", minRam: 1024, sf: 3 },
 ];
 
 function sameScript(a, b) {
@@ -25,21 +49,39 @@ function processes(ns, file) {
     return ns.ps("home").filter(process => sameScript(process.filename, file));
 }
 
-function ensureOne(ns, file) {
+// Records why every service is or is not running. A service that silently fails
+// to launch is the single most confusing failure mode in this system: the deck
+// just shows OFFLINE with no reason. ns.getScriptRam() is the authority on cost
+// (it knows the real Source-File multipliers a static analyser cannot), so
+// report its answer rather than discarding it.
+function ensureOne(ns, file, report) {
     const matches = processes(ns, file);
     for (const process of matches.slice(1)) {
         try { ns.ui.closeTail(process.pid); } catch {}
         try { ns.kill(process.pid); } catch {}
     }
-    if (matches.length) return matches[0].pid;
-    if (!ns.fileExists(file, "home")) return 0;
+    if (matches.length) {
+        report?.push({ file, state: "running", pid: matches[0].pid });
+        return matches[0].pid;
+    }
+    if (!ns.fileExists(file, "home")) {
+        report?.push({ file, state: "not-installed" });
+        return 0;
+    }
     const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
     const updateReserve = ns.fileExists(UPDATE_SCRIPT, "home") ? ns.getScriptRam(UPDATE_SCRIPT, "home") : 1.6;
-    if (free + 1e-9 < ns.getScriptRam(file, "home") + updateReserve) return 0;
-    return ns.run(file, { threads: 1, preventDuplicates: true });
+    const need = ns.getScriptRam(file, "home") + updateReserve;
+    if (free + 1e-9 < need) {
+        report?.push({ file, state: "ram-blocked", need: Math.round(need * 100) / 100, free: Math.round(free * 100) / 100 });
+        return 0;
+    }
+    const pid = ns.run(file, { threads: 1, preventDuplicates: true });
+    report?.push({ file, state: pid ? "started" : "launch-failed", pid });
+    return pid;
 }
 
 function hasSourceFile(reset, number) {
+    if (Array.isArray(number)) return number.some(n => hasSourceFile(reset, n));
     return reset.currentNode === number || sfLevel(reset, number) > 0;
 }
 
@@ -85,26 +127,31 @@ export async function main(ns) {
                 return;
             }
         }
-        for (const service of CORE) {
-            if (homeRam < service.minRam) continue;
-            if (service.key && cfg.automation?.[service.key] === false) continue;
-            if (service.ui && cfg.ui?.autoOpen === false) continue;
-            ensureOne(ns, service.file);
-        }
-
         const reset = ns.getResetInfo();
-        // ensureOne() already refuses to launch anything that does not fit in free
-        // Home RAM alongside the update reserve, so it is the real gate. The old
-        // homeRam >= 128 guards were pure obstruction: they meant the service that
-        // buys Home RAM could not run until you had already bought Home RAM. Every
-        // manager below is gated on its Source File and on actually fitting.
-        if (cfg.automation?.progression !== false) ensureOne(ns, "/matrix/services/coordinator.js");
-        if (cfg.automation?.singularity !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/singularity.js");
-        if (cfg.automation?.progression !== false && hasSourceFile(reset, 4)) ensureOne(ns, "/matrix/services/progression.js");
-        if (cfg.automation?.gang !== false && hasSourceFile(reset, 2)) ensureOne(ns, "/matrix/services/gang.js");
-        if (cfg.automation?.sleeves !== false && hasSourceFile(reset, 10)) ensureOne(ns, "/matrix/services/sleeves.js");
-        if (cfg.automation?.bladeburner !== false && (hasSourceFile(reset, 6) || hasSourceFile(reset, 7))) ensureOne(ns, "/matrix/services/bladeburner.js");
-        if (cfg.automation?.corporation !== false && hasSourceFile(reset, 3)) ensureOne(ns, "/matrix/services/corporation.js");
+        const report = [];
+        for (const service of SERVICES) {
+            if (service.key && cfg.automation?.[service.key] === false) {
+                report.push({ file: service.file, state: "disabled" });
+                continue;
+            }
+            if (service.ui && cfg.ui?.autoOpen === false) continue;
+            if (service.sf !== undefined && !hasSourceFile(reset, service.sf)) {
+                report.push({ file: service.file, state: "needs-source-file", sf: service.sf });
+                continue;
+            }
+            if (service.sf4Level3 && sfLevel(reset, 4) < 3 && reset.currentNode !== 4) {
+                // 16x Singularity cost below SF4 level 3 puts this out of reach.
+                report.push({ file: service.file, state: "needs-sf4-level-3" });
+                continue;
+            }
+            if (homeRam < service.minRam) {
+                report.push({ file: service.file, state: "needs-home-ram", minRam: service.minRam });
+                continue;
+            }
+            ensureOne(ns, service.file, report);
+        }
+        await writeState(ns, "supervisor", { status: "online", homeRam, services: report });
+
         await ns.sleep(5000);
     }
 }

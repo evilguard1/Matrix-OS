@@ -137,8 +137,14 @@ assert.equal(reserveMoney(reserveMock), 80_000_000, "fresh augmentation reserve 
 reserveMock.read = file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: 0 }) : "";
 assert.equal(reserveMoney(reserveMock), 15_000_000, "stale augmentation reserve must not freeze economy spending");
 
-const coordSource = fs.readFileSync(path.join(root, "matrix/services/coordinator.js"), "utf8")
-    .replace(/from\s+["']\/matrix\/lib\/common\.js["']/g, `from "${pathToFileURL(path.join(root, "matrix/lib/common.js")).href}"`);
+// Rewrite every in-game /matrix/... import to a real file URL so the module can
+// be imported here. Generic on purpose: a service gaining a new lib import must
+// not silently break its own tests.
+const asFileImports = source => source.replace(
+    /from\s+["'](\/matrix\/[^"']+)["']/g,
+    (_, spec) => `from "${pathToFileURL(path.join(root, spec.replace(/^\//, ""))).href}"`,
+);
+const coordSource = asFileImports(fs.readFileSync(path.join(root, "matrix/services/coordinator.js"), "utf8"));
 const { evaluateObjective, planDirectives } = await import(`data:text/javascript;base64,${Buffer.from(coordSource).toString("base64")}`);
 
 const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
@@ -247,12 +253,18 @@ assert.equal(constantIn("matrix/worm/spread.js", "SPREAD_RAM"), wormRam.spread, 
 assert.equal(constantIn("matrix/worm/spread.js", "DRONE_RAM"), wormRam.drone, "spread.js DRONE_RAM constant is stale");
 assert.equal(constantIn("matrix/worm/seed.js", "SPREAD_RAM"), wormRam.spread, "seed.js SPREAD_RAM constant is stale");
 
-// The kernel must hand off to the seeder below 16 GB, and the installer must be
-// able to sweep the worm off every host on a stage transition.
+// The kernel must hand off to the seeder, and the installer must NOT sweep the
+// worm: a stage transition that killed the botnet would trade continuous income
+// for a batcher that idles between waves. spread.js yields RAM to HWGW instead.
 assert.match(read("matrix/kernel.js"), /worm\/seed\.js/, "kernel must be able to launch the worm seeder");
+const installerSource = read("install.js");
 for (const name of ["seed", "spread", "drone"]) {
-    assert.ok(read("install.js").includes(`matrix/worm/${name}.js`), `installer must sweep matrix/worm/${name}.js`);
+    assert.ok(
+        !installerSource.includes(`"matrix/worm/${name}.js"`),
+        `installer must not sweep matrix/worm/${name}.js - the worm has to survive stage transitions`,
+    );
 }
+assert.match(read("matrix/worm/spread.js"), /DRONE_SHARE_WITH_HWGW/, "the worm must yield RAM to the batcher once HWGW runs");
 
 // --- capabilities + hud: what MATRIX cannot automate, and rendering it --------
 const cap = await import(pathToFileURL(path.join(root, "matrix/lib/capabilities.js")));
@@ -320,6 +332,110 @@ assert.equal(hud.cols("🎯"), 2, "emoji are two columns wide in the tail font")
 assert.equal(hud.cols("⠹"), 1, "braille spinner is one column");
 assert.equal(hud.bar(0.5, 16), "████████░░░░░░░░");
 
+// --- the stage model must match measured RAM ---------------------------------
+// The service table in start.js declares how much Home RAM each manager needs.
+// Assert those numbers still cover the script's real static cost plus the update
+// reserve, so the stage model can never drift back into fiction. Costs are
+// verified against bitburner-src RamCostGenerator.ts.
+
+const { SERVICES } = await import(
+    `data:text/javascript;base64,${Buffer.from(asFileImports(read("matrix/start.js"))).toString("base64")}`
+);
+const UPDATE_RESERVE = scriptRam(read("matrix/update.js")).ram;
+
+for (const service of SERVICES) {
+    const relative = service.file.replace(/^\//, "");
+    // Singularity services are only reachable at SF4 level 3; price them there.
+    const measured = scriptRam(read(relative), { sf4: service.sf4Level3 ? 3 : 0 });
+    assert.deepEqual(measured.unknown, [], `${relative} uses NS functions with no known RAM cost: ${measured.unknown.join(", ")}`);
+    assert.ok(
+        service.minRam >= measured.ram + UPDATE_RESERVE,
+        `${relative} declares minRam ${service.minRam} but needs ${measured.ram} + ${UPDATE_RESERVE} reserve`,
+    );
+}
+
+// The 32 GB set must actually co-exist in 32 GB, which is the promise the README
+// makes and the one that was previously false.
+const at32 = SERVICES.filter(s => s.minRam <= 32);
+const total32 = at32.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, ""))).ram, 0)
+    + scriptRam(read("matrix/start.js")).ram + UPDATE_RESERVE;
+assert.ok(total32 <= 32, `the 32 GB stage needs ${Math.round(total32 * 100) / 100} GB and does not fit`);
+assert.ok(at32.some(s => s.file.includes("hacking.js")), "hacking must be in the 32 GB set");
+assert.ok(at32.some(s => s.file.includes("coordinator.js")), "the coordinator must be in the 32 GB set");
+
+// Singularity is 1242 GB below SF4 level 3 - it must be flagged, or the
+// supervisor will retry it forever on a save that can never run it.
+const sing = SERVICES.find(s => s.file.includes("singularity.js"));
+assert.ok(sing.sf4Level3, "singularity.js must be marked as requiring SF4 level 3");
+assert.ok(scriptRam(read("matrix/services/singularity.js")).ram > 1000, "singularity without SF4 is over 1 TB");
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3 }).ram < 100, "singularity at SF4 L3 is under 100 GB");
+
+// --- coding-contract solvers -------------------------------------------------
+// A contract has limited attempts, so a wrong solver costs a real reward. Every
+// solver has at least one known-answer case here.
+const { solvers } = await import(pathToFileURL(path.join(root, "matrix/lib/solvers.js")));
+
+const solverCases = [
+    ["Find Largest Prime Factor", 13195, 29],
+    ["Find Largest Prime Factor", 48, 3],
+    ["Subarray with Maximum Sum", [-2, 1, -3, 4, -1, 2, 1, -5, 4], 6],
+    ["Total Ways to Sum", 5, 6],
+    ["Total Ways to Sum II", [10, [1, 2, 5]], 10],
+    ["Spiralize Matrix", [[1, 2, 3], [4, 5, 6], [7, 8, 9]], [1, 2, 3, 6, 9, 8, 7, 4, 5]],
+    ["Array Jumping Game", [2, 3, 1, 1, 4], 1],
+    ["Array Jumping Game II", [2, 3, 1, 1, 4], 2],
+    ["Merge Overlapping Intervals", [[1, 3], [2, 6], [8, 10]], [[1, 6], [8, 10]]],
+    ["Algorithmic Stock Trader I", [7, 1, 5, 3, 6, 4], 5],
+    ["Algorithmic Stock Trader II", [7, 1, 5, 3, 6, 4], 7],
+    ["Algorithmic Stock Trader III", [3, 3, 5, 0, 0, 3, 1, 4], 6],
+    ["Algorithmic Stock Trader IV", [2, [3, 2, 6, 5, 0, 3]], 7],
+    ["Minimum Path Sum in a Triangle", [[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]], 11],
+    ["Unique Paths in a Grid I", [3, 7], 28],
+    ["Unique Paths in a Grid II", [[0, 0, 0], [0, 1, 0], [0, 0, 0]], 2],
+    ["Encryption I: Caesar Cipher", ["MEDIUM", 1], "LDCHTL"],
+    ["Encryption II: Vigenère Cipher", ["DASHBOARD", "LINUX"], "OIFBYZIEX"],
+    // previously unsolved types
+    ["Shortest Path in a Grid", [[0, 1, 0, 0, 0], [0, 0, 0, 1, 0]], "DRRURRD"],
+    ["Proper 2-Coloring of a Graph", [4, [[0, 2], [0, 3], [1, 2], [1, 3]]], [0, 0, 1, 1]],
+    ["Proper 2-Coloring of a Graph", [3, [[0, 1], [1, 2], [0, 2]]], []],
+    ["Compression I: RLE Compression", "aaaaabccc", "5a1b3c"],
+    ["Compression II: LZ Decompression", "5aaabb450723abb", "aaabbaaababababaabb"],
+    ["HammingCodes: Integer to Encoded Binary", 5, "0101101"],
+    ["Square Root", "109882259804267570667338854624", "331484931489001"],
+];
+
+for (const [type, input, expected] of solverCases) {
+    const solver = solvers[type];
+    assert.ok(solver, `no solver registered for ${type}`);
+    assert.deepEqual(solver(input), expected, `${type} produced the wrong answer`);
+}
+
+// Sanitize returns a sorted set of maximal-length valid strings.
+assert.deepEqual(solvers["Sanitize Parentheses in Expression"]("()())()"), ["(())()", "()()()"]);
+// Math expressions must respect operator precedence and reject leading zeros.
+const mathAnswers = solvers["Find All Valid Math Expressions"](["123", 6]);
+assert.ok(mathAnswers.includes("1*2*3") && mathAnswers.includes("1+2+3"), "must find both routes to 6");
+assert.deepEqual(solvers["Find All Valid Math Expressions"](["105", 5]), ["1*0+5", "10-5"], "no leading-zero operands");
+
+// Hamming and LZ must round-trip, including single-bit error correction.
+for (const value of [1, 5, 8, 19, 1000, 123456]) {
+    const encoded = solvers["HammingCodes: Integer to Encoded Binary"](value);
+    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](encoded), value, `hamming round-trip for ${value}`);
+    const corrupted = encoded.split("");
+    corrupted[3] = corrupted[3] === "1" ? "0" : "1";
+    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](corrupted.join("")), value,
+        `hamming must correct a single flipped bit for ${value}`);
+}
+for (const plain of ["aaaaabbbbbbbbbbbbbbbbbbbbbbccccc", "abcabcabcabcabc", "x", "mississippi"]) {
+    const compressed = solvers["Compression III: LZ Compression"](plain);
+    assert.equal(solvers["Compression II: LZ Decompression"](compressed), plain, `LZ round-trip for ${plain}`);
+}
+
+// contracts.js must only attempt types it can actually solve.
+assert.match(read("matrix/services/contracts.js"), /if \(!solver\) \{ skipped\+\+; continue; \}/,
+    "an unknown contract type must be skipped, never guessed at");
+
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
 console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
 console.log(`  bootstrap.js: ${bootstrapRam.ram} GB of the 8 GB fresh-save home.`);
+console.log(`  ${Object.keys(solvers).length} coding-contract solvers, all known-answer tested.`);

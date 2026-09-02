@@ -4,6 +4,11 @@ import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
 const H = "/matrix/workers/hack.js";
 const G = "/matrix/workers/grow.js";
 const W = "/matrix/workers/weaken.js";
+const SHARE = "/matrix/workers/share.js";
+
+// Fraction of network RAM devoted to ns.share() when the coordinator asks for
+// reputation instead of pure income.
+const SHARE_FRACTION = 0.25;
 
 function candidateTargets(ns, hosts, cfg) {
     const minMoney = cfg.hacking?.minTargetMoney ?? 1_000_000;
@@ -66,6 +71,20 @@ async function execDistributed(ns, script, threads, args, hosts, cfg) {
         }
     }
     return { launched: threads - remaining, remaining, pids };
+}
+
+// ns.share() multiplies faction reputation gain while working. Only worth RAM
+// when the coordinator says reputation is the bottleneck, so it is directive-led.
+async function applyShare(ns, hosts, cfg, wanted) {
+    const ram = ns.getScriptRam(SHARE, "home");
+    for (const item of freePool(ns, hosts, cfg)) {
+        if (!wanted) { try { ns.scriptKill(SHARE, item.host); } catch {} continue; }
+        if (item.host !== "home" && !ns.fileExists(SHARE, item.host)) {
+            try { await ns.scp(SHARE, item.host, "home"); } catch {}
+        }
+        const threads = Math.floor((ns.getServerMaxRam(item.host) * SHARE_FRACTION) / ram);
+        if (threads > 0) { try { ns.exec(SHARE, item.host, { threads, preventDuplicates: true }); } catch {} }
+    }
 }
 
 async function waitPids(ns, pids) {
@@ -184,7 +203,9 @@ export async function main(ns) {
         }
 
         const { hosts } = scanAll(ns);
-        const mode = getDirectives(ns)?.directives?.hacking === "xp" ? "xp" : "money";
+        const directive = getDirectives(ns)?.directives?.hacking;
+        await applyShare(ns, hosts, cfg, directive === "share");
+        const mode = directive === "xp" ? "xp" : "money";
         const target = chooseTarget(ns, hosts, cfg, mode);
         if (await prep(ns, target, hosts, cfg)) continue;
 

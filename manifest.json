@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
@@ -26,12 +26,14 @@
     { "path": "matrix/lib/network.js", "stage": "early" },
     { "path": "matrix/lib/capabilities.js", "stage": "early" },
     { "path": "matrix/lib/hud.js", "stage": "early" },
+    { "path": "matrix/lib/solvers.js", "stage": "full" },
     { "path": "matrix/services/root.js", "stage": "full" },
     { "path": "matrix/services/hacking.js", "stage": "full" },
     { "path": "matrix/services/telemetry.js", "stage": "full" },
     { "path": "matrix/workers/hack.js", "stage": "full" },
     { "path": "matrix/workers/grow.js", "stage": "full" },
     { "path": "matrix/workers/weaken.js", "stage": "full" },
+    { "path": "matrix/workers/share.js", "stage": "full" },
     { "path": "matrix/services/cloud.js", "stage": "full" },
     { "path": "matrix/services/hacknet.js", "stage": "full" },
     { "path": "matrix/services/contracts.js", "stage": "full" },

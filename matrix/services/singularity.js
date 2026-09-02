@@ -162,9 +162,27 @@ export async function main(ns){
             }catch{}
 
             const q=queued(ns);
+            // Publish everything the coordinator would otherwise call Singularity
+            // for. Singularity RAM is charged statically and multiplied by 16
+            // without SF4 level 3, so a speculative try/catch call in a service
+            // that runs on every save is enormously expensive. State files are
+            // ns.read, which is free.
+            let hasTor=false,missingPrograms=[],programCosts=0;
+            try{
+                for(const p of ns.singularity.getDarkwebPrograms()){
+                    const c=ns.singularity.getDarkwebProgramCost(p);
+                    if(c>0){missingPrograms.push(p);programCosts+=c;}
+                }
+                hasTor=true;
+            }catch{}
+            let ramUpgradeCost=Infinity;
+            try{ramUpgradeCost=ns.singularity.getUpgradeHomeRamCost();}catch{}
             await writeState(ns,"singularity",{
-                status:"online",queuedAugs:q,goal:goal?{faction:goal.faction,augmentation:goal.aug,rep:goal.factionRep,need:goal.rep}:null,
-                currentWork:ns.singularity.getCurrentWork(), invitations, purchased, donated
+                status:"online",queuedAugs:q,
+                goal:goal?{faction:goal.faction,augmentation:goal.aug,rep:goal.factionRep,need:goal.rep,price:goal.price,favor:goal.favor}:null,
+                currentWork:ns.singularity.getCurrentWork(), invitations, purchased, donated,
+                hasTor, missingPrograms, programCosts, ramUpgradeCost,
+                hasRedPill:ns.singularity.getOwnedAugmentations(true).includes(RED),
             });
 
             if(cfg.progression?.autoInstallAugmentations!==false&&shouldReset(ns,cfg)){

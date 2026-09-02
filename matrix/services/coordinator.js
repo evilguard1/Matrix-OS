@@ -1,4 +1,5 @@
-import { config, writeState, writeJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
+import { config, writeState, writeJson, readJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
+import { homeRamUpgradeCost as homeRamCost } from "/matrix/lib/capabilities.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
@@ -274,7 +275,11 @@ export function planDirectives(data) {
 
     const directives = {
         hacking:
-            phase === "BOOTSTRAP" && hackingLevel < 300 ? "xp" : "money",
+            phase === "BOOTSTRAP" && hackingLevel < 300 ? "xp"
+            // Reputation, not cash, is the bottleneck here - spend RAM on
+            // ns.share() instead of squeezing out marginal income.
+            : (phase === "FACTION_REP" || phase === "ENDGAME") && repFaction ? "share"
+            : "money",
         sleeves:
             phase === "KARMA_GANG" ? "karma"
             : (phase === "FACTION_REP" || phase === "ENDGAME") && repFaction ? `rep:${repFaction}`
@@ -334,62 +339,38 @@ export async function main(ns) {
             lastCash = cash;
             lastTime = now;
 
-            let homeRamUpgradeCost = Infinity;
-            try { homeRamUpgradeCost = ns.singularity.getUpgradeHomeRamCost(); } catch {}
+            // Everything below used to be a speculative ns.singularity / ns.gang /
+            // ns.corporation call wrapped in try/catch. Bitburner charges that RAM
+            // STATICALLY whether or not the Source File exists, and multiplies
+            // Singularity costs by 16 without SF4 level 3 - so a coordinator that
+            // runs on every save was paying hundreds of GB for calls that always
+            // threw. Those services publish their own state; ns.read is free.
+            const singState = readJson(ns, `${STATE_DIR}/singularity.txt`, {});
+            const gangState = readJson(ns, `${STATE_DIR}/gang.txt`, {});
+            const corpState = readJson(ns, `${STATE_DIR}/corporation.txt`, {});
+            const stockState = readJson(ns, `${STATE_DIR}/stock.txt`, {});
 
-            let hasTor = false;
-            let missingPrograms = [];
-            let programCosts = 0;
-            try {
-                const programs = ns.singularity.getDarkwebPrograms();
-                for (const p of programs) {
-                    const c = ns.singularity.getDarkwebProgramCost(p);
-                    if (c > 0) {
-                        missingPrograms.push(p);
-                        programCosts += c;
-                    }
-                }
-                hasTor = true;
-            } catch {}
+            // Home RAM price comes from Bitburner's own formula, not an API.
+            const homeRamUpgradeCost = homeRamCost(homeRam);
 
-            let queuedAugs = 0;
-            let ownedAugs = [];
-            try {
-                ownedAugs = ns.singularity.getOwnedAugmentations(true);
-                const installed = ns.singularity.getOwnedAugmentations(false);
-                queuedAugs = ownedAugs.length - installed.length;
-            } catch {}
+            const hasTor = Boolean(singState.hasTor);
+            const missingPrograms = Array.isArray(singState.missingPrograms) ? singState.missingPrograms : [];
+            const programCosts = Number(singState.programCosts ?? 0);
+            const queuedAugs = Number(singState.queuedAugs ?? 0);
+            const hasRedPill = Boolean(singState.hasRedPill);
 
-            let targetAugPrice = 0;
-            let targetAugName = "";
-            let targetAugFaction = "";
-            let redPillRep = 0;
+            const targetAugName = singState.goal?.augmentation ?? "";
+            const targetAugFaction = singState.goal?.faction ?? "";
+            const targetAugPrice = Number(singState.goal?.price ?? 0);
+            const redPillRep = targetAugFaction === "Daedalus" ? Number(singState.goal?.rep ?? 0) : 0;
 
-            const singState = ns.read(`${STATE_DIR}/singularity.txt`);
-            if (singState) {
-                try {
-                    const parsed = JSON.parse(singState);
-                    if (parsed.goal?.augmentation) {
-                        targetAugName = parsed.goal.augmentation;
-                        targetAugFaction = parsed.goal.faction;
-                        try { targetAugPrice = ns.singularity.getAugmentationPrice(targetAugName); } catch {}
-                    }
-                    if (parsed.goal?.faction === "Daedalus") {
-                        try { redPillRep = ns.singularity.getFactionRep("Daedalus"); } catch {}
-                    }
-                } catch {}
-            }
+            const stockPortfolioValue = Number(stockState.exposure ?? 0);
+            const has4S = Boolean(stockState.fourS);
 
-            let stockPortfolioValue = 0;
-            let has4S = false;
-            const stockState = ns.read(`${STATE_DIR}/stock.txt`);
-            if (stockState) {
-                try {
-                    const parsed = JSON.parse(stockState);
-                    stockPortfolioValue = Number(parsed.exposure ?? 0);
-                    has4S = Boolean(parsed.fourS);
-                } catch {}
-            }
+            // "locked" is what gang.js / corporation.js write when the Source File
+            // or the seed money is not there yet.
+            const hasGang = gangState.status === "online";
+            const hasCorp = corpState.status === "online" || corpState.status === "building";
 
             let worldDaemonRooted = false;
             let worldDaemonReqLevel = 3000;
@@ -398,18 +379,12 @@ export async function main(ns) {
                 worldDaemonReqLevel = ns.getServerRequiredHackingLevel(WORLD_DAEMON);
             } catch {}
 
-            let hasGang = false;
-            try { hasGang = ns.gang.inGang(); } catch {}
-
-            let hasCorp = false;
-            try { hasCorp = Boolean(ns.corporation.getCorporation()); } catch {}
-
             const data = {
                 cash, cashRate, hackingLevel, karma: player.karma, homeRam, homeRamUpgradeCost,
                 hasTor, missingPrograms, programCosts, resetInfo, factions: player.factions,
                 queuedAugs, targetAugPrice, targetAugName, targetAugFaction,
                 stockPortfolioValue, worldDaemonRooted, worldDaemonReqLevel,
-                hasGang, hasCorp, has4S, hasRedPill: ownedAugs.includes(RED_PILL),
+                hasGang, hasCorp, has4S, hasRedPill,
                 redPillRep, redPillReqRep: 2_500_000,
             };
 

@@ -17,6 +17,9 @@ const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
 const CONFIG_FILE = "/matrix/config.json";
 const LEGACY_CONFIG = "/matrix/config.txt";
 
+// The worm is deliberately NOT listed: it must survive stage transitions so a
+// 32 GB upgrade does not silently trade a continuously-earning botnet for a
+// batcher that idles between waves. spread.js yields RAM to HWGW instead.
 const MATRIX_PROGRAMS = new Set([
     "matrix/bootstrap.js",
     "matrix/early.js",
@@ -37,12 +40,10 @@ const MATRIX_PROGRAMS = new Set([
     "matrix/services/bladeburner.js",
     "matrix/services/corporation.js",
     "matrix/workers/early.js",
-    "matrix/worm/seed.js",
-    "matrix/worm/spread.js",
-    "matrix/worm/drone.js",
     "matrix/workers/hack.js",
     "matrix/workers/grow.js",
     "matrix/workers/weaken.js",
+    "matrix/workers/share.js",
 ]);
 
 function normalize(path) {

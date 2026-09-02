@@ -30,6 +30,12 @@ const DRONE_RAM = 2.40;
 // have meaningful room left for drones. Smaller hosts get drones only.
 const PROPAGATE_MIN_RAM = 16;
 
+// From 32 GB home the HWGW batcher in hacking.js schedules the same network far
+// more efficiently than loose drones - but it drains each wave before starting
+// the next, leaving the botnet idle in between. Take only that slack.
+const HWGW_HOME_RAM = 32;
+const DRONE_SHARE_WITH_HWGW = 0.35;
+
 const CYCLE_MS = 20_000;
 
 // Netscript port the worm reports botnet status on. Ports are 0 GB and
@@ -133,7 +139,9 @@ export async function main(ns) {
             botnetUsed += used;
             if (used > 0) infected++;
 
-            const free = maxRam - used - (host === me ? 0 : reserved);
+            // Yield the bulk of each host to the batcher once it exists.
+            const share = ns.getServerMaxRam("home") >= HWGW_HOME_RAM ? DRONE_SHARE_WITH_HWGW : 1;
+            const free = (maxRam * share) - used - (host === me ? 0 : reserved);
             const threads = Math.floor(free / DRONE_RAM);
             if (threads < 1) continue;
             try { ns.exec(DRONE, host, { threads, preventDuplicates: true }, target); } catch {}

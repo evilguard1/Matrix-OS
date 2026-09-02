@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.6.0`
+Current release/version: `0.7.0`
 
 ## Quick Start
 
@@ -51,6 +51,30 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.7.0 verification status
+
+RAM costs are now verified against bitburner-src `RamCostGenerator.ts` rather
+than estimated. The headline: `SF4Cost()` multiplies every Singularity call by
+**16** below SF4 level 3, so `singularity.js` measures **1242 GB** without it and
+80 GB with it, and `corporation.js` is **342 GB** of CorporationAction calls.
+`coordinator.js` used to make eight speculative Singularity calls in try/catch -
+Bitburner charges that RAM statically whether or not the Source File exists, so
+it could never have run. It now reads the state files those services publish and
+measures 2.45 GB.
+
+The service table in `start.js` declares Home RAM per manager, and `npm test`
+asserts each `minRam` still exceeds the measured cost plus the update reserve,
+so the stage model cannot drift back into fiction.
+
+`tests/mock-ns.mjs` is a fake Netscript that enforces real RAM, and
+`tests/integration.mjs` runs the actual worm against it. Verified to catch both
+a stale `DRONE_RAM` constant and a missing relay reserve. This is the first
+integration coverage in the project; every prior failure was an integration bug
+that parsed cleanly.
+
+Still NOT runtime-tested in Bitburner: the 32 GB+ stage as a whole, the relaxed
+service gates on a save with Source Files, and `ns.share()`.
 
 ### 0.6.0 verification status
 
