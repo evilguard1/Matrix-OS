@@ -1,4 +1,5 @@
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
+import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
 
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
@@ -105,6 +106,37 @@ async function handoffUpdate(ns) {
     return true;
 }
 
+// A supervisor with no visible output is a supervisor you cannot debug. The deck
+// is the real UI, so this tail only appears when the deck is NOT running - which
+// is exactly when you need to know why. Costs 0 GB: print/tail/ui are all free,
+// and the report is already computed.
+function drawSupervisor(ns, homeRam, report, reason) {
+    ns.clearLog();
+    const used = ns.getServerUsedRam("home");
+    const worm = readWorm(ns);
+    ns.print(top());
+    ns.print(center("M A T R I X  //  S U P E R V I S O R"));
+    ns.print(rule());
+    ns.print(row("💻", "HOME RAM", `${ns.format.ram(homeRam)}  │  ${ns.format.ram(used)} used, ${ns.format.ram(homeRam - used)} free`));
+    if (reason) ns.print(row("⚠️", "DECK", reason));
+    if (worm) ns.print(row("🐛", "BOTNET", `${worm.infected}/${worm.rooted} infected  │  ${worm.drones} drones`));
+    ns.print(rule("S E R V I C E S"));
+    for (const entry of report) {
+        const name = entry.file.replace("/matrix/", "").replace("services/", "").replace(/\.jsx?$/, "");
+        const icon = entry.state === "running" || entry.state === "started" ? "🟢"
+            : entry.state === "ram-blocked" || entry.state === "launch-failed" ? "🔴" : "⚪";
+        const detail = entry.state === "ram-blocked" ? `BLOCKED - needs ${entry.need}GB, ${entry.free}GB free`
+            : entry.state === "needs-home-ram" ? `needs ${entry.minRam}GB home`
+            : entry.state === "needs-source-file" ? `needs Source-File ${entry.sf}`
+            : entry.state === "needs-sf4-level-3" ? "needs SF4 level 3 (16x RAM below it)"
+            : entry.state === "not-installed" ? "not downloaded"
+            : entry.state === "launch-failed" ? "LAUNCH REFUSED by the game"
+            : entry.state.toUpperCase();
+        ns.print(row(icon, name.slice(0, 11), detail));
+    }
+    ns.print(bottom());
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     if (ns.getServerMaxRam("home") < 32) {
@@ -117,6 +149,7 @@ export async function main(ns) {
     const self = ns.pid;
     if (ns.ps("home").some(process => sameScript(process.filename, "/matrix/start.js") && process.pid < self)) return;
     await event(ns, "system", "MATRIX full supervisor online", "success");
+    let tailOpen = false;
 
     while (true) {
         if (await handoffUpdate(ns)) return;
@@ -154,6 +187,30 @@ export async function main(ns) {
             ensureOne(ns, service.file, report);
         }
         await writeState(ns, "supervisor", { status: "online", homeRam, services: report });
+
+        // The command deck is the real UI. If it is not up, show why rather than
+        // leaving the player with no window at all - the state this stage used to
+        // fail into silently.
+        const deck = report.find(entry => entry.file === DASHBOARD);
+        const deckUp = deck && (deck.state === "running" || deck.state === "started");
+        if (deckUp) {
+            if (tailOpen) { try { ns.ui.closeTail(); } catch {} tailOpen = false; }
+        } else {
+            const reason = !deck ? "not attempted"
+                : deck.state === "ram-blocked" ? `needs ${deck.need}GB, only ${deck.free}GB free`
+                : deck.state === "not-installed" ? "dashboard.jsx not downloaded"
+                : deck.state === "launch-failed" ? "the game refused to run it"
+                : String(deck.state);
+            if (!tailOpen) {
+                try { ns.tail(); } catch {}
+                try { ns.ui.setTailTitle("MATRIX // SUPERVISOR"); } catch {}
+                try { ns.ui.resizeTail(640, 520); } catch {}
+                try { ns.ui.openTail(); } catch {}
+                await event(ns, "system", `Command deck unavailable: ${reason}`, "error");
+                tailOpen = true;
+            }
+            drawSupervisor(ns, homeRam, report, reason);
+        }
 
         await ns.sleep(5000);
     }

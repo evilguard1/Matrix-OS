@@ -21,6 +21,11 @@ function state(ns) {
     return { updated: boot.updated ?? 0, player: { money: ns.getServerMoneyAvailable("home") }, network: { discovered: boot.discovered ?? 0, rooted: boot.rooted ?? 0, maxRam: boot.homeRam ?? 0, ramPct: 0 }, services: { bootstrap: { status: boot.status ?? "starting" }, hacking: { status: boot.phase ?? "bootstrap", target: boot.target ?? "n00dles" } }, events: [] };
 }
 
+// Deliberately does NOT touch window or document. Bitburner charges 25 GB
+// (RamCostConstants Dom: 25) the moment a script mentions either identifier -
+// statically, whether or not the line runs. A single window.innerWidth here made
+// the whole command deck 26.9 GB and silently unlaunchable at 32 GB.
+// The canvas is position:fixed inset:0, so its own client box IS the viewport.
 function MatrixRainCanvas({ enabled = true }) {
     const canvasRef = React.useRef(null);
     React.useEffect(() => {
@@ -28,53 +33,43 @@ function MatrixRainCanvas({ enabled = true }) {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
-        let width = (canvas.width = window.innerWidth);
-        let height = (canvas.height = window.innerHeight);
-        const handleResize = () => {
-            if (!canvas) return;
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+        const fontSize = 14;
+        let width = 0;
+        let height = 0;
+        let drops = [];
+
+        const resize = () => {
+            const w = canvas.clientWidth || 800;
+            const h = canvas.clientHeight || 600;
+            if (w === width && h === height) return;
+            width = canvas.width = w;
+            height = canvas.height = h;
+            const columns = Math.max(1, Math.floor(width / fontSize));
+            drops = Array(columns).fill(1);
         };
-        window.addEventListener("resize", handleResize);
 
         const katakana = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZMATRIXOS";
-        const fontSize = 14;
-        const columns = Math.floor(width / fontSize);
-        const drops = Array(columns).fill(1);
 
         const drawRain = () => {
+            // Re-measure each frame instead of listening for a window resize event.
+            resize();
             ctx.fillStyle = "rgba(3, 9, 7, 0.08)";
             ctx.fillRect(0, 0, width, height);
             ctx.font = `${fontSize}px monospace`;
-
             for (let i = 0; i < drops.length; i++) {
                 const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
                 const x = i * fontSize;
                 const y = drops[i] * fontSize;
-
                 const rand = Math.random();
-                if (rand > 0.88) {
-                    ctx.fillStyle = "#e6fff3";
-                } else if (rand > 0.6) {
-                    ctx.fillStyle = "#52ddff";
-                } else {
-                    ctx.fillStyle = "#00ff88";
-                }
-
+                ctx.fillStyle = rand > 0.88 ? "#e6fff3" : rand > 0.6 ? "#52ddff" : "#00ff88";
                 ctx.fillText(text, x, y);
-
-                if (y > height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
+                if (y > height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             }
         };
 
         const interval = setInterval(drawRain, 45);
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener("resize", handleResize);
-        };
+        return () => clearInterval(interval);
     }, [enabled]);
 
     if (!enabled) return null;

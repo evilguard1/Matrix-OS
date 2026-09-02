@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.8.0`
+Current release/version: `0.8.1`
 
 ## Quick Start
 
@@ -51,6 +51,28 @@ These have been live-tested on a new, 8 GB Home save:
 Repository validation currently passes with `npm test`. It checks syntax for
 every JS/JSX runtime file, manifest completeness/stage ordering, core pure
 helpers, state-file extensions, and prohibited legacy/dev-only APIs.
+
+### 0.8.1 verification status
+
+The command deck never launched at 32 GB. `RamCostConstants.Dom` is **25**, and
+Bitburner charges it statically the moment a script *mentions* `window` or
+`document` - whether or not the line runs. One `window.innerWidth` in the
+decorative matrix-rain canvas made `dashboard.jsx` **26.9 GB** instead of 1.9, so
+`ensureOne()` refused it and, because `start.js` had no UI of its own, the player
+was left with no window and no explanation.
+
+Fixed three ways:
+- the canvas sizes itself from its own element via a React ref, no DOM
+  identifiers, so the deck is back to 1.9 GB;
+- the RAM analyser prices the DOM, and the validator now fails any runtime file
+  that touches `window`/`document` (verified to bite on reintroduction);
+- `start.js` opens its own supervisor tail whenever the deck is NOT running,
+  listing every service and why it is not up. It costs 0 GB - print, tail and
+  ui are all free - and it closes itself when the deck comes back.
+
+The deeper lesson is recorded in the capability matrix: a static RAM analyser
+that only looks at `ns.*` is incomplete, because Bitburner also prices DOM
+access and imported modules.
 
 ### 0.8.0 verification status
 

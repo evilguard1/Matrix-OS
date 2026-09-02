@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { transform } from "esbuild";
-import { scriptRam } from "./ram-budget.mjs";
+import { scriptRam, stripComments, DOM_IDENTIFIERS } from "./ram-budget.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = relative => fs.readFileSync(path.join(root, relative), "utf8");
@@ -59,6 +59,15 @@ for (const absolute of runtimeFiles) {
     assert.doesNotMatch(source, /\bns\.closeTail\b/, `${absolute} uses the removed pre-v3 tail API`);
     assert.doesNotMatch(source, /\bui\.renderPage\b/, `${absolute} uses a dev-only UI API`);
     assert.doesNotMatch(source, /\bns\.self\b/, `${absolute} uses non-existent ns.self API`);
+    // Touching window or document costs 25 GB (RamCostConstants Dom: 25), charged
+    // statically on the identifier whether or not the line ever runs. One
+    // window.innerWidth in a decorative canvas made the command deck 26.9 GB and
+    // silently unlaunchable at 32 GB. Use a React ref instead.
+    assert.deepEqual(
+        stripComments(source).match(DOM_IDENTIFIERS) ?? [],
+        [],
+        `${absolute} touches the DOM, which costs 25 GB`,
+    );
     for (const match of source.matchAll(/["'`](\/matrix\/state\/[^"'`$]+)["'`]/g)) {
         assert.match(match[1], /\.(?:txt|json|js|jsx)$/, `${absolute} uses an invalid Bitburner state-file extension`);
     }

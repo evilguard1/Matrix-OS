@@ -16,6 +16,12 @@ import path from "node:path";
  */
 export const BASE_COST = 1.6;
 
+// Referencing window or document costs 25 GB (RamCostConstants Dom: 25). This is
+// charged STATICALLY on the identifier, so a single window.innerWidth in a
+// decorative canvas silently made the command deck unlaunchable at 32 GB.
+export const DOM_COST = 25;
+export const DOM_IDENTIFIERS = /(?:^|[^\w$.])(?:window|document)\s*\./g;
+
 export const RAM_COSTS = {
     // free
     args: 0, pid: 0, enums: 0, sleep: 0, print: 0, tprint: 0, printf: 0,
@@ -196,6 +202,9 @@ export function scriptRam(source, { sf4 = 0, root = null } = {}) {
 
     let ram = BASE_COST;
     for (const cost of used.values()) ram += cost;
+    const usesDom = DOM_IDENTIFIERS.test(code);
+    DOM_IDENTIFIERS.lastIndex = 0;
+    if (usesDom) { ram += DOM_COST; used.set("<dom>", DOM_COST); }
     return {
         ram: Math.round(ram * 100) / 100,
         used: [...used.keys()].sort(),
