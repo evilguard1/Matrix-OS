@@ -94,10 +94,26 @@ function hasSourceFile(reset, number) {
     return reset.currentNode === number || sfLevel(reset, number) > 0;
 }
 
-function expectedStage(homeRam) {
+export function expectedStage(homeRam) {
     if (homeRam >= 128) return "advanced";
     if (homeRam >= 64) return "operations";
     return "full";
+}
+
+// A representative file for each stage. Stage completeness is decided by asking
+// whether these actually exist, NOT by a marker file: install.js derives its
+// marker from stageLimit() while the supervisor used expectedStage(), and any
+// disagreement between those two made the supervisor relaunch the installer
+// forever - leaving a new command deck behind on every cycle.
+const STAGE_PROBE = {
+    full: DASHBOARD,
+    operations: "/matrix/services/cloud.js",
+    advanced: "/matrix/services/stock.js",
+};
+
+export function stageInstalled(ns, stage) {
+    const probe = STAGE_PROBE[stage];
+    return !probe || ns.fileExists(probe, "home");
 }
 
 async function handoffUpdate(ns) {
@@ -169,10 +185,12 @@ export async function main(ns) {
         const wantStage = expectedStage(homeRam);
         const haveStage = ns.read(INSTALLED_STAGE);
         let stageStuck = false;
-        if (haveStage !== wantStage) {
+        // Reality, not the marker: if the files are here, we are on this stage.
+        if (!stageInstalled(ns, wantStage)) {
             const lastAttempt = Number(ns.read(STAGE_ATTEMPT) || 0);
             if (Date.now() - lastAttempt > STAGE_RETRY_MS) {
                 await ns.write(STAGE_ATTEMPT, String(Date.now()), "w");
+                ns.tprint(`MATRIX-OS // FETCHING STAGE "${wantStage}" (marker says "${haveStage || "none"}")`);
                 if (await fetchLatestInstaller(ns, INSTALLER)) {
                     ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
                     return;

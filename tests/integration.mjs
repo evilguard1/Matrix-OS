@@ -175,3 +175,46 @@ console.log("MATRIX-OS integration passed: contracts dispatch off-home, once eac
 }
 
 console.log("MATRIX-OS integration passed: exactly one command deck survives.");
+
+// --- the stage transition must not be able to loop ---------------------------
+// A stage change restarts everything, so a transition that never "takes" is an
+// infinite restart loop that leaves a new command deck behind on every cycle.
+// That is exactly what happened: install.js derived its marker from
+// stageLimit() while the supervisor compared against expectedStage(), and any
+// disagreement between the two looped forever. Completeness is now decided by
+// asking whether the stage's files actually exist.
+{
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const { pathToFileURL } = await import("node:url");
+    const root = process.cwd();
+    const src = fs.readFileSync("matrix/start.js", "utf8").replace(
+        /from\s+["'](\/matrix\/[^"']+)["']/g,
+        (_, spec) => `from "${pathToFileURL(path.join(root, spec.replace(/^\//, ""))).href}"`);
+    const { expectedStage, stageInstalled } = await import(
+        `data:text/javascript;base64,${Buffer.from(src).toString("base64")}`);
+
+    assert.equal(expectedStage(32), "full");
+    assert.equal(expectedStage(64), "operations");
+    assert.equal(expectedStage(128), "advanced");
+
+    const ns = createMockNs();
+    // The installer has already placed the full stage.
+    assert.equal(stageInstalled(ns, "full"), true, "dashboard.jsx present means the full stage is installed");
+    // ...so no transition is attempted, whatever the marker file happens to say.
+    assert.equal(stageInstalled(ns, "operations"), true, "cloud.js ships in the manifest the mock mirrors");
+
+    // Remove the probe file and the transition becomes necessary again.
+    ns._servers.get("home").files.delete("/matrix/dashboard.jsx");
+    assert.equal(stageInstalled(ns, "full"), false, "a missing stage file must trigger exactly one fetch");
+
+    // The decision must not consult the marker file, which is the thing that
+    // disagreed with expectedStage() and caused the loop.
+    const start = fs.readFileSync("matrix/start.js", "utf8");
+    assert.ok(start.includes("if (!stageInstalled(ns, wantStage))"),
+        "stage completeness must come from the filesystem, not the marker");
+    assert.ok(!start.includes("if (haveStage !== wantStage)"),
+        "comparing the marker against expectedStage() is what looped forever");
+}
+
+console.log("MATRIX-OS integration passed: stage transitions cannot loop.");

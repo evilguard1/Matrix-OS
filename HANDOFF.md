@@ -17,7 +17,7 @@ Current branch: `main`
 
 Current published commit: see `git log -1 --format=%H` on `main`.
 
-Current release/version: `0.8.3`
+Current release/version: `0.8.4`
 
 ## Quick Start
 
