@@ -36,11 +36,13 @@ export async function main(ns) {
             const cash = ns.getServerMoneyAvailable("home");
             const reserve = reserveMoney(ns,cfg);
             const budget = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.hacknetBudgetFraction ?? 0.04)));
+            let remaining = budget;
             let bought = 0;
             for (let n=0;n<8;n++) {
                 const x = cheapestUpgrade(ns);
-                if (!x || x.cost > budget) break;
+                if (!x || x.cost > remaining) break;
                 if (!execute(ns,x)) break;
+                remaining -= x.cost;
                 bought++;
             }
 

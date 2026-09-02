@@ -19,11 +19,14 @@ function ensureApiUnlocks(ns) {
 
 
 function ensureAgri(ns) {
-    const corp = ns.corporation.getCorporation();
+    let corp = ns.corporation.getCorporation();
     if (!corp.divisions.includes(DIV)) {
         const data = ns.corporation.getIndustryData(AGRI);
-        if (corp.funds >= data.startingCost) ns.corporation.expandIndustry(AGRI,DIV);
+        if (corp.funds < data.startingCost) return false;
+        ns.corporation.expandIndustry(AGRI,DIV);
+        corp = ns.corporation.getCorporation();
     }
+    if (!corp.divisions.includes(DIV)) return false;
     const div = ns.corporation.getDivision(DIV);
     for (const city of CITIES) {
         if (!div.cities.includes(city)) {
@@ -35,6 +38,7 @@ function ensureAgri(ns) {
             if (corpFunds(ns) > cost*2) ns.corporation.purchaseWarehouse(DIV,city);
         }
     }
+    return true;
 }
 
 function setupCity(ns,city) {
@@ -110,8 +114,8 @@ export async function main(ns) {
             }
 
             const apiReady = ensureApiUnlocks(ns);
-            ensureAgri(ns);
-            if (apiReady && ns.corporation.getCorporation().divisions.includes(DIV)) {
+            const agricultureReady = ensureAgri(ns);
+            if (apiReady && agricultureReady) {
                 for (const city of CITIES) setupCity(ns,city);
                 upgradeGlobal(ns);
             }
@@ -124,7 +128,7 @@ export async function main(ns) {
             }
 
             await writeState(ns,"corporation",{
-                status:"online",funds:corp.funds,revenue:corp.revenue,expenses:corp.expenses,
+                status:agricultureReady?"online":"building",funds:corp.funds,revenue:corp.revenue,expenses:corp.expenses,
                 profit:corp.revenue-corp.expenses,divisions:corp.divisions,investmentRound:offer.round,
                 investmentOffer:offer.funds
             });

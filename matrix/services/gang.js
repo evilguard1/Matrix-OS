@@ -6,6 +6,9 @@ function bestTask(ns, mode, member) {
     const tasks = ns.gang.getTaskNames()
         .map(n=>({n,s:ns.gang.getTaskStats(n)}))
         .filter(x=>x.s && x.n!=="Unassigned");
+    if (mode === "wanted") {
+        return tasks.sort((a,b)=>(a.s.baseWanted??0)-(b.s.baseWanted??0))[0]?.n ?? "Vigilante Justice";
+    }
     const hackingGang = ns.gang.getGangInformation().isHacking;
     const stat = hackingGang ? (member.hack ?? 1) : Math.max(1,(member.str+member.def+member.dex+member.agi)/4);
     const score = x => {
@@ -18,6 +21,15 @@ function bestTask(ns, mode, member) {
     return tasks.sort((a,b)=>score(b)-score(a))[0]?.n ?? "Train Combat";
 }
 
+function tryCreateGang(ns) {
+    for (const faction of ns.getPlayer().factions) {
+        try {
+            if (ns.gang.createGang(faction)) return faction;
+        } catch {}
+    }
+    return null;
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     while (true) {
@@ -26,6 +38,10 @@ export async function main(ns) {
             await writeState(ns,"gang",{status:"paused"}); await ns.sleep(5000); continue;
         }
         try {
+            if (!ns.gang.inGang()) {
+                const faction = tryCreateGang(ns);
+                if (faction) await event(ns,"gang",`Created gang for ${faction}`,"success");
+            }
             if (!ns.gang.inGang()) {
                 await writeState(ns,"gang",{status:"locked",reason:"Not in a gang"});
                 await ns.sleep(15000); continue;
@@ -40,7 +56,7 @@ export async function main(ns) {
 
             const info = ns.gang.getGangInformation();
             const members = ns.gang.getMemberNames();
-            const mode = info.wantedPenalty < 0.92 ? "respect" : (cfg.mode==="money" ? "money" : "balanced");
+            const mode = info.wantedPenalty < 0.95 ? "wanted" : (cfg.mode==="money" ? "money" : "balanced");
 
             for (const name of members) {
                 const m = ns.gang.getMemberInformation(name);

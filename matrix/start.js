@@ -4,11 +4,13 @@ const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const DASHBOARD = "/matrix/dashboard.jsx";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
+const UPDATE_SCRIPT = "/matrix/update.js";
 
 const CORE = [
+    { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
+    { file: DASHBOARD, ui: true, minRam: 32 },
     { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
     { file: "/matrix/services/telemetry.js", minRam: 32 },
-    { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
@@ -32,7 +34,8 @@ function ensureOne(ns, file) {
     if (matches.length) return matches[0].pid;
     if (!ns.fileExists(file, "home")) return 0;
     const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
-    if (free + 1e-9 < ns.getScriptRam(file, "home")) return 0;
+    const updateReserve = ns.fileExists(UPDATE_SCRIPT, "home") ? ns.getScriptRam(UPDATE_SCRIPT, "home") : 1.6;
+    if (free + 1e-9 < ns.getScriptRam(file, "home") + updateReserve) return 0;
     return ns.run(file, { threads: 1, preventDuplicates: true });
 }
 
@@ -85,7 +88,7 @@ export async function main(ns) {
         for (const service of CORE) {
             if (homeRam < service.minRam) continue;
             if (service.key && cfg.automation?.[service.key] === false) continue;
-            if (service.file === "/matrix/services/hacking.js" && cfg.ui?.autoOpen !== false) ensureOne(ns, DASHBOARD);
+            if (service.ui && cfg.ui?.autoOpen === false) continue;
             ensureOne(ns, service.file);
         }
 
@@ -96,7 +99,6 @@ export async function main(ns) {
         if (homeRam >= 128 && cfg.automation?.sleeves !== false && hasSourceFile(reset, 10)) ensureOne(ns, "/matrix/services/sleeves.js");
         if (homeRam >= 128 && cfg.automation?.bladeburner !== false && (hasSourceFile(reset, 6) || hasSourceFile(reset, 7))) ensureOne(ns, "/matrix/services/bladeburner.js");
         if (homeRam >= 256 && cfg.automation?.corporation !== false && hasSourceFile(reset, 3)) ensureOne(ns, "/matrix/services/corporation.js");
-        if (cfg.ui?.autoOpen !== false) ensureOne(ns, DASHBOARD);
         await ns.sleep(5000);
     }
 }

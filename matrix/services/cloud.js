@@ -19,7 +19,7 @@ export async function main(ns) {
         try {
             const cash = ns.getServerMoneyAvailable("home");
             const reserve = reserveMoney(ns, cfg);
-            const spendable = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.cloudBudgetFraction ?? 0.12)));
+            let spendable = Math.max(0, Math.min(cash-reserve, cash*(cfg.economy?.cloudBudgetFraction ?? 0.12)));
             const limit = ns.cloud.getServerLimit();
             const ramLimit = ns.cloud.getRamLimit();
             let names = ns.cloud.getServerNames();
@@ -31,8 +31,10 @@ export async function main(ns) {
                     if (ns.cloud.getServerCost(ram) <= spendable / Math.max(1, Math.min(4, limit-names.length))) chosen = ram;
                 }
                 if (chosen >= 2) {
+                    const cost = ns.cloud.getServerCost(chosen);
                     const host = ns.cloud.purchaseServer("mx-node", chosen);
                     if (host) {
+                        spendable = Math.max(0, spendable - cost);
                         action = `purchased ${host} ${chosen}GB`;
                         await event(ns, "cloud", action, "success");
                         names = ns.cloud.getServerNames();

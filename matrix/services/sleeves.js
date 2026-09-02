@@ -10,6 +10,7 @@ export async function main(ns) {
         try {
             const n = ns.sleeve.getNumSleeves();
             const data = [];
+            const player = ns.getPlayer();
             for (let i=0;i<n;i++) {
                 const s = ns.sleeve.getSleeve(i);
                 let assignment = "idle";
@@ -17,15 +18,21 @@ export async function main(ns) {
                     ns.sleeve.setToShockRecovery(i); assignment="shock recovery";
                 } else if (s.sync < 100) {
                     ns.sleeve.setToSynchronize(i); assignment="synchronize";
-                } else if (ns.getPlayer().karma > -54000) {
+                } else if (player.karma > -54000) {
                     ns.sleeve.setToCommitCrime(i,ns.enums.CrimeType.homicide); assignment="homicide";
                 } else {
-                    ns.sleeve.setToUniversityCourse(i,"Rothman University",ns.enums.UniversityClassType.algorithms); assignment="Algorithms";
+                    const studying = ns.sleeve.setToUniversityCourse(i,"Rothman University",ns.enums.UniversityClassType.algorithms);
+                    if (studying) assignment="Algorithms";
+                    else {
+                        ns.sleeve.setToCommitCrime(i,ns.enums.CrimeType.homicide);
+                        assignment="homicide";
+                    }
                 }
 
-                const budget = ns.getServerMoneyAvailable("home") * 0.005;
+                let budget = ns.getServerMoneyAvailable("home") * 0.005;
                 for (const aug of ns.sleeve.getSleevePurchasableAugs(i).sort((a,b)=>a.cost-b.cost)) {
-                    if (aug.cost <= budget) ns.sleeve.purchaseSleeveAug(i,aug.name);
+                    if (aug.cost > budget) break;
+                    if (ns.sleeve.purchaseSleeveAug(i,aug.name)) budget -= aug.cost;
                 }
                 data.push({i,shock:s.shock,sync:s.sync,assignment});
             }
