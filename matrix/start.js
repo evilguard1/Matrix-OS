@@ -189,8 +189,12 @@ export async function main(ns) {
 
     // Duplicate supervisors are what produced duplicate command decks: each one
     // launched its own. Lowest PID wins and evicts the rest.
-    if (!holdSingleton(ns, "/matrix/start.js")) return;
+    if (!holdSingleton(ns, "/matrix/start.js")) {
+        ns.tprint("MATRIX-OS // SUPERVISOR STANDING DOWN (another is older)");
+        return;
+    }
     await event(ns, "system", "MATRIX full supervisor online", "success");
+    ns.tprint(`MATRIX-OS // SUPERVISOR ONLINE (pid ${ns.pid}, home ${ns.getServerMaxRam("home")}GB)`);
     let tailOpen = false;
     // A service that dies immediately and is respawned every cycle orphans a
     // tail window each time. Give up after a few tries and report it instead.
@@ -198,8 +202,16 @@ export async function main(ns) {
     const DECK_RESTART_LIMIT = 3;
 
     while (true) {
-        if (!holdSingleton(ns, "/matrix/start.js")) return;
-        if (await handoffUpdate(ns)) return;
+        if (!holdSingleton(ns, "/matrix/start.js")) {
+            ns.tprint("MATRIX-OS // SUPERVISOR STANDING DOWN (another is older)");
+            return;
+        }
+        // Announce every exit: an unexplained supervisor restart is what spawns a
+        // command deck each cycle, and it was invisible in the event stream.
+        if (await handoffUpdate(ns)) {
+            ns.tprint("MATRIX-OS // SUPERVISOR RESTARTING: update requested");
+            return;
+        }
         const cfg = config(ns);
         const homeRam = ns.getServerMaxRam("home");
         // A stage change restarts everything, so it must be rate-limited. Left

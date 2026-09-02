@@ -507,10 +507,11 @@ function anotherDeckAlive(ns) {
 }
 
 // Heartbeat: where the deck got to, and how long it survived. ns.write is free.
-async function beat(ns, phase, ticks) {
+async function beat(ns, phase, ticks, error) {
     try {
         await writeJson(ns, `${STATE_DIR}/dashboard.txt`, {
             service: "dashboard", updated: Date.now(), pid: ns.pid, phase, ticks,
+            ...(error ? { error: String(error) } : {}),
         });
     } catch {}
 }
@@ -527,7 +528,16 @@ export async function main(ns) {
         return;
     }
     await beat(ns, "rendering", 0);
-    ns.printRaw(<App ns={ns} />);
+    // The deck was dying somewhere between launch and its first heartbeat, with
+    // no trace. Record the cause and put it in the terminal, where it cannot be
+    // missed, instead of silently leaving another orphaned window behind.
+    try {
+        ns.printRaw(<App ns={ns} />);
+    } catch (error) {
+        await beat(ns, "render-failed", 0, error);
+        ns.tprint(`MATRIX-OS // COMMAND DECK RENDER FAILED: ${error}`);
+        return;
+    }
     try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {}
     try {
@@ -542,10 +552,13 @@ export async function main(ns) {
     }
     ns.ui.openTail();
     await beat(ns, "alive", 0);
+    ns.tprint("MATRIX-OS // COMMAND DECK ONLINE");
     // Re-assert ownership rather than trusting the one check at startup, and
     // leave a heartbeat so a deck that dies is diagnosable rather than silent.
     let ticks = 0;
     while (true) {
+        // Never wrap ns.sleep: catching it would swallow the game's own
+        // termination signal when the script is killed.
         await ns.sleep(2000);
         if (!holdSingleton(ns, DECK) || anotherDeckAlive(ns)) {
             await beat(ns, "stood-down", ticks);

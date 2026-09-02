@@ -1,10 +1,10 @@
 {
   "name": "matrix-os",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/validate.mjs && node tests/integration.mjs"
+    "test": "node tests/validate.mjs && node tests/integration.mjs && node tests/render-deck.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.9"
