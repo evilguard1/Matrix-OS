@@ -28,7 +28,7 @@
     { "path": "matrix/workers/grow.js", "stage": "full" },
     { "path": "matrix/workers/weaken.js", "stage": "full" },
     { "path": "matrix/services/cloud.js", "stage": "operations" },
-    { "path": "matrix/services/hacknet.js", "stage": "operations" },
+    { "path": "matrix/services/hacknet.js", "stage": "full" },
     { "path": "matrix/services/contracts.js", "stage": "advanced" },
     { "path": "matrix/services/stock.js", "stage": "advanced" },
     { "path": "matrix/services/progression.js", "stage": "advanced" },

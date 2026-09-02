@@ -12,7 +12,7 @@ const CORE = [
     { file: "/matrix/services/root.js", key: "rooting", minRam: 32 },
     { file: "/matrix/services/telemetry.js", minRam: 32 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
-    { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
+    { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 32 },
     { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
     { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
 ];
