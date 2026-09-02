@@ -2,6 +2,7 @@ import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/comm
 import { scanAll, routeTo } from "/matrix/lib/network.js";
 import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 import { factionDirectives, factionPlan, BACKDOOR_FACTIONS } from "/matrix/lib/factions.js";
+import { narrate, moduleDirectives } from "/matrix/lib/voice.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
 
@@ -101,7 +102,12 @@ export async function main(ns){
             let factions=null,directives=[];
             try{
                 factions=factionPlan(factionInput,{singularity});
-                directives=factionDirectives(factionInput,{singularity});
+                // Order is the message: what you can do now, then what MATRIX is
+                // holding in reserve and which BitNode releases it.
+                directives=narrate([
+                    ...factionDirectives(factionInput,{singularity}),
+                    ...moduleDirectives([...(reset.ownedSF?.entries?.()??[])]),
+                ]);
             }catch{}
 
             await writeJson(ns,`${STATE_DIR}/overview.txt`,{

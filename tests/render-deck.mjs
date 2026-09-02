@@ -152,6 +152,14 @@ const shapes = {
         directives: [{ id: "JOIN_Sector-12", tag: "JOIN", label: "Join Sector-12", detail: "invitation is waiting", urgent: true, ready: true }],
         factions: { joined: ["CyberSec"], eligible: [{ name: "Sector-12", how: "be in Sector-12" }],
                     pending: [{ name: "NiteSec", missing: ["backdoor avmnite-02h"], how: "backdoor it" }] } },
+    "narrated directives with command": { ...base, directives: [
+        { id: "B_CyberSec", tag: "BACKDOOR", label: "Backdoor CSEC", detail: "run it",
+          command: "connect n00dles; connect CSEC; backdoor", voice: "The door is unlocked.", ready: true },
+        { id: "MODULE_gang", tag: "MODULE", label: "gang module is dormant",
+          detail: "needs Source-File 2", voice: "That power belongs elsewhere.", ready: false } ] },
+    "directive voice missing or wrong type": { ...base, directives: [
+        { id: "a", tag: "JOIN", label: "Join X", detail: "d" },
+        { id: "b", tag: "JOIN", label: "Join Y", detail: "d", voice: null, command: 42 } ] },
     "faction block half-built": { ...base, directives: [{}], factions: { joined: null, eligible: null, pending: null } },
     "faction directives not arrays": { ...base, directives: "nope", factions: { joined: 3, eligible: "x", pending: {} } },
     "faction pending missing fields": { ...base, factions: { joined: [], eligible: [{}], pending: [{ name: "X" }] } },
