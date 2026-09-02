@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "1.2.0",
+    version: "1.3.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -29,6 +29,8 @@ const DEFAULT_CONFIG = {
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
         minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: 24,
         minTargetMoney: 1_000_000,
+        // maxBatches is a ceiling, not the working limit - the schedule decides.
+        maxTargets: 12, waveReserveFraction: 0.05,
     },
     progression: {
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,

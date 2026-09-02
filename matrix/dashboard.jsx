@@ -402,7 +402,7 @@ function Hacking({ data }) {
                 <div className="mxMeter"><i style={{ width: `${(network.ramPct ?? 0) * 100}%` }} /></div>
                 <div className="mxHint">{network.rooted ?? 0} rooted hosts / {network.discovered ?? 0} discovered</div>
             </Panel>
-            <Panel title="Batch telemetry & thread breakdown" right="LIVE SCHEDULER" span={12}>
+            <Panel title="Batch telemetry & thread breakdown" right={hacking.utilisation != null ? `${percent(hacking.utilisation)} OF NETWORK` : "LIVE SCHEDULER"} span={12}>
                 <table className="mxTable">
                     <tbody>
                         {rows.map(([label, value]) => (

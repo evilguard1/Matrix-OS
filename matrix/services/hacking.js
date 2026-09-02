@@ -1,5 +1,6 @@
 import { config, event, writeState, sleepUntil, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
+import { allocateWave, mergeWave } from "/matrix/lib/batch.js";
 
 const H = "/matrix/workers/hack.js";
 const G = "/matrix/workers/grow.js";
@@ -38,12 +39,16 @@ function xpScore(ns, h) {
     return req * chance / hackTime;
 }
 
-function chooseTarget(ns, hosts, cfg, mode = "money") {
+function rankTargets(ns, hosts, cfg, mode = "money") {
     const scorer = mode === "xp" ? xpScore : targetScore;
-    const list = candidateTargets(ns, hosts, cfg)
+    return candidateTargets(ns, hosts, cfg)
         .map(h => ({ host: h, score: scorer(ns, h) }))
-        .sort((a,b) => b.score - a.score);
-    return list[0]?.host ?? "n00dles";
+        .sort((a, b) => b.score - a.score)
+        .map(entry => entry.host);
+}
+
+function chooseTarget(ns, hosts, cfg, mode = "money") {
+    return rankTargets(ns, hosts, cfg, mode)[0] ?? "n00dles";
 }
 
 function freePool(ns, hosts, cfg) {
@@ -89,6 +94,17 @@ async function applyShare(ns, hosts, cfg, wanted) {
 
 async function waitPids(ns, pids) {
     while (pids.some(pid => ns.isRunning(pid))) await ns.sleep(40);
+}
+
+// HWGW arithmetic assumes minimum security and a full balance. A target that is
+// not there yet desyncs, so it is left out of the wave until prep brings it in.
+function isPrepped(ns, host, cfg) {
+    const margin = cfg.hacking?.prepSecurityMargin ?? 0.5;
+    const moneyFrac = cfg.hacking?.prepMoneyFraction ?? 0.985;
+    const max = ns.getServerMaxMoney(host);
+    if (max <= 0) return false;
+    if (ns.getServerSecurityLevel(host) > ns.getServerMinSecurityLevel(host) + margin) return false;
+    return ns.getServerMoneyAvailable(host) >= max * moneyFrac;
 }
 
 async function prep(ns, target, hosts, cfg) {
@@ -182,10 +198,10 @@ function makeBatchEvents(shape, target, batches, gap) {
     for (let i = 0; i < batches; i++) {
         const base = first + i * stride;
         events.push(
-            { op:"H", script:H, threads:shape.ht, duration:shape.hTime, finish:base, args:[target] },
-            { op:"W1",script:W, threads:shape.wt1,duration:shape.wTime,finish:base+gap,args:[target] },
-            { op:"G", script:G, threads:shape.gt, duration:shape.gTime, finish:base+gap*2,args:[target] },
-            { op:"W2",script:W, threads:shape.wt2,duration:shape.wTime,finish:base+gap*3,args:[target] },
+            { op:"H", target, script:H, threads:shape.ht, duration:shape.hTime, finish:base, args:[target] },
+            { op:"W1",target, script:W, threads:shape.wt1,duration:shape.wTime,finish:base+gap,args:[target] },
+            { op:"G", target, script:G, threads:shape.gt, duration:shape.gTime, finish:base+gap*2,args:[target] },
+            { op:"W2",target, script:W, threads:shape.wt2,duration:shape.wTime,finish:base+gap*3,args:[target] },
         );
     }
     return events.sort((a,b) => (a.finish-a.duration) - (b.finish-b.duration));
@@ -209,16 +225,40 @@ export async function main(ns) {
         const target = chooseTarget(ns, hosts, cfg, mode);
         if (await prep(ns, target, hosts, cfg)) continue;
 
-        const shape = batchShape(ns, target, cfg);
-        if (!shape) {
+        // One target cannot absorb a large network. Its batch shape is a fixed
+        // size and its schedule allows only so many concurrent batches, so past
+        // that point every remaining gigabyte simply idles - which is how a
+        // 95-server, 800 TB network ran at 1.3% utilisation. Build the wave
+        // across as many targets as the RAM supports instead.
+        const ranked = rankTargets(ns, hosts, cfg, mode);
+        const shaped = [];
+        for (const host of ranked.slice(0, cfg.hacking?.maxTargets ?? 12)) {
+            // The primary was prepped above. A secondary that is not at minimum
+            // security and full money would desync - its grow cannot restore
+            // what its hack takes - so it waits rather than wasting threads.
+            if (host !== target && !isPrepped(ns, host, cfg)) continue;
+            const built = batchShape(ns, host, cfg);
+            if (built) shaped.push({ host, shape: built });
+        }
+        if (!shaped.length) {
             await writeState(ns, "hacking", { status:"waiting", target, reason:"No viable batch shape" });
             await ns.sleep(2000);
             continue;
         }
+        const shape = shaped[0].shape;
 
         const free = totalFreeRam(ns, hosts, cfg.hacking?.homeReserveGb ?? 24);
-        const maxBatches = cfg.hacking?.maxBatches ?? 24;
-        const batches = Math.min(maxBatches, Math.floor(free / Math.max(1, shape.ram)));
+        const gap = cfg.hacking?.batchGapMs ?? 120;
+        const wave = allocateWave(shaped, {
+            freeRam: free,
+            gapMs: gap,
+            // maxBatches is now an optional ceiling, not the working limit: the
+            // real cap is the schedule, which allows far more than the old 24.
+            configuredMax: cfg.hacking?.maxBatches,
+            maxTargets: cfg.hacking?.maxTargets ?? 12,
+            reserveFraction: cfg.hacking?.waveReserveFraction ?? 0.05,
+        });
+        const batches = wave.plan.reduce((sum, entry) => sum + entry.batches, 0);
         if (batches < 1) {
             await writeState(ns, "hacking", {
                 status:"waiting", phase:"RAM-GATED", target,
@@ -228,26 +268,27 @@ export async function main(ns) {
             await ns.sleep(1500);
             continue;
         }
-        const gap = cfg.hacking?.batchGapMs ?? 120;
-        const events = makeBatchEvents(shape, target, batches, gap);
+        const events = mergeWave(wave.plan, (host, built, count) => makeBatchEvents(built, host, count, gap));
         const pids = [];
         let failedThreads = 0;
 
         await writeState(ns, "hacking", {
             status:"batching", phase:"HWGW", target,
             hackFraction: shape.f, batches,
+            targets: wave.plan.map(entry => ({ host: entry.host, batches: entry.batches, ram: entry.ram })),
             batchRam: shape.ram, expectedPerBatch: shape.expected,
+            waveRam: wave.used, freeRam: free,
+            utilisation: free > 0 ? wave.used / free : 0,
             gapMs: gap, batchCounter
         });
 
         for (const e of events) {
             await sleepUntil(ns, e.finish - e.duration);
             const extra = Math.max(0, e.finish - Date.now() - e.duration);
-            const r = await execDistributed(ns, e.script, e.threads, [target, extra], hosts, cfg);
+            const r = await execDistributed(ns, e.script, e.threads, [e.target ?? target, extra], hosts, cfg);
             pids.push(...r.pids);
             failedThreads += r.remaining;
         }
-
         await waitPids(ns, pids);
         batchCounter += batches;
         if (failedThreads > 0) {
