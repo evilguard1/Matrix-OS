@@ -7,7 +7,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "0.2.4",
+    version: "0.3.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -30,6 +30,7 @@ const DEFAULT_CONFIG = {
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,
         forceResetAtQueuedAugs: 10, minMinutesBetweenResets: 35,
         autoDestroyWorldDaemon: false,
+        donationFavorThreshold: 150, donationBudgetFraction: 0.05,
     },
 };
 
@@ -74,6 +75,18 @@ export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-ins
 }
 
 export function reserveMoney(ns, cfg = config(ns)) {
+    const cash = ns.getServerMoneyAvailable("home");
+    const econ = cfg.economy ?? {};
+    const baseline = Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));
+    // Singularity publishes a target augmentation budget here. Economy managers
+    // honour it, while the singularity service itself uses the baseline reserve.
+    const progression = readJson(ns, `${STATE_DIR}/spending-reserve.txt`, {});
+    const target = Number(progression.amount ?? 0);
+    const fresh = Date.now() - Number(progression.updated ?? 0) < 30_000;
+    return fresh && Number.isFinite(target) ? Math.max(baseline, target) : baseline;
+}
+
+export function baselineReserveMoney(ns, cfg = config(ns)) {
     const cash = ns.getServerMoneyAvailable("home");
     const econ = cfg.economy ?? {};
     return Math.max(econ.cashReserve ?? 10_000_000, cash * (econ.reserveFraction ?? 0.15));

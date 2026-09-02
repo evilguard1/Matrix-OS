@@ -1,8 +1,9 @@
-import { config, reserveMoney, writeState, event } from "/matrix/lib/common.js";
+import { baselineReserveMoney, config, writeJson, writeState, event } from "/matrix/lib/common.js";
 
 const NFG="NeuroFlux Governor";
 const RED="The Red Pill";
-const CITY_SKIP = new Set(["Chongqing","New Tokyo","Ishima","Volhaven"]);
+const CITY_FACTIONS = new Set(["Aevum", "Chongqing", "Sector-12", "New Tokyo", "Ishima", "Volhaven"]);
+const SPENDING_RESERVE = "/matrix/state/spending-reserve.txt";
 
 function scoreAug(stats,name) {
     if(name===RED) return 1e12;
@@ -31,7 +32,8 @@ function candidates(ns) {
                 faction,aug,score:scoreAug(stats,aug),
                 price:ns.singularity.getAugmentationPrice(aug),
                 rep:ns.singularity.getAugmentationRepReq(aug),
-                factionRep:ns.singularity.getFactionRep(faction)
+                factionRep:ns.singularity.getFactionRep(faction),
+                favor:ns.singularity.getFactionFavor(faction),
             });
         }
     }
@@ -47,17 +49,22 @@ function buyPrograms(ns,cfg){
     let programs=[];try{programs=ns.singularity.getDarkwebPrograms();}catch{}
     for(const p of programs){
         const c=ns.singularity.getDarkwebProgramCost(p);
-        if(c>0&&ns.getServerMoneyAvailable("home")-c>reserveMoney(ns,cfg))ns.singularity.purchaseProgram(p);
+        if(c>0&&ns.getServerMoneyAvailable("home")-c>baselineReserveMoney(ns,cfg))ns.singularity.purchaseProgram(p);
     }
+}
+
+function choosePurchase(list, cash, reserve) {
+    return list
+        .filter(x=>x.aug!==NFG&&x.score>0&&x.factionRep>=x.rep&&x.price<=cash-reserve)
+        // Augmentation prices increase after every purchase, so buy expensive
+        // high-value augmentations before their later price multiplier applies.
+        .sort((a,b)=>b.price-a.price || b.score-a.score)[0]??null;
 }
 
 function buyAugs(ns,cfg){
     let count=0;
     for(let i=0;i<50;i++){
-        const list=candidates(ns).filter(x=>x.aug!==NFG&&x.score>0&&x.factionRep>=x.rep)
-            .sort((a,b)=>b.price-a.price);
-        const cash=ns.getServerMoneyAvailable("home"),res=reserveMoney(ns,cfg);
-        const next=list.find(x=>x.price<=cash-res);
+        const next=choosePurchase(candidates(ns),ns.getServerMoneyAvailable("home"),baselineReserveMoney(ns,cfg));
         if(!next)break;
         if(!ns.singularity.purchaseAugmentation(next.faction,next.aug))break;
         count++;
@@ -67,7 +74,8 @@ function buyAugs(ns,cfg){
 
 function bestRepGoal(ns){
     const list=candidates(ns).filter(x=>x.aug!==NFG&&x.score>0&&x.factionRep<x.rep);
-    list.sort((a,b)=>(b.score/(1+b.rep-b.factionRep))-(a.score/(1+a.rep-a.factionRep)));
+    // Prefer a high-impact augmentation that is close enough to finish soon.
+    list.sort((a,b)=>(b.score/(1+b.rep-b.factionRep))-(a.score/(1+a.rep-a.factionRep)) || b.price-a.price);
     return list[0]??null;
 }
 
@@ -76,6 +84,44 @@ function workGoal(ns,goal){
     let types=[];try{types=ns.singularity.getFactionWorkTypes(goal.faction);}catch{}
     const type=types.find(x=>String(x).toLowerCase().includes("hack"))??types[0];
     return type ? ns.singularity.workForFaction(goal.faction,type,false) : false;
+}
+
+function joinInvitations(ns) {
+    const joined = new Set(ns.getPlayer().factions);
+    let cityJoined = [...joined].some(f=>CITY_FACTIONS.has(f));
+    let joinedCount=0;
+    for(const faction of ns.singularity.checkFactionInvitations()) {
+        // City factions are mutually exclusive. Joining the first offered city is
+        // useful, but never block all of the other city paths by taking another.
+        if(CITY_FACTIONS.has(faction) && cityJoined) continue;
+        try {
+            if(ns.singularity.joinFaction(faction)) {
+                joined.add(faction); joinedCount++;
+                if (CITY_FACTIONS.has(faction)) cityJoined = true;
+            }
+        } catch {}
+    }
+    return joinedCount;
+}
+
+function donateForGoal(ns,cfg,goal) {
+    if(!goal || goal.factionRep>=goal.rep) return 0;
+    const threshold=cfg.progression?.donationFavorThreshold??150;
+    if(goal.favor<threshold) return 0;
+    const cash=ns.getServerMoneyAvailable("home");
+    const free=cash-baselineReserveMoney(ns,cfg);
+    const fraction=cfg.progression?.donationBudgetFraction??0.05;
+    const amount=Math.floor(Math.max(0,free*Math.max(0,Math.min(0.25,fraction))));
+    if(amount<=0) return 0;
+    try { return ns.singularity.donateToFaction(goal.faction,amount) ? amount : 0; } catch { return 0; }
+}
+
+async function publishReserve(ns,cfg,goal) {
+    const base=baselineReserveMoney(ns,cfg);
+    // This does not spend money. It prevents the independent economy services
+    // from taking funds already needed for the next deliberate augmentation.
+    const amount=goal ? Math.max(base,goal.price+base) : base;
+    await writeJson(ns,SPENDING_RESERVE,{amount,goal:goal?goal.aug:null,updated:Date.now()});
 }
 
 function shouldReset(ns,cfg){
@@ -90,29 +136,31 @@ export async function main(ns){
     let lastGoal="";
     while(true){
         const cfg=config(ns);
-        if(cfg.masterEnabled===false||cfg.automation?.singularity===false){await writeState(ns,"singularity",{status:"paused"});await ns.sleep(5000);continue;}
+        if(cfg.masterEnabled===false||cfg.automation?.singularity===false){
+            await writeJson(ns,SPENDING_RESERVE,{amount:0,updated:Date.now()});
+            await writeState(ns,"singularity",{status:"paused"});await ns.sleep(5000);continue;
+        }
         try{
             buyPrograms(ns,cfg);
-            for(const f of ns.singularity.checkFactionInvitations()){
-                if (CITY_SKIP.has(f)) continue;
-                try{ns.singularity.joinFaction(f);}catch{}
-            }
-            buyAugs(ns,cfg);
+            const invitations=joinInvitations(ns);
+            const purchased=buyAugs(ns,cfg);
 
             const goal=bestRepGoal(ns);
+            await publishReserve(ns,cfg,goal);
+            const donated=donateForGoal(ns,cfg,goal);
             const key=goal?`${goal.faction}/${goal.aug}`:"";
             if(goal&&key!==lastGoal){if(workGoal(ns,goal))lastGoal=key;}
 
             try{
                 const cash=ns.getServerMoneyAvailable("home");
                 const ramCost=ns.singularity.getUpgradeHomeRamCost();
-                if(ramCost>0&&ramCost<cash*0.10&&cash-ramCost>reserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
+                if(ramCost>0&&ramCost<cash*0.10&&cash-ramCost>baselineReserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
             }catch{}
 
             const q=queued(ns);
             await writeState(ns,"singularity",{
                 status:"online",queuedAugs:q,goal:goal?{faction:goal.faction,augmentation:goal.aug,rep:goal.factionRep,need:goal.rep}:null,
-                currentWork:ns.singularity.getCurrentWork()
+                currentWork:ns.singularity.getCurrentWork(), invitations, purchased, donated
             });
 
             if(cfg.progression?.autoInstallAugmentations!==false&&shouldReset(ns,cfg)){

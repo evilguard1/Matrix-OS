@@ -67,13 +67,17 @@ assert.doesNotMatch(updateSource, /\bns\.(?:spawn|run|exec|wget|ps)\b/, "the 8 G
 assert.doesNotMatch(read("matrix/bootstrap.js"), /from\s+["']\/matrix\//, "bootstrap must remain standalone");
 assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\/main/);
 assert.match(read("install.js"), /\$\{release\}\//, "installer downloads must be pinned to the resolved commit");
+const singularitySource = read("matrix/services/singularity.js");
+assert.match(singularitySource, /spending-reserve\.txt/, "Singularity must publish its augmentation funding reserve");
+assert.match(singularitySource, /donateToFaction/, "Singularity must use unlocked faction donations");
+assert.match(singularitySource, /getAugmentationPrereq/, "Singularity must respect augmentation dependencies");
 const startSource = read("matrix/start.js");
 assert.ok(startSource.indexOf('file: "/matrix/services/hacking.js"') < startSource.indexOf("file: DASHBOARD"), "hacking must launch before the full dashboard");
 assert.match(startSource, /getScriptRam\(UPDATE_SCRIPT/, "the full supervisor must reserve RAM for self-update");
 
 const { scanNetwork, tryRoot, chooseTarget, chooseStarterAction } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
 const { stageForRam } = await import(pathToFileURL(path.join(root, "matrix/kernel.js")));
-const { config, plannedNextBitNode } = await import(pathToFileURL(path.join(root, "matrix/lib/common.js")));
+const { config, plannedNextBitNode, reserveMoney } = await import(pathToFileURL(path.join(root, "matrix/lib/common.js")));
 const { eligibleFiles } = await import(pathToFileURL(path.join(root, "install.js")));
 
 assert.equal(stageForRam(8), "/matrix/bootstrap.js");
@@ -122,6 +126,14 @@ assert.equal(chooseStarterAction(2_000_000, 50_000_000, 95, 3), "weaken");
 const merged = config({ read: file => file.endsWith("config.json") ? '{"economy":{"cashReserve":123}}' : "" });
 assert.equal(merged.economy.cashReserve, 123);
 assert.equal(merged.economy.cloudBudgetFraction, 0.12, "nested defaults must survive partial configuration");
+const reserveMock = {
+    getServerMoneyAvailable: () => 100_000_000,
+    read: file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: Date.now() }) : "",
+};
+assert.equal(config(reserveMock).progression.donationFavorThreshold, 150, "new progression defaults must apply to preserved configs");
+assert.equal(reserveMoney(reserveMock), 80_000_000, "fresh augmentation reserve must protect progression funds");
+reserveMock.read = file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: 0 }) : "";
+assert.equal(reserveMoney(reserveMock), 15_000_000, "stale augmentation reserve must not freeze economy spending");
 
 const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
 assert.equal(plannedNextBitNode(reset, [4, 4, 4, 5]), 4);
