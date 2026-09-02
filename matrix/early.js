@@ -113,6 +113,7 @@ export async function main(ns) {
         try { ns.ui.closeTail(); } catch {}
         return;
     }
+    try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // DISTRIBUTED EARLY ENGINE"); } catch {}
     try { ns.ui.resizeTail(620, 390); } catch {}
     try { ns.ui.openTail(); } catch {}

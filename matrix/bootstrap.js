@@ -136,6 +136,7 @@ export async function main(ns) {
     const lockPid = Number(ns.read(LOCK));
     if (lockPid && lockPid !== ns.pid && ns.isRunning(lockPid)) return;
     await ns.write(LOCK, String(ns.pid), "w");
+    try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // FRESH-SAVE KERNEL"); } catch {}
     try { ns.ui.resizeTail(620, 390); } catch {}
     try { ns.ui.openTail(); } catch {}

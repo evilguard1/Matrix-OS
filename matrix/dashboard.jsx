@@ -446,6 +446,7 @@ export async function main(ns) {
         return;
     }
     ns.printRaw(<App ns={ns} />);
+    try { ns.tail(); } catch {}
     try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {}
     try {
         const [width, height] = ns.ui.windowSize();
