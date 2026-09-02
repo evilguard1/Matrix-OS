@@ -1,185 +1,54 @@
 import { CONFIG, STATE_DIR, readJson } from "/matrix/lib/common.js";
 
-const G="#00ff88", G2="#00c86f", DIM="#628f76", BG="#020705", PANEL="rgba(2,18,12,.88)", RED="#ff5577", AMBER="#ffd166";
+const COLOR = { green: "#55f6a4", mint: "#00d982", dim: "#7ba38e", ink: "#030907", red: "#ff5d79", amber: "#ffd36a", cyan: "#52ddff" };
+const SERVICE_ORDER = ["root", "hacking", "cloud", "hacknet", "contracts", "stock", "progression", "singularity", "gang", "sleeves", "bladeburner", "corporation"];
 
-function money(n){
-    if(!Number.isFinite(n))return"—";
-    const a=Math.abs(n),u=[["q",1e15],["t",1e12],["b",1e9],["m",1e6],["k",1e3]];
-    for(const [s,v] of u)if(a>=v)return`${n<0?"-":""}$${(a/v).toFixed(a/v>=100?0:a/v>=10?1:2)}${s}`;
-    return `$${Math.round(n).toLocaleString()}`;
+function money(value) {
+    if (!Number.isFinite(value)) return "--";
+    const abs = Math.abs(value), units = [["q", 1e15], ["t", 1e12], ["b", 1e9], ["m", 1e6], ["k", 1e3]];
+    for (const [label, size] of units) if (abs >= size) return `${value < 0 ? "-" : ""}$${(abs / size).toFixed(abs / size >= 100 ? 0 : abs / size >= 10 ? 1 : 2)}${label}`;
+    return `$${Math.round(value).toLocaleString()}`;
 }
-function ram(n){if(!Number.isFinite(n))return"—";if(n>=1024*1024)return`${(n/1024/1024).toFixed(1)} PB`;if(n>=1024)return`${(n/1024).toFixed(1)} TB`;return`${n.toFixed(1)} GB`;}
-function pct(n){return`${((n??0)*100).toFixed(1)}%`;}
-function age(t){if(!t)return"never";const s=Math.max(0,(Date.now()-t)/1000);return s<60?`${s.toFixed(0)}s`:s<3600?`${(s/60).toFixed(0)}m`:`${(s/3600).toFixed(1)}h`;}
+function ram(value) { if (!Number.isFinite(value)) return "--"; if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} PB`; if (value >= 1024) return `${(value / 1024).toFixed(1)} TB`; return `${value.toFixed(value < 10 ? 1 : 0)} GB`; }
+function percent(value) { return `${Math.max(0, Math.min(100, (value ?? 0) * 100)).toFixed(1)}%`; }
+function age(time) { if (!time) return "OFFLINE"; const seconds = Math.max(0, (Date.now() - time) / 1000); return seconds < 3 ? "LIVE" : seconds < 60 ? `${seconds.toFixed(0)} SEC AGO` : `${(seconds / 60).toFixed(0)} MIN AGO`; }
 
-function dashboardData(ns){
-    const overview=readJson(ns,`${STATE_DIR}/overview.txt`,null);
-    if(overview&&Date.now()-(overview.updated??0)<15000)return overview;
-    const bootstrap=readJson(ns,`${STATE_DIR}/bootstrap.txt`,{});
-    const early=readJson(ns,`${STATE_DIR}/early.txt`,{});
-    const boot=(early.updated??0)>(bootstrap.updated??0)?early:bootstrap;
-    return {
-        updated:boot.updated??0,
-        player:{money:ns.getServerMoneyAvailable("home")},
-        network:{discovered:boot.discovered??0,rooted:boot.rooted??0,maxRam:boot.homeRam??0,ramPct:0},
-        services:{bootstrap:{status:boot.status??"starting"},hacking:{status:boot.phase??"bootstrap",target:boot.target??"n00dles"}},
-        events:[],
-    };
+function state(ns) {
+    const overview = readJson(ns, `${STATE_DIR}/overview.txt`, null);
+    if (overview && Date.now() - (overview.updated ?? 0) < 15_000) return overview;
+    const bootstrap = readJson(ns, `${STATE_DIR}/bootstrap.txt`, {}), early = readJson(ns, `${STATE_DIR}/early.txt`, {});
+    const boot = (early.updated ?? 0) > (bootstrap.updated ?? 0) ? early : bootstrap;
+    return { updated: boot.updated ?? 0, player: { money: ns.getServerMoneyAvailable("home") }, network: { discovered: boot.discovered ?? 0, rooted: boot.rooted ?? 0, maxRam: boot.homeRam ?? 0, ramPct: 0 }, services: { bootstrap: { status: boot.status ?? "starting" }, hacking: { status: boot.phase ?? "bootstrap", target: boot.target ?? "n00dles" } }, events: [] };
 }
 
-const css=`
-@keyframes mxPulse{0%,100%{opacity:.65}50%{opacity:1}}
-@keyframes mxScan{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
-@keyframes mxRain{0%{transform:translateY(-120vh);opacity:0}10%{opacity:.18}90%{opacity:.08}100%{transform:translateY(120vh);opacity:0}}
-.mxRoot{position:relative;min-height:720px;background:${BG};color:${G};font-family:'JetBrains Mono','Fira Code',monospace;overflow:hidden;padding:18px 20px 30px;box-sizing:border-box}
-.mxRoot *{box-sizing:border-box}
-.mxRoot:after{content:"";pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,136,.025) 0px,rgba(0,255,136,.025) 1px,transparent 1px,transparent 4px);z-index:50}
-.mxScan{pointer-events:none;position:fixed;left:0;right:0;height:120px;background:linear-gradient(transparent,rgba(0,255,136,.035),transparent);animation:mxScan 7s linear infinite;z-index:49}
-.mxGrid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;position:relative;z-index:2}
-.mxPanel{background:${PANEL};border:1px solid rgba(0,255,136,.22);box-shadow:0 0 22px rgba(0,255,136,.045),inset 0 0 30px rgba(0,255,136,.018);border-radius:4px;padding:13px;min-width:0}
-.mxTitle{font-size:11px;letter-spacing:.2em;color:${DIM};text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between}
-.mxValue{font-size:24px;color:${G};text-shadow:0 0 12px rgba(0,255,136,.25)}
-.mxSmall{font-size:11px;color:${DIM}}
-.mxRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(0,255,136,.07)}
-.mxDot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 8px currentColor}
-.mxBar{height:5px;background:#07130d;border-radius:99px;overflow:hidden;margin-top:6px}.mxBar>div{height:100%;background:${G};box-shadow:0 0 10px ${G}}
-.mxTabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}.mxBtn{background:#03120b;border:1px solid rgba(0,255,136,.28);color:${G};padding:7px 10px;border-radius:3px;font:inherit;font-size:11px;cursor:pointer}.mxBtn:hover,.mxBtn.active{background:rgba(0,255,136,.11);box-shadow:0 0 12px rgba(0,255,136,.12)}
-.mxLogo{font-size:23px;letter-spacing:.28em;font-weight:700;text-shadow:0 0 14px rgba(0,255,136,.38)}
-.mxHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;position:relative;z-index:2}
-.mxBadge{border:1px solid rgba(0,255,136,.25);padding:5px 8px;font-size:10px;letter-spacing:.12em;color:${DIM}}
-.mxTable{width:100%;border-collapse:collapse;font-size:11px}.mxTable th{text-align:left;color:${DIM};font-weight:400;padding:6px;border-bottom:1px solid rgba(0,255,136,.18)}.mxTable td{padding:7px 6px;border-bottom:1px solid rgba(0,255,136,.06)}
-.mxEvent{font-size:10px;padding:5px 0;border-bottom:1px solid rgba(0,255,136,.05);color:#8db7a0}.mxEvent b{color:${G2};font-weight:500}
-.mxRainCol{position:fixed;top:0;color:${G};font-size:10px;line-height:12px;white-space:pre;animation:mxRain linear infinite;pointer-events:none;z-index:0;text-shadow:0 0 5px ${G}}
-@media(max-width:1000px){.mxGrid{grid-template-columns:repeat(6,1fr)}}
+const css = `
+@keyframes matrixPulse{0%,100%{opacity:.42}50%{opacity:1}}@keyframes matrixSweep{from{transform:translateY(-140px)}to{transform:translateY(calc(100vh + 140px))}}@keyframes matrixDrift{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(0,10px,0)}}
+.mxRoot{--green:${COLOR.green};--mint:${COLOR.mint};--dim:${COLOR.dim};--ink:${COLOR.ink};--red:${COLOR.red};--amber:${COLOR.amber};--cyan:${COLOR.cyan};position:relative;min-height:100vh;overflow:hidden;padding:18px;color:var(--green);background:radial-gradient(circle at 78% 2%,rgba(0,217,130,.12),transparent 25%),radial-gradient(circle at 12% 80%,rgba(82,221,255,.06),transparent 26%),var(--ink);font-family:'JetBrains Mono','Cascadia Code','Fira Code',monospace;letter-spacing:.015em}.mxRoot *{box-sizing:border-box}.mxRoot:before{content:"";pointer-events:none;position:fixed;inset:0;z-index:20;opacity:.38;background:repeating-linear-gradient(0deg,rgba(123,255,184,.025) 0,rgba(123,255,184,.025) 1px,transparent 1px,transparent 4px)}.mxRoot:after{content:"";pointer-events:none;position:fixed;inset:0;z-index:0;opacity:.28;background-image:linear-gradient(rgba(85,246,164,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(85,246,164,.06) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,black,transparent 74%)}.mxSweep{pointer-events:none;position:fixed;inset:auto 0 0;top:0;height:130px;z-index:19;background:linear-gradient(transparent,rgba(85,246,164,.045),transparent);animation:matrixSweep 8s linear infinite}.mxShell{position:relative;z-index:2;max-width:1680px;margin:0 auto}
+.mxHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:5px 0 17px;border-bottom:1px solid rgba(85,246,164,.25)}.mxBrand{min-width:0}.mxKicker{color:var(--cyan);font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:7px}.mxLogo{color:#e6fff3;font-size:clamp(20px,3vw,34px);line-height:1;font-weight:800;letter-spacing:.11em;text-shadow:0 0 18px rgba(85,246,164,.35)}.mxSubtitle{margin-top:10px;color:var(--dim);font-size:10px;letter-spacing:.14em}.mxSignal{flex:0 0 auto;display:flex;align-items:center;gap:9px;color:var(--mint);border:1px solid rgba(85,246,164,.28);background:rgba(0,217,130,.06);padding:9px 11px;font-size:10px;letter-spacing:.13em}.mxSignal i{width:8px;height:8px;border-radius:99px;background:currentColor;box-shadow:0 0 12px currentColor;animation:matrixPulse 1.8s ease-in-out infinite}
+.mxTabs{display:flex;gap:5px;margin:15px 0;flex-wrap:wrap}.mxBtn{appearance:none;border:1px solid rgba(85,246,164,.24);background:rgba(1,13,8,.78);color:var(--dim);padding:8px 11px;border-radius:0;font:inherit;font-size:10px;letter-spacing:.11em;cursor:pointer;transition:background .18s,color .18s,border .18s,transform .18s}.mxBtn:hover{color:var(--green);border-color:rgba(85,246,164,.7);transform:translateY(-1px)}.mxBtn.active{color:#05130c;background:var(--green);border-color:var(--green);box-shadow:0 0 18px rgba(85,246,164,.24)}
+.mxGrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:11px}.mxPanel{position:relative;overflow:hidden;min-width:0;padding:14px;border:1px solid rgba(85,246,164,.2);background:linear-gradient(145deg,rgba(7,27,17,.93),rgba(2,13,8,.9));box-shadow:inset 0 1px rgba(255,255,255,.03),0 12px 30px rgba(0,0,0,.16)}.mxPanel:before{content:"";position:absolute;top:0;left:0;width:36px;height:2px;background:var(--green);box-shadow:0 0 12px var(--green)}.mxPanel:after{content:"";pointer-events:none;position:absolute;inset:0;opacity:.26;background:linear-gradient(135deg,rgba(85,246,164,.045),transparent 45%)}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:span 12}.mxPanelTitle{position:relative;z-index:1;display:flex;justify-content:space-between;gap:10px;color:var(--dim);font-size:10px;letter-spacing:.16em;text-transform:uppercase}.mxPanelTitle span:last-child{color:rgba(123,163,142,.72);white-space:nowrap}.mxValue{position:relative;z-index:1;margin:12px 0 4px;color:#e6fff3;font-size:clamp(22px,2.3vw,31px);line-height:1;font-weight:700;text-shadow:0 0 15px rgba(85,246,164,.2)}.mxHint{position:relative;z-index:1;color:var(--dim);font-size:10px;line-height:1.55}.mxMeter{position:relative;z-index:1;height:5px;margin-top:12px;overflow:hidden;background:#06180e}.mxMeter>i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--green));box-shadow:0 0 14px var(--green)}.mxMeter.cyan>i{background:linear-gradient(90deg,#257a8d,var(--cyan));box-shadow:0 0 14px var(--cyan)}
+.mxRow{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:31px;padding:5px 0;border-bottom:1px solid rgba(85,246,164,.075);font-size:11px}.mxRow:last-child{border-bottom:0}.mxRow>span:last-child{color:#d7ffe9;text-align:right}.mxServiceName{display:flex;align-items:center;min-width:0}.mxDot{width:7px;height:7px;flex:0 0 auto;margin-right:9px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}.mxServiceStatus{color:var(--dim)!important;font-size:9px;letter-spacing:.1em}.mxHero{min-height:198px;display:flex;flex-direction:column;justify-content:space-between}.mxTarget{position:relative;z-index:1;display:flex;align-items:baseline;gap:11px;margin:10px 0}.mxTargetName{position:relative;z-index:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6fff3;font-size:clamp(28px,4.5vw,58px);font-weight:800;letter-spacing:-.045em;text-shadow:0 0 22px rgba(85,246,164,.26)}.mxTargetTag{position:relative;z-index:1;color:var(--cyan);font-size:10px;letter-spacing:.13em}.mxTargetFooter{position:relative;z-index:1;display:flex;justify-content:space-between;gap:12px;color:var(--dim);font-size:10px}.mxRadar{position:absolute;z-index:0;right:-23px;bottom:-41px;width:210px;height:210px;border:1px solid rgba(85,246,164,.2);border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 28px,rgba(85,246,164,.14) 29px 30px)}.mxRadar:before{content:"";position:absolute;left:50%;top:50%;width:1px;height:105px;transform-origin:bottom;background:linear-gradient(var(--green),transparent);box-shadow:0 0 14px var(--green);animation:matrixDrift 2.4s ease-in-out infinite alternate}.mxRadar:after{content:"";position:absolute;inset:45%;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}
+.mxCommand{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}.mxCommandCell{padding:9px;border-left:2px solid rgba(85,246,164,.34);background:rgba(0,0,0,.17)}.mxCommandCell b{display:block;color:#e6fff3;margin-top:4px;font-size:14px;font-weight:600}.mxCommandCell span{color:var(--dim);font-size:9px;letter-spacing:.12em}.mxEventFeed{position:relative;z-index:1;max-height:303px;overflow:hidden}.mxEvent{display:grid;grid-template-columns:62px 77px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid rgba(85,246,164,.065);color:#aac9b7;font-size:10px;line-height:1.45}.mxEvent time{color:var(--dim)}.mxEvent b{color:var(--cyan);font-weight:500;text-transform:uppercase}.mxEvent.warn b{color:var(--amber)}.mxEvent.error b{color:var(--red)}.mxEmpty{position:relative;z-index:1;padding:24px 0;color:var(--dim);font-size:10px;letter-spacing:.11em;text-align:center}.mxTable{position:relative;z-index:1;width:100%;border-collapse:collapse;font-size:11px}.mxTable th{padding:8px 7px;color:var(--dim);border-bottom:1px solid rgba(85,246,164,.17);text-align:left;font-size:9px;font-weight:500;letter-spacing:.12em}.mxTable td{padding:9px 7px;border-bottom:1px solid rgba(85,246,164,.065)}.mxTable td:last-child{text-align:right;color:#e6fff3}.mxSettings{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+@media(max-width:1000px){.mxRoot{padding:14px}.mxGrid{grid-template-columns:repeat(6,minmax(0,1fr))}.span-12,.span-8,.span-6{grid-column:span 6}.span-4,.span-3{grid-column:span 3}.mxLogo{letter-spacing:.07em}}@media(max-width:620px){.mxRoot{padding:11px}.mxHeader{flex-direction:column;gap:12px}.mxSignal{align-self:stretch;justify-content:center}.mxGrid{grid-template-columns:1fr;gap:8px}.span-12,.span-8,.span-6,.span-4,.span-3{grid-column:span 1}.mxPanel{padding:12px}.mxEvent{grid-template-columns:54px 64px 1fr;gap:5px}.mxTargetName{font-size:34px}.mxTabs{margin:12px 0}.mxBtn{flex:1 1 90px}}
 `;
 
-function Rain(){
-    const glyphs="010101001101011001001101001011010010110101011000101101010010011010011001010101001101";
-    return <>{Array.from({length:30},(_,i)=><div key={i} className="mxRainCol" style={{left:`${(i*3.37)%100}%`,animationDuration:`${10+(i%9)}s`,animationDelay:`-${(i*1.7)%14}s`,opacity:.08+(i%4)*.015}}>{glyphs.slice(i%20,55+i%20).split("").join("\n")}</div>)}</>;
-}
-function Panel({title,span=3,children,right}){return <div className="mxPanel" style={{gridColumn:`span ${span}`}}><div className="mxTitle"><span>{title}</span><span>{right}</span></div>{children}</div>;}
-function Service({name,s}){
-    const st=s?.status??"offline"; const c=st==="online"||st==="batching"||st==="trading"||st==="preparing"?G:st==="error"?RED:st==="paused"?AMBER:DIM;
-    return <div className="mxRow"><span><i className="mxDot" style={{color:c,background:c}}></i>{name}</span><span className="mxSmall">{st.toUpperCase()}</span></div>;
-}
-function Toggle({ns,cfg,path,label}){
-    const parts=path.split("."); let v=cfg; for(const p of parts)v=v?.[p];
-    const flip=async()=>{const n=JSON.parse(JSON.stringify(cfg));let o=n;for(let i=0;i<parts.length-1;i++)o=o[parts[i]]??=( {} );o[parts.at(-1)]=!v;await ns.write(CONFIG,JSON.stringify(n,null,2),"w");};
-    return <button className={`mxBtn ${v!==false?"active":""}`} onClick={flip}>{label}: {v!==false?"ON":"OFF"}</button>;
+function Panel({ title, right, span = 3, className = "", children }) { return <section className={`mxPanel span-${span} ${className}`}><div className="mxPanelTitle"><span>{title}</span><span>{right}</span></div>{children}</section>; }
+function serviceColor(status) { if (["online", "batching", "preparing", "trading"].includes(status)) return COLOR.green; if (status === "error") return COLOR.red; if (status === "paused") return COLOR.amber; return COLOR.dim; }
+function Service({ name, value }) { const status = value?.status ?? "offline", color = serviceColor(status); return <div className="mxRow"><span className="mxServiceName"><i className="mxDot" style={{ color }} />{name}</span><span className="mxServiceStatus" style={{ color }}>{status.toUpperCase()}</span></div>; }
+function Toggle({ ns, config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = async () => { const next = JSON.parse(JSON.stringify(config)); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; await ns.write(CONFIG, JSON.stringify(next, null, 2), "w"); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
+
+function Overview({ data }) {
+    const services = data.services ?? {}, network = data.network ?? {}, hacking = services.hacking ?? {}, player = data.player ?? {}, income = data.income ?? {}, target = hacking.target ?? "SCANNING", phase = hacking.phase ?? hacking.status ?? "BOOTSTRAP", rootRate = network.discovered ? network.rooted / network.discovered : 0;
+    return <div className="mxGrid"><Panel title="Liquid capital" right="LIVE" span={3}><div className="mxValue">{money(player.money)}</div><div className="mxHint">hacking income {money(income.hacking ?? 0)} since install</div></Panel><Panel title="Network authority" right={`${network.rooted ?? 0}/${network.discovered ?? 0}`} span={3}><div className="mxValue">{ram(network.maxRam ?? 0)}</div><div className="mxMeter cyan"><i style={{ width: `${rootRate * 100}%` }} /></div><div className="mxHint">{percent(network.ramPct)} RAM utilization</div></Panel><Panel title="BitNode route" right={`BN-${data.reset?.currentNode ?? "?"}`} span={3}><div className="mxValue">NODE {data.reset?.currentNode ?? "?"}</div><div className="mxHint">{services.progression?.nextNode ? `next route: BN-${services.progression.nextNode}` : "route calculation standing by"}</div></Panel><Panel title="System heartbeat" right={age(data.updated)} span={3}><div className="mxValue" style={{ color: data.updated ? COLOR.green : COLOR.amber }}>{data.updated ? "NOMINAL" : "LINK LOST"}</div><div className="mxHint">telemetry updates once per second</div></Panel>
+    <Panel title="Primary operation" right={phase} span={8} className="mxHero"><div className="mxRadar" /><div><div className="mxTarget"><span className="mxTargetTag">TARGET</span></div><div className="mxTargetName">{target}</div></div><div className="mxTargetFooter"><span>ENGINE: {String(phase).toUpperCase()}</span><span>{hacking.batches ? `${hacking.batches} HWGW BATCHES` : "ADAPTIVE CONTROL"}</span></div></Panel><Panel title="Mission board" right="AUTONOMOUS" span={4}><div className="mxCommand"><div className="mxCommandCell"><span>QUEUED AUGS</span><b>{services.singularity?.queuedAugs ?? 0}</b></div><div className="mxCommandCell"><span>CONTRACTS</span><b>{services.contracts?.solved ?? 0}</b></div><div className="mxCommandCell"><span>CLOUD RAM</span><b>{ram(services.cloud?.totalRam ?? 0)}</b></div><div className="mxCommandCell"><span>HACKNET / SEC</span><b>{(services.hacknet?.production ?? 0).toFixed?.(2) ?? "0.00"}</b></div></div><div className="mxHint" style={{ marginTop: 13 }}>{services.singularity?.goal?.augmentation ? `funding ${services.singularity.goal.augmentation}` : "building capability through hacking"}</div></Panel>
+    <Panel title="Automation mesh" right={`${SERVICE_ORDER.length} MODULES`} span={4}>{SERVICE_ORDER.map(name => <Service key={name} name={name} value={services[name]} />)}</Panel><Panel title="Live event stream" right={`${data.events?.length ?? 0} BUFFERED`} span={8}><div className="mxEventFeed">{data.events?.length ? data.events.slice(0, 20).map((event, index) => <div key={index} className={`mxEvent ${event.level ?? ""}`}><time>{new Date(event.t).toLocaleTimeString()}</time><b>{event.service}</b><span>{event.message}</span></div>) : <div className="mxEmpty">AWAITING FIRST SYSTEM EVENT</div>}</div></Panel></div>;
 }
 
-function Overview({d}){
-    const h=d.services?.hacking, net=d.network??{}, p=d.player??{}, inc=d.income??{};
-    const services=d.services??{};
-    return <div className="mxGrid">
-        <Panel title="Capital" span={3} right="LIQUID"><div className="mxValue">{money(p.money)}</div><div className="mxSmall">hacking since install {money(inc.hacking??0)}</div></Panel>
-        <Panel title="Network RAM" span={3} right={pct(net.ramPct)}><div className="mxValue">{ram(net.maxRam)}</div><div className="mxBar"><div style={{width:`${Math.min(100,(net.ramPct??0)*100)}%`}}></div></div><div className="mxSmall">{net.rooted??0}/{net.discovered??0} rooted</div></Panel>
-        <Panel title="Hacking Engine" span={3} right={h?.phase??"—"}><div className="mxValue">{h?.target??"SCANNING"}</div><div className="mxSmall">{h?.batches?`${h.batches} batches · ${(h.hackFraction*100).toFixed(1)}% extraction`:(h?.status??"offline")}</div></Panel>
-        <Panel title="BitNode" span={3} right={`BN-${d.reset?.currentNode??"?"}`}><div className="mxValue">NODE {d.reset?.currentNode??"?"}</div><div className="mxSmall">SF: {(d.reset?.sourceFiles??[]).map(x=>`${x[0]}.${x[1]}`).join(" · ")||"none"}</div></Panel>
+function Hacking({ data }) { const hacking = data.services?.hacking ?? {}, network = data.network ?? {}, extraction = hacking.hackFraction ? percent(hacking.hackFraction) : "--", rows = [["Target", hacking.target ?? "--"], ["Engine phase", hacking.phase ?? hacking.status ?? "offline"], ["Batch count", hacking.batches ?? 0], ["Extraction", extraction], ["Expected / batch", money(hacking.expectedPerBatch)], ["Batch RAM", ram(hacking.batchRam)], ["Launch gap", hacking.gapMs ? `${hacking.gapMs} ms` : "--"], ["Completed batches", hacking.batchCounter ?? 0]]; return <div className="mxGrid"><Panel title="Hacking engine" right={hacking.status ?? "OFFLINE"} span={8} className="mxHero"><div className="mxRadar" /><div className="mxTargetTag">ACTIVE TARGET</div><div className="mxTargetName">{hacking.target ?? "SCANNING"}</div><div className="mxTargetFooter"><span>{String(hacking.phase ?? "waiting").toUpperCase()}</span><span>{extraction} EXTRACTION</span></div></Panel><Panel title="Network reserve" right={percent(network.ramPct)} span={4}><div className="mxValue">{ram(network.maxRam ?? 0)}</div><div className="mxMeter"><i style={{ width: `${(network.ramPct ?? 0) * 100}%` }} /></div><div className="mxHint">{network.rooted ?? 0} rooted hosts / {network.discovered ?? 0} discovered</div></Panel><Panel title="Batch telemetry" right="LIVE" span={12}><table className="mxTable"><tbody>{rows.map(([label, value]) => <tr key={label}><td>{label}</td><td>{value}</td></tr>)}</tbody></table></Panel></div>; }
+function Economy({ data }) { const services = data.services ?? {}, income = data.income ?? {}, rows = [["Hacking", income.hacking], ["Hacknet", income.hacknet], ["Corporation", income.corporation], ["Gang", income.gang], ["Crime", income.crime], ["Work", income.work], ["Stocks", income.stock]]; return <div className="mxGrid"><Panel title="Capital flow" right="SINCE INSTALL" span={6}><table className="mxTable"><thead><tr><th>Source</th><th>Accumulated</th></tr></thead><tbody>{rows.map(([name, value]) => <tr key={name}><td>{name}</td><td>{money(value ?? 0)}</td></tr>)}</tbody></table></Panel><Panel title="Asset allocation" right="AUTOPILOT" span={6}><div className="mxRow"><span>Purchased servers</span><span>{services.cloud?.servers ?? 0} / {ram(services.cloud?.totalRam ?? 0)}</span></div><div className="mxRow"><span>Hacknet</span><span>{services.hacknet?.nodes ?? 0} nodes</span></div><div className="mxRow"><span>Stock exposure</span><span>{money(services.stock?.exposure ?? 0)}</span></div><div className="mxRow"><span>Corporation treasury</span><span>{money(services.corporation?.funds ?? 0)}</span></div><div className="mxRow"><span>Corporation profit/cycle</span><span>{money(services.corporation?.profit ?? 0)}</span></div></Panel></div>; }
+function Progress({ data }) { const player = data.player ?? {}, services = data.services ?? {}, goal = services.singularity?.goal, skills = ["strength", "defense", "dexterity", "agility", "charisma", "intelligence"]; return <div className="mxGrid"><Panel title="Operator profile" right={player.city ?? "UNKNOWN"} span={4}><div className="mxValue">HACK {player.skills?.hacking ?? 0}</div>{skills.map(skill => <div className="mxRow" key={skill}><span>{skill}</span><span>{player.skills?.[skill] ?? 0}</span></div>)}</Panel><Panel title="Augmentation directive" right={services.singularity?.status ?? "LOCKED"} span={4}>{goal ? <><div className="mxValue" style={{ fontSize: 19 }}>{goal.augmentation}</div><div className="mxHint">{goal.faction}</div><div className="mxMeter"><i style={{ width: `${Math.min(100, 100 * (goal.rep ?? 0) / Math.max(1, goal.need ?? 1))}%` }} /></div><div className="mxHint" style={{ marginTop: 8 }}>{Math.round(goal.rep ?? 0).toLocaleString()} / {Math.round(goal.need ?? 0).toLocaleString()} faction reputation</div></> : <div className="mxEmpty">NO SINGULARITY DIRECTIVE</div>}</Panel><Panel title="Advanced modules" right="GATED BY SOURCE FILES" span={4}>{["progression", "singularity", "gang", "sleeves", "bladeburner", "corporation"].map(name => <Service key={name} name={name} value={services[name]} />)}</Panel><Panel title="Connected factions" right={`${player.factions?.length ?? 0} LINKED`} span={12}>{player.factions?.length ? player.factions.map(faction => <div className="mxRow" key={faction}><span>{faction}</span><span style={{ color: COLOR.mint }}>CONNECTED</span></div>) : <div className="mxEmpty">NO FACTION LINKS ESTABLISHED</div>}</Panel></div>; }
+function Settings({ ns, config }) { return <div className="mxGrid"><Panel title="Autopilot authority" right="PERSISTENT CONFIGURATION" span={12}><div className="mxSettings"><Toggle ns={ns} config={config} path="masterEnabled" label="AUTOPILOT" /></div><div className="mxHint" style={{ marginTop: 16 }}>Every control is saved to /matrix/config.json. The running managers read it on their next cycle.</div><div className="mxSettings">{Object.keys(config.automation ?? {}).map(key => <Toggle key={key} ns={ns} config={config} path={`automation.${key}`} label={key.toUpperCase()} />)}</div></Panel></div>; }
 
-        <Panel title="Automation Matrix" span={4}>
-            {["root","hacking","cloud","hacknet","contracts","stock","progression","singularity","gang","sleeves","bladeburner","corporation"].map(n=><Service key={n} name={n} s={services[n]}/>)}
-        </Panel>
-        <Panel title="Current Objective" span={4}>
-            <div className="mxValue" style={{fontSize:18}}>{services.singularity?.goal?.augmentation??h?.target??"BUILD CAPABILITY"}</div>
-            {services.singularity?.goal?<><div className="mxSmall">{services.singularity.goal.faction}</div><div className="mxBar"><div style={{width:`${Math.min(100,100*(services.singularity.goal.rep||0)/(services.singularity.goal.need||1))}%`}}></div></div></>:null}
-            <div style={{marginTop:15}} className="mxRow"><span>Queued augmentations</span><span>{services.singularity?.queuedAugs??0}</span></div>
-            <div className="mxRow"><span>Cloud RAM</span><span>{ram(services.cloud?.totalRam??0)}</span></div>
-            <div className="mxRow"><span>Hacknet production</span><span>{(services.hacknet?.production??0).toFixed?.(2)??0}</span></div>
-            <div className="mxRow"><span>Contracts solved last pass</span><span>{services.contracts?.solved??0}</span></div>
-        </Panel>
-        <Panel title="Live Event Stream" span={4} right={`${d.events?.length??0} buffered`}>
-            <div style={{maxHeight:330,overflow:"hidden"}}>{(d.events??[]).slice(0,22).map((e,i)=><div className="mxEvent" key={i}><b>{new Date(e.t).toLocaleTimeString()}</b> [{e.service}] {e.message}</div>)}</div>
-        </Panel>
-    </div>;
-}
-function Hacking({d}){
-    const h=d.services?.hacking??{},n=d.network??{};
-    return <div className="mxGrid">
-        <Panel title="Target" span={4}><div className="mxValue">{h.target??"—"}</div><div className="mxSmall">{h.phase??h.status??"offline"}</div></Panel>
-        <Panel title="Extraction" span={4}><div className="mxValue">{h.hackFraction?`${(h.hackFraction*100).toFixed(2)}%`:"—"}</div><div className="mxSmall">{h.expectedPerBatch?`${money(h.expectedPerBatch)} expected / batch`:"adaptive optimizer"}</div></Panel>
-        <Panel title="Batch Geometry" span={4}><div className="mxValue">{h.batches??0}</div><div className="mxSmall">{h.gapMs??"—"} ms gap · {ram(h.batchRam??0)} / batch</div></Panel>
-        <Panel title="Network capacity" span={12}>
-            <table className="mxTable"><tbody>
-            <tr><td>Discovered hosts</td><td>{n.discovered??0}</td><td>Rooted hosts</td><td>{n.rooted??0}</td></tr>
-            <tr><td>Total RAM</td><td>{ram(n.maxRam??0)}</td><td>RAM utilization</td><td>{pct(n.ramPct??0)}</td></tr>
-            <tr><td>Batch counter</td><td>{h.batchCounter??0}</td><td>Status</td><td>{h.status??"offline"}</td></tr>
-            </tbody></table>
-        </Panel>
-    </div>;
-}
-function Economy({d}){
-    const s=d.services??{},i=d.income??{};
-    const rows=[["Hacking",i.hacking],["Hacknet",i.hacknet],["Corporation",i.corporation],["Gang",i.gang],["Crime",i.crime],["Work",i.work],["Stocks",i.stock]];
-    return <div className="mxGrid">
-        <Panel title="Income Sources / Since Install" span={6}><table className="mxTable"><tbody>{rows.map(([k,v])=><tr key={k}><td>{k}</td><td>{money(v??0)}</td></tr>)}</tbody></table></Panel>
-        <Panel title="Capital Allocators" span={6}>
-            <div className="mxRow"><span>Cloud nodes</span><span>{s.cloud?.servers??0} · {ram(s.cloud?.totalRam??0)}</span></div>
-            <div className="mxRow"><span>Hacknet nodes</span><span>{s.hacknet?.nodes??0}</span></div>
-            <div className="mxRow"><span>Stock exposure</span><span>{money(s.stock?.exposure??0)}</span></div>
-            <div className="mxRow"><span>Corp funds</span><span>{money(s.corporation?.funds??0)}</span></div>
-            <div className="mxRow"><span>Corp profit/cycle</span><span>{money(s.corporation?.profit??0)}</span></div>
-        </Panel>
-    </div>;
-}
-function Progress({d}){
-    const p=d.player??{},s=d.services??{};
-    return <div className="mxGrid">
-        <Panel title="Operator" span={4}><div className="mxValue">HACK {p.skills?.hacking??0}</div>{["strength","defense","dexterity","agility","charisma","intelligence"].map(k=><div className="mxRow" key={k}><span>{k}</span><span>{p.skills?.[k]??0}</span></div>)}</Panel>
-        <Panel title="Factions" span={4}>{(p.factions??[]).map(f=><div className="mxRow" key={f}><span>{f}</span><span>CONNECTED</span></div>)}</Panel>
-        <Panel title="Advanced Systems" span={4}>
-            <Service name="Progression" s={s.progression}/><Service name="Singularity" s={s.singularity}/><Service name="Gang" s={s.gang}/><Service name="Sleeves" s={s.sleeves}/><Service name="Bladeburner" s={s.bladeburner}/><Service name="Corporation" s={s.corporation}/>
-        </Panel>
-    </div>;
-}
-function Settings({ns,d,cfg}){
-    return <div className="mxGrid"><Panel title="Master Control" span={12}>
-        <Toggle ns={ns} cfg={cfg} path="masterEnabled" label="AUTOPILOT"/>
-        <div style={{height:10}}/>
-        {Object.keys(cfg.automation??{}).map(k=><Toggle key={k} ns={ns} cfg={cfg} path={`automation.${k}`} label={k.toUpperCase()}/>)}
-        <div style={{marginTop:16}} className="mxSmall">Changes are written directly to /matrix/config.json. Managers pick them up on their next cycle.</div>
-    </Panel></div>;
-}
+function App({ ns }) { const [data, setData] = React.useState(() => state(ns)), [config, setConfig] = React.useState(() => readJson(ns, CONFIG, {})), [tab, setTab] = React.useState("OVERVIEW"), refresh = Math.max(350, config.ui?.refreshMs ?? 750); React.useEffect(() => { const id = setInterval(() => { setData(state(ns)); setConfig(readJson(ns, CONFIG, {})); }, refresh); return () => clearInterval(id); }, [ns, refresh]); const tabs = ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"], content = tab === "HACKING" ? <Hacking data={data} /> : tab === "ECONOMY" ? <Economy data={data} /> : tab === "PROGRESS" ? <Progress data={data} /> : tab === "SETTINGS" ? <Settings ns={ns} config={config} /> : <Overview data={data}/>; return <div className="mxRoot"><style>{css}</style><div className="mxSweep" /><main className="mxShell"><header className="mxHeader"><div className="mxBrand"><div className="mxKicker">BITBURNER // CYBER OPERATIONS SYSTEM</div><div className="mxLogo">MATRIX COMMAND DECK</div><div className="mxSubtitle">VERSION {data.game?.version ?? "3.x"} / TELEMETRY {age(data.updated)} / HOME LINK ACTIVE</div></div><div className="mxSignal"><i style={{ color: config.masterEnabled === false ? COLOR.amber : COLOR.green }} />{config.masterEnabled === false ? "AUTOPILOT PAUSED" : "AUTOPILOT ENGAGED"}</div></header><nav className="mxTabs">{tabs.map(name => <button key={name} className={`mxBtn ${tab === name ? "active" : ""}`} onClick={() => setTab(name)}>{name}</button>)}</nav>{content}</main></div>; }
 
-function App({ns}){
-    const [data,setData]=React.useState(()=>dashboardData(ns));
-    const [cfg,setCfg]=React.useState(()=>readJson(ns,CONFIG,{}));
-    const [tab,setTab]=React.useState("OVERVIEW");
-    React.useEffect(()=>{const id=setInterval(()=>{setData(dashboardData(ns));setCfg(readJson(ns,CONFIG,{}));},Math.max(300,cfg.ui?.refreshMs??750));return()=>clearInterval(id);},[cfg.ui?.refreshMs]);
-    const tabs=["OVERVIEW","HACKING","ECONOMY","PROGRESS","SETTINGS"];
-    let body=tab==="HACKING"?<Hacking d={data}/>:tab==="ECONOMY"?<Economy d={data}/>:tab==="PROGRESS"?<Progress d={data}/>:tab==="SETTINGS"?<Settings ns={ns} d={data} cfg={cfg}/>:<Overview d={data}/>;
-    return <div className="mxRoot">
-        <style>{css}</style>{cfg.ui?.matrixRain!==false?<Rain/>:null}<div className="mxScan"/>
-        <div className="mxHeader"><div><div className="mxLogo">MATRIX // AUTONOMOUS CONTROL</div><div className="mxSmall">BITBURNER CYBER OPERATIONS SYSTEM · {data.game?.version??"3.x"} · TELEMETRY {age(data.updated)} AGO</div></div><div className="mxBadge">{cfg.masterEnabled!==false?"● AUTOPILOT ENGAGED":"○ AUTOPILOT PAUSED"}</div></div>
-        <div className="mxTabs">{tabs.map(t=><button key={t} className={`mxBtn ${tab===t?"active":""}`} onClick={()=>setTab(t)}>{t}</button>)}</div>
-        {body}
-    </div>;
-}
-
-export async function main(ns){
-    ns.disableLog("ALL");
-    ns.clearLog();
-
-    const self=ns.self().pid;
-    const sameScript=p=>String(p.filename).replace(/^\/+/,"")==="matrix/dashboard.jsx";
-    const older=ns.ps("home").some(p=>sameScript(p)&&p.pid!==self&&p.pid<self);
-    if(older){
-        try{ns.ui.closeTail();}catch{}
-        return;
-    }
-
-    const app = <App ns={ns}/>;
-
-    ns.printRaw(app);
-    try { ns.ui.setTailTitle("MATRIX // AUTONOMOUS CONTROL"); } catch {}
-    try {
-        const [w, h] = ns.ui.windowSize();
-        ns.ui.resizeTail(Math.max(900, Math.floor(w * 0.90)),Math.max(650, Math.floor(h * 0.86)));
-        ns.ui.moveTail(Math.max(10, Math.floor(w * 0.05)),Math.max(10, Math.floor(h * 0.06)));
-    } catch {
-        try { ns.ui.resizeTail(1300,780); ns.ui.moveTail(40,40); } catch {}
-    }
-    ns.ui.openTail();
-
-    while(true) await ns.sleep(60000);
-}
+export async function main(ns) { ns.disableLog("ALL"); ns.clearLog(); const self = ns.self().pid, sameScript = process => String(process.filename).replace(/^\/+/, "") === "matrix/dashboard.jsx", older = ns.ps("home").some(process => sameScript(process) && process.pid !== self && process.pid < self); if (older) { try { ns.ui.closeTail(); } catch {} return; } ns.printRaw(<App ns={ns} />); try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {} try { const [width, height] = ns.ui.windowSize(); ns.ui.resizeTail(Math.min(Math.max(760, Math.floor(width * 0.88)), 1560), Math.min(Math.max(610, Math.floor(height * 0.84)), 980)); ns.ui.moveTail(Math.max(10, Math.floor(width * 0.06)), Math.max(10, Math.floor(height * 0.07))); } catch { try { ns.ui.resizeTail(1260, 760); ns.ui.moveTail(40, 40); } catch {} } ns.ui.openTail(); while (true) await ns.sleep(60_000); }
