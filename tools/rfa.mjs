@@ -41,6 +41,8 @@ function connect() {
     return new Promise((resolve, reject) => {
         const pending = new Map();
         let id = 0;
+        let connected = false;
+        let waiting = null;
         const server = net.createServer(socket => {
             socket.once("data", first => {
                 const text = first.toString("utf8");
@@ -59,6 +61,9 @@ function connect() {
                     else waiter.resolve(parsed.result);
                 }));
                 socket.on("error", () => {});
+                connected = true;
+                if (waiting) clearInterval(waiting);
+                console.log("Bitburner connected.\n");
                 resolve({
                     call(method, params = {}) {
                         return new Promise((ok, fail) => {
@@ -74,10 +79,30 @@ function connect() {
                 });
             });
         });
-        server.on("error", reject);
+        // Only one process can hold the port, and Bitburner connects to
+        // whichever got there first - so say which, rather than printing a
+        // stack trace at someone who just wanted to deploy.
+        server.on("error", error => {
+            if (error?.code === "EADDRINUSE") {
+                console.error(`\nPort ${PORT} is already in use.\n`);
+                console.error("Something else is already listening for Bitburner. Usually one of:");
+                console.error("  - another 'npm run rfa' still open in another terminal");
+                console.error("  - the cloud gateway bridge, which uses this port too");
+                console.error("\nOnly one can have it, and Bitburner connects to whichever");
+                console.error("got there first. Close that one, then try again.\n");
+                console.error(`To find it:  netstat -ano | findstr :${PORT}`);
+                process.exit(1);
+            }
+            reject(error);
+        });
         server.listen(PORT, "127.0.0.1", () => {
             console.log(`RFA server listening on 127.0.0.1:${PORT}`);
-            console.log("In Bitburner: Options > Remote API > Connect\n");
+            console.log("In Bitburner: Options > Remote API > Connect");
+            console.log("(waiting - nothing happens until you press Connect)\n");
+            // A silent cursor looks identical to a hang. Say so periodically.
+            waiting = setInterval(() => {
+                if (!connected) console.log("still waiting for Bitburner to connect...");
+            }, 15_000);
         });
     });
 }
