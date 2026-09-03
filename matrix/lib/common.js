@@ -207,3 +207,45 @@ export async function writeState(ns, name, state) {
         ...state,
     });
 }
+
+export async function event(ns, service, message, level = "info") {
+    const line = JSON.stringify({ t: Date.now(), service, level, message });
+    await ns.write(EVENTS, `${line}\n`, "a");
+}
+
+export function sfLevel(reset, n) {
+    return reset?.ownedSF?.get?.(n) ?? 0;
+}
+
+export function plannedNextBitNode(reset, plan) {
+    const required = new Map();
+    for (const value of plan ?? []) {
+        const node = Number(value);
+        if (!Number.isInteger(node) || node < 1 || node > 13) continue;
+        const targetLevel = (required.get(node) ?? 0) + 1;
+        required.set(node, targetLevel);
+        const completingCurrent = reset?.currentNode === node ? 1 : 0;
+        if (sfLevel(reset, node) + completingCurrent < targetLevel) return node;
+    }
+    return 1;
+}
+
+export function hasSF(reset, n) {
+    return reset?.currentNode === n || sfLevel(reset, n) > 0;
+}
+
+export function formatMoney(n) {
+    if (!Number.isFinite(n)) return "∞";
+    const a = Math.abs(n);
+    const units = [["q",1e15],["t",1e12],["b",1e9],["m",1e6],["k",1e3]];
+    for (const [s,v] of units) if (a >= v) return `${n < 0 ? "-" : ""}$${(a/v).toFixed(a/v >= 100 ? 0 : a/v >= 10 ? 1 : 2)}${s}`;
+    return `$${Math.round(n).toLocaleString()}`;
+}
+
+export function clamp(x, lo, hi) {
+    return Math.max(lo, Math.min(hi, x));
+}
+
+export function sleepUntil(ns, when) {
+    return ns.sleep(Math.max(0, when - Date.now()));
+}
