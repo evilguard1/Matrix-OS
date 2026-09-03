@@ -4,14 +4,14 @@ import { manualActions, singularityReady, PORT_PROGRAMS, ramExpansionAdvice } fr
 import { factionDirectives, factionPlan, BACKDOOR_FACTIONS, companyDirectives } from "/matrix/lib/factions.js";
 import { narrate, moduleDirectives } from "/matrix/lib/voice.js";
 import { augmentationPlan, augmentationDirectives, bestFactionToGrind } from "/matrix/lib/augmentations.js";
+import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
 
 // Which faction-gating servers the player can backdoor RIGHT NOW. Reading the
-// actual backdoor flag needs ns.getServer at 2 GB, which does not fit the 32 GB
-// stage - and is not needed: a backdoor produces an invitation immediately, so
-// "rooted, in level range, faction not joined" is the same instruction. Treating
-// an already-joined faction's server as done keeps it from nagging.
+// actual backdoor flag needs ns.getServer at 2 GB, so this low-cost telemetry
+// path avoids it: a backdoor produces an invitation immediately, so
+// "rooted, in level range, faction not joined" is the useful instruction.
 function backdoorable(ns){
     const out=[];
     for(const host of Object.keys(BACKDOOR_FACTIONS)){
@@ -22,9 +22,6 @@ function backdoorable(ns){
     return out;
 }
 
-// installBackdoor() is Singularity, so below SF4 the player has to type it. The
-// least MATRIX can do is say exactly what is blocking each one and hand over the
-// full connect path - every input here is already paid for by this service.
 function backdoorDetail(ns,parent,crackers){
     const out={};
     for(const host of Object.keys(BACKDOOR_FACTIONS)){
@@ -34,8 +31,6 @@ function backdoorDetail(ns,parent,crackers){
                 have:ns.getHackingLevel(),
                 ports:ns.getServerNumPortsRequired(host),
                 crackers,
-                rooted:ns.hasRootAccess(host),
-                // routeTo omits "home"; the hops are what the player types.
                 path:routeTo(parent,host).filter(h=>h!=="home"),
             };
         }catch{}
@@ -43,8 +38,6 @@ function backdoorDetail(ns,parent,crackers){
     return out;
 }
 
-// A backdoor produces its faction invitation immediately, so a joined faction
-// is proof its backdoor is done - without paying 2 GB for ns.getServer.
 function backdoorsDone(joined){
     return Object.entries(BACKDOOR_FACTIONS).filter(([,f])=>joined.includes(f)).map(([host])=>host);
 }
@@ -74,8 +67,6 @@ export async function main(ns){
             let game={version:"3.x"};
             try{game=ns.ui.getGameInfo();}catch{}
 
-            // Single writer: telemetry computes what the player still has to do by
-            // hand so every UI renders the same list instead of each recomputing it.
             const singularity=singularityReady(reset);
             const owned=PORT_PROGRAMS.filter(p=>ns.fileExists(p.file,"home")).map(p=>p.file);
             const manual=manualActions({
@@ -84,13 +75,11 @@ export async function main(ns){
                 hackingLevel:player.skills?.hacking??1,
                 ownedPrograms:owned,
                 singularity,
-                // From 32 GB the cloud service buys servers itself.
-                cloudAutomated:ns.getServerMaxRam("home")>=32&&cfg.automation?.cloud!==false,
+                // Cloud becomes a full-stage manager at the same 64 GB ownership
+                // boundary where rolling HWGW replaces the early/worm economy.
+                cloudAutomated:ns.getServerMaxRam("home")>=FULL_ENGINE_HOME_RAM&&cfg.automation?.cloud!==false,
             });
 
-            // Faction guidance. Joining needs Singularity, but KNOWING what each
-            // faction wants does not - so the deck can always point at the next
-            // real move even when the game will not let a script take it.
             const factionInput={
                 skills:player.skills,money:player.money,city:player.city,karma:player.karma,
                 kills:player.numPeopleKilled,factions:player.factions,jobs:player.jobs,
@@ -103,11 +92,6 @@ export async function main(ns){
             let factions=null,directives=[],augs=null,grind=null,augState=null;
             try{
                 factions=factionPlan(factionInput,{singularity});
-                // Order is the message: what you can do now, then what MATRIX is
-                // holding in reserve and which BitNode releases it.
-                // Faction rep needs Singularity to read, so before SF4 it is
-                // absent and every implant reports as "needs rep" - which names
-                // the requirement instead of hiding the implant.
                 augState={
                     owned:(player.augmentations??[]).map(a=>typeof a==="string"?a:a?.name).filter(Boolean),
                     factions:player.factions??[],
@@ -116,12 +100,8 @@ export async function main(ns){
                 };
                 augs=augmentationPlan(augState);
                 grind=bestFactionToGrind(augState);
-                // Employment and RAM value are both cases where the game shows
-                // a number but never its meaning.
-                // The fleet comes from cloud.js's own state file rather than
-                // ns.cloud.getServerNames(), which costs 1.05 GB and pushed the
-                // 32 GB stage over budget. Absent state means an empty fleet,
-                // which is the correct assumption before cloud.js runs.
+                // Fleet data comes from cloud.js state instead of paying for the
+                // cloud API again inside telemetry.
                 const cloudState=serviceState.cloud??{};
                 const fleetSize=Number(cloudState.servers??0)||0;
                 const ramAdvice=ramExpansionAdvice({
