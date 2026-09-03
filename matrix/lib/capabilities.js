@@ -1,22 +1,12 @@
-import { HOME_RAM_TIERS } from "/matrix/lib/stages.js";
+const UI_STAGE_RAM = Object.freeze({ early: 16, full: 64, operations: 128, advanced: 256 });
 
 /**
  * What MATRIX can automate right now, and what the player still has to do.
- *
- * Bitburner hard-gates a large slice of automation behind Singularity
- * (Source-File 4, or being inside BitNode 4): buying Home RAM, buying or
- * creating programs, travel, faction/company work, crime, backdoors, and
- * augmentation installs. On a save without SF4 no script can do those, so the
- * honest thing is to detect that and tell the player exactly what to click.
- *
- * Every cost here is computed from Bitburner's own formulas rather than read
- * through an API, because the Singularity getters cost 5 GB each and the whole
- * point is to run this on an 8-16 GB home.
+ * Runtime stage ownership is centralized in /matrix/lib/stages.js; these pure
+ * constants only keep low-RAM player-facing guidance aligned without adding an
+ * import dependency to this early-game library.
  */
-
-// Bitburner: currentRam * 32000 * 1.58^log2(currentRam)
 const HOME_RAM_BASE_COST = 32000;
-// Bitburner: ram * 55000, flat forever
 const SERVER_COST_PER_GB = 55000;
 export const TOR_COST = 200_000;
 
@@ -33,11 +23,8 @@ export function homeRamUpgradeCost(currentRam) {
     return currentRam * HOME_RAM_BASE_COST * Math.pow(1.58, Math.log2(currentRam));
 }
 
-export function serverCost(ram) {
-    return ram * SERVER_COST_PER_GB;
-}
+export function serverCost(ram) { return ram * SERVER_COST_PER_GB; }
 
-/** Largest useful purchased server that fits the spendable budget. */
 export function bestServerBuy(spendable, workerRam = 2.4, ramLimit = 1_048_576) {
     const worker = Number(workerRam) > 0 ? Number(workerRam) : 2.4;
     const cap = Number(ramLimit) > 0 ? Number(ramLimit) : 1_048_576;
@@ -52,15 +39,10 @@ export function bestServerBuy(spendable, workerRam = 2.4, ramLimit = 1_048_576) 
     return best;
 }
 
-/** Decide what purchased-server action best uses the current budget. */
 export function serverPurchasePlan(options = {}) {
     const {
-        budget = 0,
-        owned = [],
-        limit = 25,
-        workerRam = 2.4,
-        ramLimit = 1_048_576,
-        upgradeMultiple = 4,
+        budget = 0, owned = [], limit = 25, workerRam = 2.4,
+        ramLimit = 1_048_576, upgradeMultiple = 4,
     } = options ?? {};
     const spendable = Math.max(0, Number(budget) || 0);
     const fleet = (Array.isArray(owned) ? owned : [])
@@ -68,11 +50,7 @@ export function serverPurchasePlan(options = {}) {
         .filter(server => server.host);
     const affordable = bestServerBuy(spendable, workerRam, ramLimit);
     if (affordable <= 0) return { action: "wait", reason: "budget below the smallest useful server" };
-
-    if (fleet.length < Math.max(0, limit)) {
-        return { action: "buy", ram: affordable, cost: serverCost(affordable) };
-    }
-
+    if (fleet.length < Math.max(0, limit)) return { action: "buy", ram: affordable, cost: serverCost(affordable) };
     const weakest = fleet.reduce((worst, server) => server.ram < worst.ram ? server : worst, fleet[0]);
     if (affordable >= weakest.ram * upgradeMultiple) {
         return { action: "replace", host: weakest.host, from: weakest.ram, ram: affordable, cost: serverCost(affordable) };
@@ -85,32 +63,18 @@ export function singularityReady(reset) {
     return reset?.currentNode === 4 || (reset?.ownedSF?.get?.(4) ?? 0) > 0;
 }
 
-/** The next port cracker the player does not own yet. */
 export function nextPortProgram(owned, hackingLevel) {
     const have = Array.isArray(owned) ? owned : [];
     const level = Number(hackingLevel) || 0;
     const missing = PORT_PROGRAMS.find(program => !have.includes(program.file));
     if (!missing) return null;
-    return {
-        ...missing,
-        canCreate: level >= missing.level,
-        levelsToGo: Math.max(0, missing.level - level),
-    };
+    return { ...missing, canCreate: level >= missing.level, levelsToGo: Math.max(0, missing.level - level) };
 }
 
-/**
- * Actions the human still has to perform, most valuable first. Returns [] once
- * Singularity is available, because at that point MATRIX can do those actions.
- */
 export function manualActions(options = {}) {
     const {
-        homeRam = 8,
-        cash = 0,
-        hackingLevel = 1,
-        ownedPrograms = [],
-        singularity = false,
-        cloudAutomated = false,
-        workerRam = 2.4,
+        homeRam = 8, cash = 0, hackingLevel = 1, ownedPrograms = [],
+        singularity = false, cloudAutomated = false, workerRam = 2.4,
     } = options ?? {};
     if (singularity) return [];
     const out = [];
@@ -118,18 +82,15 @@ export function manualActions(options = {}) {
     const program = nextPortProgram(ownedPrograms, hackingLevel);
     if (program) {
         out.push(program.canCreate ? {
-            id: "CREATE_PROGRAM", tag: "CREATE",
-            label: `Create ${program.file}`,
+            id: "CREATE_PROGRAM", tag: "CREATE", label: `Create ${program.file}`,
             short: `${program.file} - free, do it now`,
             detail: `free at Hacking ${program.level} - you qualify now`,
             cost: 0, where: "Create Program tab", ready: true,
         } : {
-            id: "GET_PROGRAM", tag: "PROGRAM",
-            label: `Get ${program.file}`,
+            id: "GET_PROGRAM", tag: "PROGRAM", label: `Get ${program.file}`,
             short: `${program.file} @ terminal`,
             detail: `create free at Hacking ${program.level} (${program.levelsToGo} to go), or buy now`,
-            cost: program.price, where: `terminal: buy ${program.file}`,
-            ready: cash >= program.price,
+            cost: program.price, where: `terminal: buy ${program.file}`, ready: cash >= program.price,
         });
     }
 
@@ -143,28 +104,24 @@ export function manualActions(options = {}) {
             detail: server
                 ? `${Math.floor(server / workerRam)} more workers - cheapest RAM in the game`
                 : `need ${fmt(serverCost(floorRam))}; anything smaller cannot host a worker`,
-            cost: serverCost(server || floorRam),
-            where: "Alpha Ent. (Sector-12)", ready: Boolean(server),
+            cost: serverCost(server || floorRam), where: "Alpha Ent. (Sector-12)", ready: Boolean(server),
         });
     }
 
     const ramCost = homeRamUpgradeCost(homeRam);
     out.push({
-        id: "UPGRADE_HOME_RAM", tag: "HOME RAM",
-        label: `Upgrade Home RAM ${homeRam} -> ${homeRam * 2}GB`,
-        short: `${homeRam}->${homeRam * 2}GB @ Alpha Ent.`,
-        detail: nextStageNote(homeRam * 2),
+        id: "UPGRADE_HOME_RAM", tag: "HOME RAM", label: `Upgrade Home RAM ${homeRam} -> ${homeRam * 2}GB`,
+        short: `${homeRam}->${homeRam * 2}GB @ Alpha Ent.`, detail: nextStageNote(homeRam * 2),
         cost: ramCost, where: "Alpha Ent. (Sector-12)", ready: cash >= ramCost,
     });
-
     return out.sort((a, b) => (b.ready ? 1 : 0) - (a.ready ? 1 : 0) || a.cost - b.cost);
 }
 
 function nextStageNote(ram) {
-    if (ram >= HOME_RAM_TIERS.advanced) return "unlocks advanced capability managers";
-    if (ram >= HOME_RAM_TIERS.operations) return "unlocks contracts, stock and broader operations";
-    if (ram >= HOME_RAM_TIERS.full) return "unlocks the full command deck, rolling HWGW and automated infrastructure";
-    if (ram >= HOME_RAM_TIERS.early) return "unlocks the distributed early engine";
+    if (ram >= UI_STAGE_RAM.advanced) return "unlocks advanced capability managers";
+    if (ram >= UI_STAGE_RAM.operations) return "unlocks contracts, stock and broader operations";
+    if (ram >= UI_STAGE_RAM.full) return "unlocks the full command deck, rolling HWGW and automated infrastructure";
+    if (ram >= UI_STAGE_RAM.early) return "unlocks the distributed early engine";
     return "more RAM for MATRIX itself";
 }
 
@@ -178,55 +135,34 @@ function fmt(n) {
 }
 export { fmt as formatCost };
 
-/** Compare Home RAM expansion against purchased-server expansion. */
 export function ramExpansionAdvice(options = {}) {
-    const {
-        homeRam = 8,
-        ownedServers = [],
-        serverLimit = 25,
-        ramLimit = 1_048_576,
-    } = options ?? {};
-
+    const { homeRam = 8, ownedServers = [], serverLimit = 25, ramLimit = 1_048_576 } = options ?? {};
     const home = Math.max(1, Number(homeRam) || 1);
     const homeCost = homeRamUpgradeCost(home);
     const homeGain = home;
     const homePerGb = homeGain > 0 && Number.isFinite(homeCost) ? homeCost / homeGain : Infinity;
-
     const fleet = (Array.isArray(ownedServers) ? ownedServers : [])
-        .map(s => ({ host: String(s?.host ?? ""), ram: Number(s?.ram) || 0 }))
-        .filter(s => s.host);
+        .map(s => ({ host: String(s?.host ?? ""), ram: Number(s?.ram) || 0 })).filter(s => s.host);
     const limit = Math.max(0, Number(serverLimit) || 0);
     const cap = Math.max(0, Number(ramLimit) || 0);
     const slotsLeft = Math.max(0, limit - fleet.length);
     const upgradable = fleet.filter(s => s.ram < cap).length;
     const serverRoom = slotsLeft > 0 || upgradable > 0;
     const serverPerGb = serverCost(1);
-
-    const stageThreshold = Number(options?.stageThreshold ?? HOME_RAM_TIERS.advanced);
+    const stageThreshold = Number(options?.stageThreshold ?? UI_STAGE_RAM.advanced);
     const homeIsCapability = home < stageThreshold;
-
     return {
-        homePerGb,
-        serverPerGb,
-        homeCost,
-        homeGain,
-        slotsLeft,
-        upgradable,
-        homeIsCapability,
-        better: homeIsCapability ? "home"
-            : serverRoom && serverPerGb < homePerGb ? "servers"
-            : "home",
+        homePerGb, serverPerGb, homeCost, homeGain, slotsLeft, upgradable, homeIsCapability,
+        better: homeIsCapability ? "home" : serverRoom && serverPerGb < homePerGb ? "servers" : "home",
         reason: homeIsCapability
             ? `home is below ${stageThreshold} GB - upgrading it unlocks modules, which no server can do`
             : !serverRoom ? "the purchased fleet is full and maxed, so home is the only way left to grow"
             : "servers are pure worker RAM and far cheaper per gigabyte at this scale",
         multiple: serverPerGb > 0 && Number.isFinite(homePerGb) ? homePerGb / serverPerGb : 1,
-        equivalentServerGb: serverPerGb > 0 && Number.isFinite(homeCost)
-            ? Math.floor(homeCost / serverPerGb) : 0,
+        equivalentServerGb: serverPerGb > 0 && Number.isFinite(homeCost) ? Math.floor(homeCost / serverPerGb) : 0,
     };
 }
 
-/** How much of Home to keep out of the distributed worker pool. */
 export function homeReserveFor(homeRam, cfg = {}) {
     const configured = Math.max(0, Number(cfg?.hacking?.homeReserveGb ?? 24) || 24);
     const home = Math.max(0, Number(homeRam) || 0);
