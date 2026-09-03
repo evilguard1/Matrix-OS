@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "1.7.1",
+    version: "1.8.0",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -27,7 +27,7 @@ const DEFAULT_CONFIG = {
     hacking: {
         homeReserveGb: 2, fullEngineHomeRam: 32, batchGapMs: 120,
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
-        minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: 24,
+        minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: null,   // no ceiling: the batch schedule decides
         minTargetMoney: 1_000_000,
         // maxBatches is a ceiling, not the working limit - the schedule decides.
         // These are ceilings, not working limits: allocateWave stops as soon as
@@ -69,9 +69,67 @@ export async function writeJson(ns, file, value) {
     await ns.write(file, JSON.stringify(value), "w");
 }
 
+
+/**
+ * Config migrations.
+ *
+ * matrix/config.json is a protected file: the updater preserves it so the
+ * player's settings survive. The cost is that a value which was only ever a
+ * DEFAULT gets frozen at whatever it was the day the file was written, and then
+ * silently overrides every later default.
+ *
+ * That is not hypothetical. A live save carried `hacking.maxBatches: 24` from
+ * version 0.3.0. Every improvement to the wave allocator since was capped by it:
+ * an 800 TB network ran at 5.7% because each target was pinned to 24 batches
+ * regardless of what its schedule allowed. Removing it took the same save from
+ * 168 batches to 790.
+ *
+ * A migration therefore only fires when the saved value still EQUALS the old
+ * default - meaning the player never chose it. A value they actually changed is
+ * theirs and is left alone.
+ */
+export const CONFIG_MIGRATIONS = [
+    {
+        path: ["hacking", "maxBatches"],
+        stale: 24,
+        next: null,
+        why: "a flat 24-batch cap per target held a large network at a fraction of its capacity; the schedule decides now",
+    },
+];
+
+/**
+ * Applies migrations to a SAVED config object, returning the new object and what
+ * changed. Operates on the saved file rather than the merged result, because
+ * only the saved file tells us what the player actually wrote down.
+ */
+export function migrateConfig(saved, migrations = CONFIG_MIGRATIONS) {
+    const source = saved && typeof saved === "object" ? saved : {};
+    const out = JSON.parse(JSON.stringify(source));
+    const applied = [];
+    for (const migration of Array.isArray(migrations) ? migrations : []) {
+        const path = Array.isArray(migration?.path) ? migration.path : [];
+        if (!path.length) continue;
+        let node = out;
+        for (let i = 0; i < path.length - 1; i++) {
+            if (!node || typeof node !== "object") { node = null; break; }
+            node = node[path[i]];
+        }
+        if (!node || typeof node !== "object") continue;
+        const key = path[path.length - 1];
+        if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+        // Only a value the player never changed may be migrated.
+        if (node[key] !== migration.stale) continue;
+        node[key] = migration.next;
+        applied.push({ path: path.join("."), from: migration.stale, to: migration.next, why: migration.why });
+    }
+    return { config: out, applied };
+}
+
 export function config(ns) {
     const saved = readJson(ns, CONFIG, readJson(ns, `${ROOT}/config.txt`, {}));
-    return merge(DEFAULT_CONFIG, saved);
+    // Stale defaults in a protected file would otherwise override every later
+    // improvement; a value the player actually changed is left untouched.
+    return merge(DEFAULT_CONFIG, migrateConfig(saved).config);
 }
 
 export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-install.js`) {
