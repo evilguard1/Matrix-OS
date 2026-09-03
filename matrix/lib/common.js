@@ -21,15 +21,19 @@ const DEFAULT_CONFIG = {
         cashReserve: 10_000_000, reserveFraction: 0.15,
         cloudBudgetFraction: 0.12, hacknetBudgetFraction: 0.04, stockBudgetFraction: 0.25,
     },
+    // Pin `opponent` to chase a specific bonus; null climbs the ladder by
+    // results, which is what actually maximises node power.
     go: { opponent: null, boardSize: 5 },
     hacking: {
-        // Compatibility/display value only. Runtime stage ownership is centralized
-        // in /matrix/lib/stages.js so a protected config cannot strand an old
-        // handoff threshold after an update.
         homeReserveGb: 2, fullEngineHomeRam: 64, batchGapMs: 120,
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
-        minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: null,
+        minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: null,   // no ceiling: the batch schedule decides
         minTargetMoney: 1_000_000,
+        // maxBatches is a ceiling, not the working limit - the schedule decides.
+        // These are ceilings, not working limits: allocateWave stops as soon as
+        // the RAM runs out, so a generous cap simply lets RAM be the constraint
+        // instead of an arbitrary number. At 804 TB a cap of 12 held the network
+        // to ~37% - it was the whole reason utilisation plateaued there.
         maxTargets: 32, waveReserveFraction: 0.05, maxPrepTargets: 20,
     },
     progression: {
@@ -65,10 +69,24 @@ export async function writeJson(ns, file, value) {
     await ns.write(file, JSON.stringify(value), "w");
 }
 
+
 /**
- * Config migrations for values that were historical defaults rather than user
- * choices. Protected config survives updates, so stale defaults need an explicit
- * compatibility path when architecture changes.
+ * Config migrations.
+ *
+ * matrix/config.json is a protected file: the updater preserves it so the
+ * player's settings survive. The cost is that a value which was only ever a
+ * DEFAULT gets frozen at whatever it was the day the file was written, and then
+ * silently overrides every later default.
+ *
+ * That is not hypothetical. A live save carried `hacking.maxBatches: 24` from
+ * version 0.3.0. Every improvement to the wave allocator since was capped by it:
+ * an 800 TB network ran at 5.7% because each target was pinned to 24 batches
+ * regardless of what its schedule allowed. Removing it took the same save from
+ * 168 batches to 790.
+ *
+ * A migration therefore only fires when the saved value still EQUALS the old
+ * default - meaning the player never chose it. A value they actually changed is
+ * theirs and is left alone.
  */
 export const CONFIG_MIGRATIONS = [
     {
@@ -85,6 +103,11 @@ export const CONFIG_MIGRATIONS = [
     },
 ];
 
+/**
+ * Applies migrations to a SAVED config object, returning the new object and what
+ * changed. Operates on the saved file rather than the merged result, because
+ * only the saved file tells us what the player actually wrote down.
+ */
 export function migrateConfig(saved, migrations = CONFIG_MIGRATIONS) {
     const source = saved && typeof saved === "object" ? saved : {};
     const out = JSON.parse(JSON.stringify(source));
@@ -100,6 +123,7 @@ export function migrateConfig(saved, migrations = CONFIG_MIGRATIONS) {
         if (!node || typeof node !== "object") continue;
         const key = path[path.length - 1];
         if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+        // Only a value the player never changed may be migrated.
         if (node[key] !== migration.stale) continue;
         node[key] = migration.next;
         applied.push({ path: path.join("."), from: migration.stale, to: migration.next, why: migration.why });
@@ -109,6 +133,8 @@ export function migrateConfig(saved, migrations = CONFIG_MIGRATIONS) {
 
 export function config(ns) {
     const saved = readJson(ns, CONFIG, readJson(ns, `${ROOT}/config.txt`, {}));
+    // Stale defaults in a protected file would otherwise override every later
+    // improvement; a value the player actually changed is left untouched.
     return merge(DEFAULT_CONFIG, migrateConfig(saved).config);
 }
 
@@ -131,17 +157,38 @@ export function getCoordinatorState(ns) {
     return raw;
 }
 
+/**
+ * The flat cash reserve protects whatever milestone the coordinator is saving
+ * for. Applied literally it reserves $10m from a player who owns $1m, which
+ * zeroes every infrastructure budget for the entire early game - exactly when
+ * infrastructure compounds hardest. A $440k purchased server pays for itself in
+ * minutes and then keeps paying, and under the old rule MATRIX could not buy one
+ * until $50m of cash.
+ *
+ * So the flat floor scales in: hold a fraction of the balance early, and only
+ * honour the full flat reserve once it is small relative to what you have.
+ */
 export function reserveFloor(cash, cfg = {}) {
     const econ = cfg.economy ?? {};
     const balance = Math.max(0, Number(cash) || 0);
     const flat = Math.max(0, Number(econ.cashReserve ?? 10_000_000) || 0);
     const fraction = Math.max(0, Number(econ.reserveFraction ?? 0.15) || 0);
+    // Never hold more than a quarter of the balance as the flat component.
     const scaled = Math.min(flat, balance * 0.25);
     return Math.max(scaled, balance * fraction);
 }
 
-/** How much of spendable cash a manager may use. */
+/**
+ * How much of the spendable balance a manager may use.
+ *
+ * Below the configured aggressive cloud threshold there is nothing worth
+ * saving for that beats more worker RAM, so the cloud manager is allowed most
+ * of the balance. The conservative configured fractions take over later, and an
+ * explicit coordinator directive always wins.
+ */
 export function managerFraction(name, { configured = 0, homeRam = 8, directive = null, aggressiveBelowRam = 128 } = {}) {
+    // Number(null) is 0 and 0 is finite, so testing the coercion alone would
+    // treat "no directive" as "spend nothing" and zero every budget.
     if (directive != null && directive !== "") {
         const override = Number(directive);
         if (Number.isFinite(override)) return Math.max(0, override);
@@ -166,6 +213,8 @@ export function reserveMoney(ns, cfg = config(ns)) {
         }
     }
 
+    // Singularity publishes a target augmentation budget here. Economy managers
+    // honour it, while the singularity service itself uses the baseline reserve.
     const progression = readJson(ns, `${STATE_DIR}/spending-reserve.txt`, {});
     const target = Number(progression.amount ?? 0);
     const fresh = Date.now() - Number(progression.updated ?? 0) < 30_000;
@@ -176,12 +225,19 @@ export function baselineReserveMoney(ns, cfg = config(ns)) {
     return reserveFloor(ns.getServerMoneyAvailable("home"), cfg);
 }
 
+// Live per-manager directive protocol published by the coordinator. Returns null
+// when there is no fresh coordinator (fresh save, coordinator paused, or a
+// crashed coordinator) so every consumer falls back to its own local defaults.
 export function getDirectives(ns) {
     const raw = readJson(ns, DIRECTIVES, null);
     if (!raw || Date.now() - Number(raw.updated ?? 0) > 30_000) return null;
     return raw;
 }
 
+// Discretionary spend ceiling for an infrastructure manager ("hacknet", "cloud",
+// "stock"). The coordinator can shrink the fraction to zero during
+// reserve-heavy phases; without a live coordinator the static config fraction
+// applies exactly as before this protocol existed.
 export function managerBudget(ns, name, cfg = config(ns)) {
     const cash = ns.getServerMoneyAvailable("home");
     const reserve = reserveMoney(ns, cfg);
