@@ -127,6 +127,8 @@ assert.match(hacking, /currentGrowThreads\s*>\s*shape\.gt/);
 assert.match(hacking, /grow-thread-shortfall/);
 assert.match(hacking, /staleSnapshotCount/);
 assert.match(hacking, /snapshotStaleDrains/);
+assert.match(hacking, /staleRefreshPending/);
+assert.match(hacking, /staleRefreshPendingCount/);
 assert.match(hacking, /probeRequiredGrowThreads/);
 
 // The probe must be gated to near-minimum security so it cannot reintroduce
