@@ -3,6 +3,7 @@ import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
 import { holdSingleton } from "/matrix/lib/singleton.js";
 import { scanAll } from "/matrix/lib/network.js";
 import { stampFile, staleHosts, sweepNeeded, residentScripts, REMOTE_FILES } from "/matrix/lib/propagate.js";
+import { FULL_ENGINE_HOME_RAM, stageIdForRam } from "/matrix/lib/stages.js";
 
 const VERSION_FILE = "/matrix/VERSION.txt";
 // Bounded per cycle: refreshing the whole network in one pass would stall the
@@ -36,45 +37,39 @@ function deckAlive(ns) {
 // every 5s is an infinite restart loop that spawns a command deck each time.
 const STAGE_RETRY_MS = 300_000;
 
-// Every managed service, with the Home RAM it genuinely needs.
-//
-// minRam values are DERIVED FROM MEASURED COST, not chosen. `npm test` asserts
-// each one still exceeds the script's real static RAM plus the update reserve,
-// so this table cannot drift away from reality.
-//
-// Costs verified against bitburner-src RamCostGenerator.ts. The headline is
-// Singularity: SF4Cost() multiplies every call by 16 below SF4 level 3, so
-// singularity.js is 1242 GB without it and 80 GB with it. sf4Level3 marks the
-// services that are only realistically reachable at SF4 level 3 - ensureOne()
-// still checks the true runtime cost, this table just avoids pointless retries.
+// Every managed service. minRam is an eligibility floor for that individual
+// service, not a promise that every service sharing that number fits together.
+// ensureOne() remains the final authority: it asks Bitburner for live script RAM
+// and preserves enough free Home RAM to launch the updater.
 export const SERVICES = [
-    // 32 GB: 6.7 + 12.75 + 4.05 + 1.9 + 2.45 = 27.85, + 1.6 reserve = 29.45.
-    // Import RAM is billed to the importer, so these include their libs.
+    // Core services are only orchestrated once start.js itself owns Home at 64 GB.
+    // Hacking/coordinator individually fit below 64, so their floors remain 32;
+    // the stage ownership boundary, not this table, prevents premature launch.
     { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
-    { file: DASHBOARD, ui: true, minRam: 32 },
-
-    { file: "/matrix/services/telemetry.js", minRam: 32 },
+    { file: DASHBOARD, ui: true, minRam: 64 },
+    { file: "/matrix/services/telemetry.js", minRam: 64 },
     { file: "/matrix/services/coordinator.js", key: "progression", minRam: 32 },
-    // 64 GB: + 8.6 + 5.5
-    // 64 GB: the worm already roots continuously, so root.js is redundant below here
-    { file: "/matrix/services/root.js", key: "rooting", minRam: 64 },
+
+    // 64 GB priority set. With the measured 1.8.1 costs these coexist with the
+    // rolling core and updater reserve. Rooting is already supplied by the worm.
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
-    // IPvGO needs no Source-File at all, and each opponent grants a permanent
-    // multiplier - hacking money and faster hack/grow/weaken among them.
+    // IPvGO needs no Source-File and grants permanent global multipliers.
     { file: "/matrix/services/go.js", key: "go", minRam: 64 },
-    // 128 GB: + 21.8 + 33.2
-    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 64 },
+
+    // 128 GB operations tier: add deferred convenience/throughput services.
+    { file: "/matrix/services/root.js", key: "rooting", minRam: 128 },
+    { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
     { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
     { file: "/matrix/services/progression.js", key: "progression", minRam: 128, sf: 4 },
-    // 256 GB: + 38.2 + 66.1
+
+    // Capability-gated expansion. The nominal floor only makes a service
+    // eligible; actual SF-adjusted getScriptRam() still decides whether it runs.
     { file: "/matrix/services/sleeves.js", key: "sleeves", minRam: 256, sf: 10 },
     { file: "/matrix/services/gang.js", key: "gang", minRam: 256, sf: 2 },
-    // 512 GB: + 77.6 + 79.7 (singularity only fits at SF4 level 3)
     { file: "/matrix/services/stanek.js", key: "stanek", minRam: 256, sf: 13 },
     { file: "/matrix/services/bladeburner.js", key: "bladeburner", minRam: 512, sf: [6, 7] },
     { file: "/matrix/services/singularity.js", key: "singularity", minRam: 512, sf: 4, sf4Level3: true },
-    // 1024 GB: corporation is 341.6 GB of CorporationAction calls
     { file: "/matrix/services/corporation.js", key: "corporation", minRam: 1024, sf: 3 },
 ];
 
@@ -130,20 +125,16 @@ function hasSourceFile(reset, number) {
 }
 
 export function expectedStage(homeRam) {
-    if (homeRam >= 128) return "advanced";
-    if (homeRam >= 64) return "operations";
-    return "full";
+    return stageIdForRam(homeRam);
 }
 
-// A representative file for each stage. Stage completeness is decided by asking
-// whether these actually exist, NOT by a marker file: install.js derives its
-// marker from stageLimit() while the supervisor used expectedStage(), and any
-// disagreement between those two made the supervisor relaunch the installer
-// forever - leaving a new command deck behind on every cycle.
+// A representative file for each installed stage. Runtime service admission is
+// separate from file installation; these probes only answer whether that stage's
+// payload has actually arrived on Home.
 const STAGE_PROBE = {
     full: DASHBOARD,
-    operations: "/matrix/services/cloud.js",
-    advanced: "/matrix/services/stock.js",
+    operations: "/matrix/services/stock.js",
+    advanced: "/matrix/services/stanek.js",
 };
 
 export function stageInstalled(ns, stage) {
@@ -239,7 +230,7 @@ async function sweepBuild(ns, hosts, version) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
-    if (ns.getServerMaxRam("home") < 32) {
+    if (ns.getServerMaxRam("home") < FULL_ENGINE_HOME_RAM) {
         ns.spawn(ns.getServerMaxRam("home") < 16 ? "/matrix/bootstrap.js" : "/matrix/early.js", {
             threads: 1, preventDuplicates: true, spawnDelay: 0,
         });
