@@ -1,4 +1,3 @@
-// Bitburner video-game Netscript only. Host/root terminology below refers solely to simulated in-game servers.
 /**
  * MATRIX-OS worm seeder.
  *
