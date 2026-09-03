@@ -1,3 +1,4 @@
+// Bitburner video-game Netscript only. Host/root terminology below refers solely to simulated in-game servers.
 /**
  * MATRIX-OS worm seeder.
  *
@@ -9,16 +10,16 @@
  * On a fresh save foodnstuff / sigma-cosmetics / joesguns are 16 GB and need
  * zero open ports, so the botnet starts on the first cycle.
  *
- * RAM budget: 6.70 GB one-shot  (computed and enforced by tests/validate.mjs)
+ * RAM budget: 7.20 GB one-shot  (computed and enforced by tests/validate.mjs)
  *   1.60 base + 0.20 scan + 0.05 hasRootAccess + 0.10 getServerNumPortsRequired
  * + 0.25 five crackers + 0.05 nuke + 0.60 scp + 1.30 exec
- * + 0.50 scriptKill + 0.05 getServerMaxRam + 2.00 spawn
+ * + 1.00 scriptKill + 0.05 getServerMaxRam + 2.00 spawn
  *
  * args: [stageScript]  the stage to hand control back to.
  */
 const SPREAD = "/matrix/worm/spread.js";
 const DRONE = "/matrix/worm/drone.js";
-const SPREAD_RAM = 5.05;
+const SPREAD_RAM = 5.55;
 
 function scanAll(ns) {
     const seen = new Set(["home"]);
