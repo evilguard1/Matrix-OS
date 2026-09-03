@@ -1,7 +1,7 @@
+import { stageScriptForRam } from "/matrix/lib/stages.js";
+
 export function stageForRam(homeRam) {
-    if (homeRam < 16) return "/matrix/bootstrap.js";
-    if (homeRam < 32) return "/matrix/early.js";
-    return "/matrix/start.js";
+    return stageScriptForRam(homeRam);
 }
 
 // The dashboard is included: a kernel relaunch that left the old deck running
@@ -33,8 +33,8 @@ export async function main(ns) {
     // self-propagating worm on the biggest rootable server and then spawns the
     // real stage, leaving home with zero resident botnet cost.
     //
-    // The worm survives every stage for rooting and propagation. Below 32 GB
-    // its drones own the botnet economy. From 32 GB the rolling HWGW scheduler
+    // The worm survives every stage for rooting and propagation. Below 64 GB
+    // its drones own the botnet economy. From 64 GB the rolling HWGW scheduler
     // owns all money-making H/G/W work, so spread.js kills/withholds autonomous
     // drones instead of competing with coordinated batches.
     if (ns.fileExists(SEED, "home")) {
