@@ -88,6 +88,7 @@ assert.match(startSource, /getScriptRam\(UPDATE_SCRIPT/, "the full supervisor mu
 
 const { scanNetwork, tryRoot, chooseTarget, chooseStarterAction } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
 const { stageForRam } = await import(pathToFileURL(path.join(root, "matrix/kernel.js")));
+const { autonomousDronesAllowed } = await import(pathToFileURL(path.join(root, "matrix/worm/spread.js")));
 const { config, plannedNextBitNode, reserveMoney } = await import(pathToFileURL(path.join(root, "matrix/lib/common.js")));
 const { eligibleFiles } = await import(pathToFileURL(path.join(root, "install.js")));
 
@@ -268,18 +269,32 @@ assert.equal(constantIn("matrix/worm/spread.js", "SPREAD_RAM"), wormRam.spread, 
 assert.equal(constantIn("matrix/worm/spread.js", "DRONE_RAM"), wormRam.drone, "spread.js DRONE_RAM constant is stale");
 assert.equal(constantIn("matrix/worm/seed.js", "SPREAD_RAM"), wormRam.spread, "seed.js SPREAD_RAM constant is stale");
 
-// The kernel must hand off to the seeder, and the installer must NOT sweep the
-// worm: a stage transition that killed the botnet would trade continuous income
-// for a batcher that idles between waves. spread.js yields RAM to HWGW instead.
+// The kernel still seeds the worm so rooting/propagation survives every stage,
+// but autonomous earning is an early-game-only role. Once Home reaches the
+// 32 GB full stage, rolling HWGW owns all H/G/W work and drones must stand down.
 assert.match(read("matrix/kernel.js"), /worm\/seed\.js/, "kernel must be able to launch the worm seeder");
 const installerSource = read("install.js");
 for (const name of ["seed", "spread", "drone"]) {
     assert.ok(
         !installerSource.includes(`"matrix/worm/${name}.js"`),
-        `installer must not sweep matrix/worm/${name}.js - the worm has to survive stage transitions`,
+        `installer must not directly sweep matrix/worm/${name}.js - supervisor propagation owns resident refresh`,
     );
 }
-assert.match(read("matrix/worm/spread.js"), /DRONE_SHARE_WITH_HWGW/, "the worm must yield RAM to the batcher once HWGW runs");
+assert.equal(autonomousDronesAllowed(8), true, "8 GB bootstrap must retain worm earning");
+assert.equal(autonomousDronesAllowed(16), true, "16 GB early stage must retain worm earning");
+assert.equal(autonomousDronesAllowed(31), true, "pre-full stage must retain worm earning");
+assert.equal(autonomousDronesAllowed(32), false, "32 GB rolling HWGW handoff must disable autonomous drones");
+assert.equal(autonomousDronesAllowed(4096), false, "advanced saves must never re-enable autonomous drones");
+assert.doesNotMatch(
+    read("matrix/worm/spread.js"),
+    /DRONE_SHARE_WITH_HWGW/,
+    "rolling HWGW must not share a nominal RAM fraction with uncoordinated drones",
+);
+assert.match(
+    read("matrix/worm/spread.js"),
+    /if \(hwgwActive\)[\s\S]*scriptKill\(DRONE, host\)/,
+    "full-stage worm must actively kill resident drones instead of merely withholding new launches",
+);
 
 // --- capabilities + hud: what MATRIX cannot automate, and rendering it --------
 const cap = await import(pathToFileURL(path.join(root, "matrix/lib/capabilities.js")));
