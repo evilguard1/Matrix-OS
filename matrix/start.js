@@ -1,7 +1,13 @@
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
 import { holdSingleton } from "/matrix/lib/singleton.js";
+import { scanAll } from "/matrix/lib/network.js";
+import { stampFile, staleHosts, sweepNeeded, residentScripts, REMOTE_FILES } from "/matrix/lib/propagate.js";
 
+const VERSION_FILE = "/matrix/VERSION.txt";
+// Bounded per cycle: refreshing the whole network in one pass would stall the
+// supervisor, and a host that waits a cycle is current a few seconds later.
+const SWEEP_LIMIT = 12;
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const DASHBOARD = "/matrix/dashboard.jsx";
@@ -191,6 +197,46 @@ function drawSupervisor(ns, homeRam, report, reason, stuck) {
     ns.print(bottom());
 }
 
+// Push the current build out to the network.
+//
+// Every deploy site copied a worker only when it was missing, so a server kept
+// whatever version it first received - forever. After an update home ran new
+// code and ninety-odd servers ran old code, silently.
+//
+// ns.scp is instant, so there is nothing to gain from spreading in a tree: the
+// same number of instant calls happen either way. The missing piece was knowing
+// which hosts are behind, and a version-stamped marker file answers that with
+// one fileExists per host - there is no API to read a remote file's contents.
+async function sweepBuild(ns, hosts, version) {
+    const stamp = stampFile(version);
+    // Home carries the marker so it can be copied outward like any other file.
+    if (!ns.fileExists(stamp, "home")) await ns.write(stamp, version, "w");
+
+    const stale = staleHosts(hosts, host => ns.fileExists(stamp, host), {
+        limit: SWEEP_LIMIT,
+    });
+    if (!stale.length) return { refreshed: 0, remaining: 0 };
+
+    const payload = REMOTE_FILES.map(file => file.path).filter(path => ns.fileExists(path, "home"));
+    const resident = residentScripts();
+    let refreshed = 0;
+    for (const host of stale) {
+        if (!ns.hasRootAccess(host)) continue;
+        try {
+            if (!await ns.scp([...payload, stamp], host, "home")) continue;
+            // A running script keeps the code it started with, so a long-running
+            // worker has to be restarted to pick the new build up. One-shot
+            // workers are left alone - killing those would waste a batch in
+            // flight for no gain, and the next launch uses the new file anyway.
+            for (const script of resident) {
+                try { ns.scriptKill(script, host); } catch {}
+            }
+            refreshed++;
+        } catch {}
+    }
+    return { refreshed, remaining: stale.length - refreshed };
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     if (ns.getServerMaxRam("home") < 32) {
@@ -261,6 +307,21 @@ export async function main(ns) {
                 stageStuck = true;
             }
         }
+
+        // Keep the network on the build home is running.
+        let sweep = null;
+        try {
+            // VERSION.txt reads like "MATRIX-OS 1.4.0"; take the number itself
+            // rather than splitting on a newline.
+            const version = (String(ns.read(VERSION_FILE) ?? "").match(/[0-9]+[.][0-9]+[.][0-9]+/) ?? [])[0] ?? "";
+            if (version) {
+                const { hosts } = scanAll(ns);
+                sweep = await sweepBuild(ns, hosts, version);
+                if (sweep.refreshed) {
+                    await event(ns, "system", `Pushed build ${version} to ${sweep.refreshed} server(s)`, "success");
+                }
+            }
+        } catch {}
 
         const reset = ns.getResetInfo();
         const report = [];
