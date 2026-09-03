@@ -183,4 +183,26 @@ for (const junk of [null, undefined, {}, { freeRam: NaN }, { freeRam: "x", gapMs
         `less than one batch should remain, got ${unlimited.remaining.toFixed(0)} GB`);
 }
 
+// --- every exec must be distinguishable --------------------------------------
+// Bitburner refuses to start a script when an identical one - same file, same
+// host, same ARGUMENTS - is already running, and returns 0 instead of raising.
+// A wave's arguments are [target, additionalMsec], and additionalMsec is often 0
+// or a repeated value, so launches were being silently rejected and counted as
+// "threads could not launch". A unique trailing token makes each one distinct.
+{
+    const { execTag } = await import("../matrix/lib/batch.js");
+    const frozen = 1_700_000_000_000;
+    const tags = new Set();
+    for (let i = 0; i < 10_000; i++) tags.add(execTag(frozen));
+    assert.equal(tags.size, 10_000,
+        "ten thousand launches within the same millisecond must all be distinct");
+
+    // The timestamp keeps tags distinct across a restart, when workers from the
+    // previous run may still be alive holding the old counter's values.
+    assert.notEqual(execTag(1), execTag(2));
+    assert.ok(!execTag(frozen).includes(" "), "a tag must survive being passed as an argument");
+    assert.equal(typeof execTag(), "string");
+    assert.ok(execTag(undefined).length > 0, "a missing clock still yields a usable tag");
+}
+
 console.log("MATRIX-OS batch passed: capacity follows the schedule, waves spread across targets, and leftover RAM preps the rest of the network.");

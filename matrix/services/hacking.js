@@ -1,6 +1,6 @@
 import { config, event, writeState, sleepUntil, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
-import { allocateWave, mergeWave, allocatePrep } from "/matrix/lib/batch.js";
+import { allocateWave, mergeWave, allocatePrep, execTag } from "/matrix/lib/batch.js";
 import { homeReserveFor } from "/matrix/lib/capabilities.js";
 
 const H = "/matrix/workers/hack.js";
@@ -70,7 +70,10 @@ async function execDistributed(ns, script, threads, args, hosts, cfg) {
         const fit = Math.floor(nowFree / ram);
         if (fit <= 0) continue;
         const use = Math.min(fit, remaining);
-        const pid = ns.exec(script, item.host, use, ...args);
+        // The trailing tag is what makes this launch distinct. Without it,
+        // Bitburner rejects any exec whose file, host and arguments all match a
+        // running script - and returns 0 rather than saying so.
+        const pid = ns.exec(script, item.host, use, ...args, execTag());
         if (pid) {
             pids.push(pid);
             remaining -= use;

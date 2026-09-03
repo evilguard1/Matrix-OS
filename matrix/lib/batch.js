@@ -143,3 +143,27 @@ export function allocatePrep(needs = [], options = {}) {
     }
     return { plan, used: Math.max(0, (Number(freeRam) || 0) - remaining), remaining };
 }
+
+/**
+ * A unique trailing argument for every exec.
+ *
+ * Bitburner refuses to start a script when an identical one - same file, same
+ * host, SAME ARGUMENTS - is already running, and returns 0 rather than raising
+ * anything. A wave fires thousands of events whose arguments are just
+ * [target, additionalMsec], and additionalMsec is frequently 0 or a repeated
+ * value, so a large share of launches were being silently rejected and counted
+ * as "threads could not launch".
+ *
+ * Appending a unique token makes every launch distinct. The workers destructure
+ * only their leading arguments, so the token is ignored by the script itself -
+ * it exists purely to be different.
+ *
+ * The timestamp component keeps it unique across a restart, when workers from
+ * the previous run may still be alive with the old counter's values.
+ */
+let execSequence = 0;
+
+export function execTag(now = Date.now()) {
+    execSequence = (execSequence + 1) % Number.MAX_SAFE_INTEGER;
+    return `${Number(now).toString(36)}.${execSequence.toString(36)}`;
+}
