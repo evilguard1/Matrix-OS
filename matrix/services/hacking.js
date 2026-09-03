@@ -18,6 +18,7 @@ const FAILURE_RING = 32;
 const DEFERRAL_RING = 16;
 const TARGET_TELEMETRY_LIMIT = 40;
 const LAUNCH_MARGIN_MS = 300;
+const SNAPSHOT_PROBE_SECURITY_EPSILON = 0.01;
 
 function pushBounded(list, value, limit) {
     list.push(value);
@@ -184,9 +185,52 @@ function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax) {
         hackingLevel: ns.getHackingLevel(),
         moneyFraction: live.moneyFraction,
         securityExcess: live.securityExcess,
+        hackPerThread: clamp(ns.hackAnalyze(target), 0, 1),
         shape,
         depth,
         used: false,
+        lastProbe: null,
+    };
+}
+
+/**
+ * Probe whether a stable planning snapshot still has enough grow threads under
+ * the CURRENT player/global hacking conditions.
+ *
+ * We intentionally probe only when the target is essentially at minimum
+ * security. hackAnalyze() and growthAnalyze() both depend on live security, so
+ * probing a transient H/G/W intermediate state would recreate the contamination
+ * that stable snapshots were introduced to eliminate.
+ *
+ * A snapshot becomes correctness-stale only when the grow threads required for
+ * its fixed H thread count exceed the grow threads it planned at capture. This
+ * catches hacking-level and hacking-money increases (including IPvGO effects)
+ * as well as any loss of hacking-grow multiplier, without draining merely
+ * because operation speed changed.
+ */
+function probePlanningSnapshot(ns, target, snapshot) {
+    if (!snapshot?.shape) return null;
+    const live = targetLiveState(ns, target);
+    if (live.securityExcess > SNAPSHOT_PROBE_SECURITY_EPSILON) return null;
+
+    const shape = snapshot.shape;
+    const currentHackPerThread = clamp(ns.hackAnalyze(target), 0, 1);
+    const currentHackFraction = clamp(currentHackPerThread * shape.ht, 0.001, 0.90);
+    const growthFactor = 1 / Math.max(0.10, 1 - currentHackFraction);
+    let currentGrowThreads = Math.ceil(ns.growthAnalyze(target, growthFactor));
+    if (!Number.isFinite(currentGrowThreads) || currentGrowThreads < 1) currentGrowThreads = 1;
+
+    return {
+        observedAt: Date.now(),
+        hackingLevel: ns.getHackingLevel(),
+        securityExcess: live.securityExcess,
+        currentHackPerThread,
+        currentHackFraction,
+        plannedHackFraction: shape.f,
+        currentGrowThreads,
+        plannedGrowThreads: shape.gt,
+        growThreadShortfall: Math.max(0, currentGrowThreads - shape.gt),
+        requiresDrain: currentGrowThreads > shape.gt,
     };
 }
 
@@ -588,6 +632,7 @@ function targetTelemetry(ns, {
     activeCounts,
     activePrep,
     taintedTargets,
+    staleSnapshots,
     rankMap,
 }) {
     const out = [];
@@ -600,6 +645,7 @@ function targetTelemetry(ns, {
 
         const active = activeCounts.get(target) ?? 0;
         const depth = snapshot?.depth ?? null;
+        const stale = staleSnapshots.get(target) ?? null;
         out.push({
             target,
             rank: rankMap.get(target) ?? null,
@@ -611,6 +657,8 @@ function targetTelemetry(ns, {
             pipelineDepth: depth,
             availableSlots: depth == null ? null : Math.max(0, depth - active),
             planningSnapshotCapturedAt: snapshot?.capturedAt ?? null,
+            planningHackingLevel: snapshot?.hackingLevel ?? null,
+            planningHackPerThread: snapshot?.hackPerThread ?? null,
             planningMoneyFraction: snapshot?.moneyFraction ?? null,
             planningSecurityExcess: snapshot?.securityExcess ?? null,
             planningBatchRam: shape?.ram ?? null,
@@ -624,6 +672,13 @@ function targetTelemetry(ns, {
             planningHackTime: shape?.hTime ?? null,
             planningGrowTime: shape?.gTime ?? null,
             planningWeakenTime: shape?.wTime ?? null,
+            snapshotStale: Boolean(stale),
+            snapshotStaleSince: stale?.staleSince ?? null,
+            snapshotStaleReason: stale?.reason ?? null,
+            probeHackingLevel: snapshot?.lastProbe?.hackingLevel ?? null,
+            probeHackFraction: snapshot?.lastProbe?.currentHackFraction ?? null,
+            probeRequiredGrowThreads: snapshot?.lastProbe?.currentGrowThreads ?? null,
+            probeGrowThreadShortfall: snapshot?.lastProbe?.growThreadShortfall ?? null,
             liveMoneyFraction: live.moneyFraction,
             liveSecurityExcess: live.securityExcess,
             liveHackTime: liveTimes?.hTime ?? null,
@@ -640,6 +695,7 @@ export async function main(ns) {
     const planningSnapshots = new Map();
     const nextFinishByTarget = new Map();
     const taintedTargets = new Map();
+    const staleSnapshots = new Map();
     const activeBatches = [];
     const activePrep = new Map();
     const schedulerState = new Map();
@@ -653,6 +709,8 @@ export async function main(ns) {
     let batchAdmissionDeferredRam = 0;
     let failedBatchIncidents = 0;
     let failedThreadsTotal = 0;
+    let snapshotStaleDrains = 0;
+    let snapshotRefreshes = 0;
 
     while (true) {
         const cfg = config(ns);
@@ -674,6 +732,26 @@ export async function main(ns) {
         const trackedPids = trackedPidSet(activeBatches, activePrep);
         const legacy = legacyWorkers(ns, hosts, trackedPids);
         const activeCounts = activeByTarget(activeBatches);
+
+        // Stable target-state planning must not mean permanently frozen
+        // player/global assumptions. Probe only at near-minimum security and
+        // drain a target when its fixed grow threads can no longer recover the
+        // money removed by its fixed hack threads under current conditions.
+        for (const [target, snapshot] of planningSnapshots.entries()) {
+            if (staleSnapshots.has(target)) continue;
+            if ((activeCounts.get(target) ?? 0) <= 0) continue;
+            const probe = probePlanningSnapshot(ns, target, snapshot);
+            if (!probe) continue;
+            snapshot.lastProbe = probe;
+            if (probe.requiresDrain) {
+                staleSnapshots.set(target, {
+                    staleSince: probe.observedAt,
+                    reason: "grow-thread-shortfall",
+                    ...probe,
+                });
+                snapshotStaleDrains += 1;
+            }
+        }
 
         for (const [target] of taintedTargets) {
             if ((activeCounts.get(target) ?? 0) === 0 &&
@@ -698,6 +776,19 @@ export async function main(ns) {
         for (const host of ranked.slice(0, maxTargets)) {
             const inFlight = activeCounts.get(host) ?? 0;
             const hasLegacy = (legacy.byTarget.get(host) ?? 0) > 0;
+            const stale = staleSnapshots.get(host);
+
+            if (stale && inFlight > 0) {
+                schedulerState.set(host, "snapshot-stale-drain");
+                continue;
+            }
+            if (stale && inFlight === 0) {
+                // The old generation is gone. Discard the stale assumptions,
+                // then flow through the normal prep/clean-capture lifecycle.
+                staleSnapshots.delete(host);
+                planningSnapshots.delete(host);
+                nextFinishByTarget.delete(host);
+            }
 
             if (taintedTargets.has(host)) {
                 schedulerState.set(host, "tainted");
@@ -735,6 +826,7 @@ export async function main(ns) {
                     }
                     planningSnapshots.set(host, snapshot);
                     nextFinishByTarget.delete(host);
+                    if (existing?.used) snapshotRefreshes += 1;
                 }
             }
 
@@ -971,6 +1063,22 @@ export async function main(ns) {
             failedThreads: failedThreadsTotal,
             taintedTargetCount: taintState.length,
             taintedTargets: taintState,
+            staleSnapshotCount: staleSnapshots.size,
+            snapshotStaleDrains,
+            snapshotRefreshes,
+            staleSnapshots: [...staleSnapshots.entries()].map(([target, meta]) => ({
+                target,
+                staleSince: meta.staleSince,
+                reason: meta.reason,
+                planningGrowThreads: meta.plannedGrowThreads,
+                requiredGrowThreads: meta.currentGrowThreads,
+                growThreadShortfall: meta.growThreadShortfall,
+                planningHackFraction: meta.plannedHackFraction,
+                observedHackFraction: meta.currentHackFraction,
+                planningHackingLevel: planningSnapshots.get(target)?.hackingLevel ?? null,
+                observedHackingLevel: meta.hackingLevel,
+                activeBatchesRemaining: refreshedCounts.get(target) ?? 0,
+            })),
             recentAdmissionDeferrals,
             recentFailureIncidents,
             actualNetworkRamUtilisation: afterAll.max > 0 ? afterAll.used / afterAll.max : 0,
@@ -992,6 +1100,7 @@ export async function main(ns) {
                 activeCounts: refreshedCounts,
                 activePrep,
                 taintedTargets,
+                staleSnapshots,
                 rankMap,
             }),
             targetTelemetryTruncated: ranked.length > TARGET_TELEMETRY_LIMIT,
