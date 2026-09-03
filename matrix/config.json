@@ -1,5 +1,5 @@
 {
-  "version": "1.8.1",
+  "version": "1.8.2",
   "masterEnabled": true,
   "mode": "balanced",
   "ui": {
@@ -30,13 +30,13 @@
   },
   "hacking": {
     "homeReserveGb": 24,
-    "fullEngineHomeRam": 32,
+    "fullEngineHomeRam": 64,
     "batchGapMs": 120,
     "prepSecurityMargin": 0.5,
     "prepMoneyFraction": 0.985,
     "minHackFraction": 0.05,
     "maxHackFraction": 0.4,
-    "maxBatches": 24,
+    "maxBatches": null,
     "minTargetMoney": 1000000
   },
   "progression": {
