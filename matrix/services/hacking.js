@@ -696,6 +696,7 @@ export async function main(ns) {
     const nextFinishByTarget = new Map();
     const taintedTargets = new Map();
     const staleSnapshots = new Map();
+    const staleRefreshPending = new Set();
     const activeBatches = [];
     const activePrep = new Map();
     const schedulerState = new Map();
@@ -786,6 +787,7 @@ export async function main(ns) {
                 // The old generation is gone. Discard the stale assumptions,
                 // then flow through the normal prep/clean-capture lifecycle.
                 staleSnapshots.delete(host);
+                staleRefreshPending.add(host);
                 planningSnapshots.delete(host);
                 nextFinishByTarget.delete(host);
             }
@@ -826,7 +828,7 @@ export async function main(ns) {
                     }
                     planningSnapshots.set(host, snapshot);
                     nextFinishByTarget.delete(host);
-                    if (existing?.used) snapshotRefreshes += 1;
+                    if (staleRefreshPending.delete(host) || existing?.used) snapshotRefreshes += 1;
                 }
             }
 
@@ -1066,6 +1068,7 @@ export async function main(ns) {
             staleSnapshotCount: staleSnapshots.size,
             snapshotStaleDrains,
             snapshotRefreshes,
+            staleRefreshPendingCount: staleRefreshPending.size,
             staleSnapshots: [...staleSnapshots.entries()].map(([target, meta]) => ({
                 target,
                 staleSince: meta.staleSince,
