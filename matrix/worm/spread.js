@@ -6,10 +6,10 @@
  * with drones. Home pays nothing after the initial seed: this is the botnet
  * growing itself.
  *
- * RAM budget: 5.05 GB  (computed and enforced by tests/validate.mjs)
+ * RAM budget: 5.55 GB  (computed and enforced by tests/validate.mjs)
  *   1.60 base + 0.20 scan + 0.05 getHostname + 0.05 hasRootAccess
  * + 0.10 getServerNumPortsRequired + 0.25 five crackers + 0.05 nuke
- * + 0.60 scp + 1.30 exec + 0.50 scriptKill + 0.05 getServerMaxRam
+ * + 0.60 scp + 1.30 exec + 1.00 scriptKill + 0.05 getServerMaxRam
  * + 0.05 getServerUsedRam + 0.10 getServerMaxMoney
  * + 0.10 getServerRequiredHackingLevel + 0.05 getHackingLevel
  *
@@ -23,18 +23,18 @@ const DRONE = "/matrix/worm/drone.js";
 
 // Hardcoded because ns.getScriptRam() costs 0.10 GB we cannot spare. The test
 // suite asserts these match the real computed cost of each file.
-const SPREAD_RAM = 5.05;
+const SPREAD_RAM = 5.55;
 const DRONE_RAM = 2.40;
 
 // A host only becomes a propagation node if it can carry the worm AND still
 // have meaningful room left for drones. Smaller hosts get drones only.
 const PROPAGATE_MIN_RAM = 16;
 
-// From 32 GB home the full rolling HWGW scheduler owns money-making H/G/W work.
+// From 64 GB home the full rolling HWGW scheduler owns money-making H/G/W work.
 // The worm may continue rooting and propagating, but autonomous drones must stand
 // down completely: their uncoordinated hack/grow/weaken loops corrupt stable
 // rolling batches even when they are limited to a nominal "slack" RAM share.
-const HWGW_HOME_RAM = 32;
+const HWGW_HOME_RAM = 64;
 
 export function autonomousDronesAllowed(homeRam) {
     return Number(homeRam) < HWGW_HOME_RAM;

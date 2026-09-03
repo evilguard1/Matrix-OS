@@ -1,19 +1,20 @@
 {
-  "version": "1.8.1",
+  "version": "1.8.2",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [
     { "id": "bootstrap", "minHomeRam": 8 },
     { "id": "early", "minHomeRam": 16 },
-    { "id": "full", "minHomeRam": 32 },
-    { "id": "operations", "minHomeRam": 64 },
-    { "id": "advanced", "minHomeRam": 128 }
+    { "id": "full", "minHomeRam": 64 },
+    { "id": "operations", "minHomeRam": 128 },
+    { "id": "advanced", "minHomeRam": 256 }
   ],
   "files": [
     { "path": "matrix/VERSION.txt", "stage": "bootstrap" },
     { "path": "matrix/bootstrap.js", "stage": "bootstrap" },
     { "path": "matrix/config.json", "stage": "bootstrap" },
     { "path": "matrix/kernel.js", "stage": "bootstrap" },
+    { "path": "matrix/lib/stages.js", "stage": "bootstrap" },
     { "path": "matrix/update.js", "stage": "bootstrap" },
     { "path": "matrix/early.js", "stage": "early" },
     { "path": "matrix/workers/early.js", "stage": "bootstrap" },

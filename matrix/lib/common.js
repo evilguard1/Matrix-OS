@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "1.8.0",
+    version: "1.8.2",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -25,7 +25,7 @@ const DEFAULT_CONFIG = {
     // results, which is what actually maximises node power.
     go: { opponent: null, boardSize: 5 },
     hacking: {
-        homeReserveGb: 2, fullEngineHomeRam: 32, batchGapMs: 120,
+        homeReserveGb: 2, fullEngineHomeRam: 64, batchGapMs: 120,
         prepSecurityMargin: 0.5, prepMoneyFraction: 0.985,
         minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: null,   // no ceiling: the batch schedule decides
         minTargetMoney: 1_000_000,
@@ -94,6 +94,12 @@ export const CONFIG_MIGRATIONS = [
         stale: 24,
         next: null,
         why: "a flat 24-batch cap per target held a large network at a fraction of its capacity; the schedule decides now",
+    },
+    {
+        path: ["hacking", "fullEngineHomeRam"],
+        stale: 32,
+        next: 64,
+        why: "live Bitburner RAM accounting proved the complete rolling engine cannot own the network safely before 64 GB",
     },
 ];
 
@@ -175,10 +181,10 @@ export function reserveFloor(cash, cfg = {}) {
 /**
  * How much of the spendable balance a manager may use.
  *
- * Below `fullEngineHomeRam` there is nothing worth saving for that beats more
- * worker RAM, so the cloud manager is allowed most of the balance. The
- * conservative configured fractions take over once home is large enough to run
- * the real engine, and an explicit coordinator directive always wins.
+ * Below the configured aggressive cloud threshold there is nothing worth
+ * saving for that beats more worker RAM, so the cloud manager is allowed most
+ * of the balance. The conservative configured fractions take over later, and an
+ * explicit coordinator directive always wins.
  */
 export function managerFraction(name, { configured = 0, homeRam = 8, directive = null, aggressiveBelowRam = 128 } = {}) {
     // Number(null) is 0 and 0 is finite, so testing the coercion alone would

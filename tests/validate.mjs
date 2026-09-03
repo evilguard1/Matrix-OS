@@ -1,14 +1,23 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { transform } from "esbuild";
-import { scriptRam, stripComments, DOM_IDENTIFIERS } from "./ram-budget.mjs";
+import { scriptRam, stripComments, DOM_IDENTIFIERS, RAM_COSTS } from "./ram-budget.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = relative => fs.readFileSync(path.join(root, relative), "utf8");
 const manifest = JSON.parse(read("manifest.json"));
 const configFile = JSON.parse(read("matrix/config.json"));
+const asFileImports = source => source.replace(
+    /from\s+["'](\/matrix\/[^"']+)["']/g,
+    (_, spec) => `from "${pathToFileURL(path.join(root, spec.replace(/^\//, ""))).href}"`,
+);
+const importRewritten = async relative => {
+    const source = asFileImports(read(relative));
+    return await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+};
 
 function walk(directory) {
     return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -24,12 +33,17 @@ assert.ok(manifest.protectedFiles.includes("matrix/config.json"), "config.json m
 
 const stages = [...manifest.stages].sort((a, b) => a.minHomeRam - b.minHomeRam);
 assert.deepEqual(manifest.stages, stages, "manifest stages must be ordered by RAM");
+assert.deepEqual(
+    manifest.stages.map(stage => [stage.id, stage.minHomeRam]),
+    [["bootstrap", 8], ["early", 16], ["full", 64], ["operations", 128], ["advanced", 256]],
+    "manifest stage thresholds must match the centralized 8/16/64/128/256 architecture",
+);
 const stageIndex = new Map(stages.map((stage, index) => [stage.id, index]));
 const fileStage = new Map(manifest.files.map(entry => [entry.path, entry.stage]));
 
 const required = [
     "matrix/bootstrap.js", "matrix/early.js", "matrix/kernel.js", "matrix/start.js",
-    "matrix/dashboard.jsx", "matrix/update.js", "matrix/config.json",
+    "matrix/dashboard.jsx", "matrix/update.js", "matrix/config.json", "matrix/lib/stages.js",
     "matrix/services/root.js", "matrix/services/hacking.js", "matrix/services/telemetry.js",
     "matrix/services/progression.js", "matrix/services/coordinator.js",
 ];
@@ -59,15 +73,8 @@ for (const absolute of runtimeFiles) {
     assert.doesNotMatch(source, /\bns\.closeTail\b/, `${absolute} uses the removed pre-v3 tail API`);
     assert.doesNotMatch(source, /\bui\.renderPage\b/, `${absolute} uses a dev-only UI API`);
     assert.doesNotMatch(source, /\bns\.self\b/, `${absolute} uses non-existent ns.self API`);
-    // Touching window or document costs 25 GB (RamCostConstants Dom: 25), charged
-    // statically on the identifier whether or not the line ever runs. One
-    // window.innerWidth in a decorative canvas made the command deck 26.9 GB and
-    // silently unlaunchable at 32 GB. Use a React ref instead.
-    assert.deepEqual(
-        stripComments(source).match(DOM_IDENTIFIERS) ?? [],
-        [],
-        `${absolute} touches the DOM, which costs 25 GB`,
-    );
+    assert.deepEqual(stripComments(source).match(DOM_IDENTIFIERS) ?? [], [],
+        `${absolute} touches the DOM, which costs 25 GB`);
     for (const match of source.matchAll(/["'`](\/matrix\/state\/[^"'`$]+)["'`]/g)) {
         assert.match(match[1], /\.(?:txt|json|js|jsx)$/, `${absolute} uses an invalid Bitburner state-file extension`);
     }
@@ -83,38 +90,42 @@ assert.match(singularitySource, /spending-reserve\.txt/, "Singularity must publi
 assert.match(singularitySource, /donateToFaction/, "Singularity must use unlocked faction donations");
 assert.match(singularitySource, /getAugmentationPrereq/, "Singularity must respect augmentation dependencies");
 const startSource = read("matrix/start.js");
-assert.ok(startSource.indexOf('file: "/matrix/services/hacking.js"') < startSource.indexOf("file: DASHBOARD"), "hacking must launch before the full dashboard");
+assert.ok(startSource.indexOf('file: "/matrix/services/hacking.js"') < startSource.indexOf("file: DASHBOARD"),
+    "hacking must launch before the full dashboard");
 assert.match(startSource, /getScriptRam\(UPDATE_SCRIPT/, "the full supervisor must reserve RAM for self-update");
 
 const { scanNetwork, tryRoot, chooseTarget, chooseStarterAction } = await import(pathToFileURL(path.join(root, "matrix/bootstrap.js")));
-const { stageForRam } = await import(pathToFileURL(path.join(root, "matrix/kernel.js")));
+const { stageForRam } = await importRewritten("matrix/kernel.js");
+const { stageIdForRam, FULL_ENGINE_HOME_RAM } = await import(pathToFileURL(path.join(root, "matrix/lib/stages.js")));
 const { autonomousDronesAllowed } = await import(pathToFileURL(path.join(root, "matrix/worm/spread.js")));
 const { config, plannedNextBitNode, reserveMoney } = await import(pathToFileURL(path.join(root, "matrix/lib/common.js")));
 const { eligibleFiles } = await import(pathToFileURL(path.join(root, "install.js")));
 
+assert.equal(FULL_ENGINE_HOME_RAM, 64);
 assert.equal(stageForRam(8), "/matrix/bootstrap.js");
 assert.equal(stageForRam(16), "/matrix/early.js");
-assert.equal(stageForRam(32), "/matrix/start.js");
+assert.equal(stageForRam(32), "/matrix/early.js");
+assert.equal(stageForRam(63), "/matrix/early.js");
+assert.equal(stageForRam(64), "/matrix/start.js");
+assert.equal(stageIdForRam(64), "full");
+assert.equal(stageIdForRam(128), "operations");
+assert.equal(stageIdForRam(256), "advanced");
 assert.deepEqual([...new Set(eligibleFiles(manifest, 8).map(entry => entry.stage))], ["bootstrap"]);
 assert.deepEqual([...new Set(eligibleFiles(manifest, 16).map(entry => entry.stage))], ["bootstrap", "early"]);
-assert.deepEqual([...new Set(eligibleFiles(manifest, 64).map(entry => entry.stage))], ["bootstrap", "early", "full", "operations"]);
-assert.equal(eligibleFiles(manifest, 128).length, manifest.files.length);
+assert.deepEqual([...new Set(eligibleFiles(manifest, 64).map(entry => entry.stage))], ["bootstrap", "early", "full"]);
+assert.deepEqual([...new Set(eligibleFiles(manifest, 128).map(entry => entry.stage))], ["bootstrap", "early", "full", "operations"]);
+assert.equal(eligibleFiles(manifest, 256).length, manifest.files.length);
 
 const graph = {
-    home: ["n00dles", "foodnstuff"],
-    n00dles: ["home", "sigma-cosmetics"],
-    foodnstuff: ["home"],
-    "sigma-cosmetics": ["n00dles"],
+    home: ["n00dles", "foodnstuff"], n00dles: ["home", "sigma-cosmetics"],
+    foodnstuff: ["home"], "sigma-cosmetics": ["n00dles"],
 };
 assert.deepEqual(scanNetwork({ scan: host => graph[host] }), ["home", "n00dles", "foodnstuff", "sigma-cosmetics"]);
-
 const rooted = new Set(["home"]);
 let bruteCalls = 0;
 const rootMock = {
-    hasRootAccess: host => rooted.has(host),
-    fileExists: file => file === "BruteSSH.exe",
-    getServerNumPortsRequired: () => 1,
-    brutessh: () => { bruteCalls++; },
+    hasRootAccess: host => rooted.has(host), fileExists: file => file === "BruteSSH.exe",
+    getServerNumPortsRequired: () => 1, brutessh: () => { bruteCalls++; },
     ftpcrack: () => {}, relaysmtp: () => {}, httpworm: () => {}, sqlinject: () => {},
     nuke: host => rooted.add(host),
 };
@@ -122,8 +133,7 @@ assert.equal(tryRoot(rootMock, "foodnstuff"), true);
 assert.equal(bruteCalls, 1);
 
 const targetMock = {
-    getHackingLevel: () => 20,
-    hasRootAccess: host => host !== "home",
+    getHackingLevel: () => 20, hasRootAccess: host => host !== "home",
     getServerMaxMoney: host => ({ n00dles: 100_000, foodnstuff: 2_000_000 }[host] ?? 0),
     getServerMoneyAvailable: host => ({ n00dles: 70_000, foodnstuff: 2_000_000 }[host] ?? 0),
     getServerRequiredHackingLevel: host => ({ n00dles: 1, foodnstuff: 10 }[host] ?? 1),
@@ -138,6 +148,10 @@ assert.equal(chooseStarterAction(2_000_000, 50_000_000, 95, 3), "weaken");
 const merged = config({ read: file => file.endsWith("config.json") ? '{"economy":{"cashReserve":123}}' : "" });
 assert.equal(merged.economy.cashReserve, 123);
 assert.equal(merged.economy.cloudBudgetFraction, 0.12, "nested defaults must survive partial configuration");
+const migratedDefaults = config({ read: file => file.endsWith("config.json")
+    ? '{"hacking":{"maxBatches":24,"fullEngineHomeRam":32}}' : "" });
+assert.equal(migratedDefaults.hacking.maxBatches, null, "stale protected batch cap must migrate");
+assert.equal(migratedDefaults.hacking.fullEngineHomeRam, 64, "stale protected full-engine marker must migrate to 64 GB");
 const reserveMock = {
     getServerMoneyAvailable: () => 100_000_000,
     read: file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: Date.now() }) : "",
@@ -147,16 +161,7 @@ assert.equal(reserveMoney(reserveMock), 80_000_000, "fresh augmentation reserve 
 reserveMock.read = file => file.endsWith("spending-reserve.txt") ? JSON.stringify({ amount: 80_000_000, updated: 0 }) : "";
 assert.equal(reserveMoney(reserveMock), 15_000_000, "stale augmentation reserve must not freeze economy spending");
 
-// Rewrite every in-game /matrix/... import to a real file URL so the module can
-// be imported here. Generic on purpose: a service gaining a new lib import must
-// not silently break its own tests.
-const asFileImports = source => source.replace(
-    /from\s+["'](\/matrix\/[^"']+)["']/g,
-    (_, spec) => `from "${pathToFileURL(path.join(root, spec.replace(/^\//, ""))).href}"`,
-);
-const coordSource = asFileImports(fs.readFileSync(path.join(root, "matrix/services/coordinator.js"), "utf8"));
-const { evaluateObjective, planDirectives } = await import(`data:text/javascript;base64,${Buffer.from(coordSource).toString("base64")}`);
-
+const { evaluateObjective, planDirectives } = await importRewritten("matrix/services/coordinator.js");
 const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
 assert.equal(plannedNextBitNode(reset, [4, 4, 4, 5]), 4);
 assert.equal(plannedNextBitNode({ currentNode: 1, ownedSF: new Map([[4, 3]]) }, [4, 4, 4, 5]), 5);
@@ -164,30 +169,20 @@ assert.equal(plannedNextBitNode({ currentNode: 1, ownedSF: new Map([[4, 3]]) }, 
 const objGang = evaluateObjective({ karma: -10, resetInfo: { currentNode: 2 } });
 assert.equal(objGang.id, "GANG_KARMA");
 assert.equal(objGang.liquidateStocks, false);
-
 const objDaedalus = evaluateObjective({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
 assert.equal(objDaedalus.id, "RESERVE_MILESTONE");
 assert.equal(objDaedalus.liquidateStocks, true);
-
 const objDaemon = evaluateObjective({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
 assert.equal(objDaemon.id, "W0R1D_D43M0N");
 assert.equal(objDaemon.liquidateStocks, true);
-
 const objAugs = evaluateObjective({ queuedAugs: 12 });
 assert.equal(objAugs.id, "INSTALL_AUGMENTATIONS");
 assert.equal(objAugs.liquidateStocks, true);
-
 const objTor = evaluateObjective({ cash: 300_000, hasTor: false });
-// This asserted "BUY_PROGRAMS" and so locked in a copy-paste bug: the TOR and
-// port-program objectives shared one id, and planDirectives switches every
-// per-manager directive on it.
 assert.equal(objTor.id, "BUY_TOR");
 assert.notEqual(objTor.id, evaluateObjective({
     cash: 300_000, hasTor: true, missingPrograms: ["BruteSSH.exe"], programCosts: 500_000,
 }).id, "two different objectives must not share an id");
-
-// --- planDirectives: the per-manager directive/budget protocol ---------------
-// Every branch that a consumer reads has a deterministic scenario here.
 
 const dirBoot = planDirectives({ cash: 5_000, hasTor: false });
 assert.equal(dirBoot.phase, "BOOTSTRAP", "low-cash fresh save is the bootstrap phase");
@@ -195,148 +190,121 @@ assert.equal(dirBoot.directives.hacking, "xp", "bootstrap rushes hacking XP");
 assert.equal(dirBoot.directives.singularity, "programs", "bootstrap without TOR funds port programs first");
 assert.equal(dirBoot.directives.gang, "idle", "no gang yet means no gang directive");
 assert.equal(dirBoot.budgets.homeRam, 0.5, "bootstrap spends aggressively on Home RAM");
-
+const dirEarly32 = planDirectives({ cash: 5_000, hasTor: true, homeRam: 32 });
+assert.equal(dirEarly32.phase, "BOOTSTRAP", "32-63 GB remains the early/worm-owned economy");
+const dirEarly63 = planDirectives({ cash: 5_000, hasTor: true, homeRam: 63 });
+assert.equal(dirEarly63.phase, "BOOTSTRAP", "63 GB must still use early-stage directives");
 const dirKarma = planDirectives({ karma: -10, resetInfo: { currentNode: 2 } });
 assert.equal(dirKarma.phase, "KARMA_GANG");
 assert.equal(dirKarma.directives.sleeves, "karma", "karma rush points every sleeve at homicide");
 assert.equal(dirKarma.directives.gang, "idle");
-
 const dirReset = planDirectives({ queuedAugs: 12 });
 assert.equal(dirReset.phase, "AUG_RESET");
 assert.equal(dirReset.directives.stock, "liquidate", "an imminent reset liquidates the portfolio");
 assert.equal(dirReset.directives.singularity, "augs", "reset phase stops faction work and buys queued augs");
-assert.equal(dirReset.budgets.hacknet, 0, "reset phase starves discretionary spenders");
+assert.equal(dirReset.budgets.hacknet, 0);
 assert.equal(dirReset.budgets.cloud, 0);
 assert.equal(dirReset.budgets.sleeveAugs, 0.001);
-
 const dirMilestone = planDirectives({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
 assert.equal(dirMilestone.phase, "MILESTONE");
-assert.equal(dirMilestone.budgets.cloud, 0, "a cash milestone starves infrastructure spend");
+assert.equal(dirMilestone.budgets.cloud, 0);
 assert.equal(dirMilestone.directives.stock, "liquidate");
-
 const dirEndgame = planDirectives({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
 assert.equal(dirEndgame.phase, "ENDGAME");
 assert.equal(dirEndgame.budgets.stock, 0);
 assert.equal(dirEndgame.directives.stock, "liquidate");
-
 const dirEcon = planDirectives({ cash: 5_000_000, hasTor: true, hackingLevel: 800, homeRam: 64 });
-assert.equal(dirEcon.phase, "HACK_ECON", "an established save with RAM headroom is the steady-state phase");
+assert.equal(dirEcon.phase, "HACK_ECON", "64 GB starts the steady-state full-engine economy");
 assert.equal(dirEcon.directives.hacking, "money");
 assert.equal(dirEcon.directives.stock, "trade");
 assert.equal(dirEcon.budgets.hacknet, 0.04);
 assert.equal(dirEcon.budgets.homeRam, 0.15);
-
 const dirRepGrind = planDirectives({ targetAugPrice: 5_000_000_000, targetAugName: "X", targetAugFaction: "Daedalus", cash: 1_000_000_000 });
 assert.equal(dirRepGrind.phase, "FACTION_REP");
-assert.equal(dirRepGrind.directives.sleeves, "rep:Daedalus", "a rep grind assigns sleeves to that faction");
+assert.equal(dirRepGrind.directives.sleeves, "rep:Daedalus");
 
-// --- worm RAM budgets ------------------------------------------------------
-// Bitburner charges a script for every NS function it mentions, and a script
-// that does not fit simply never launches. These budgets are what make the
-// self-propagating botnet viable on 4-16 GB servers, so they are asserted
-// exactly rather than loosely.
+// Live-derived v3.0.1 RAM constants that caused the old 32-GB false pass.
+assert.equal(RAM_COSTS.getResetInfo, 1.0);
+assert.equal(RAM_COSTS.scriptKill, 1.0);
+assert.equal(RAM_COSTS.rm, 0.6);
+
+// Imported-export reachability: importing a cheap export must not charge an
+// unrelated expensive export from the same module.
+{
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "matrix-ram-fixture-"));
+    fs.mkdirSync(path.join(fixture, "matrix"), { recursive: true });
+    fs.writeFileSync(path.join(fixture, "matrix", "lib.js"), [
+        "export function cheap(ns) { return ns.read('x'); }",
+        "export function expensive(ns) { return ns.getServer('n00dles'); }",
+    ].join("\n"));
+    const entry = "import { cheap } from '/matrix/lib.js'; export function main(ns) { cheap(ns); }";
+    fs.writeFileSync(path.join(fixture, "entry.js"), entry);
+    const measured = scriptRam(entry, { root: fixture });
+    assert.equal(measured.ram, 1.6, "unused imported exports must not add Netscript RAM");
+    assert.ok(!measured.used.includes("getServer"), "unused getServer export leaked into reachable RAM set");
+    fs.rmSync(fixture, { recursive: true, force: true });
+}
 
 const wormRam = {};
 for (const name of ["seed", "spread", "drone"]) {
     const source = read(`matrix/worm/${name}.js`);
-    assert.doesNotMatch(source, /^\s*import\s/m, `matrix/worm/${name}.js must not import (import RAM is billed to the caller)`);
+    assert.doesNotMatch(source, /^\s*import\s/m, `matrix/worm/${name}.js must not import`);
     const measured = scriptRam(source);
-    assert.deepEqual(measured.unknown, [], `matrix/worm/${name}.js uses NS functions with no known RAM cost: ${measured.unknown.join(", ")}`);
+    assert.deepEqual(measured.unknown, [], `matrix/worm/${name}.js uses unknown RAM APIs: ${measured.unknown.join(", ")}`);
     wormRam[name] = measured.ram;
 }
-
-// A 4 GB server (n00dles) must be able to carry one drone.
 assert.ok(wormRam.drone <= 4, `drone must fit a 4 GB server, is ${wormRam.drone} GB`);
-// An 8 GB server must carry the propagator plus at least one drone.
 assert.ok(wormRam.spread + wormRam.drone <= 8, `spread + drone must fit 8 GB, is ${wormRam.spread + wormRam.drone} GB`);
-// The one-shot seeder must fit an 8 GB home on its own.
 assert.ok(wormRam.seed <= 8, `seed must fit an 8 GB home, is ${wormRam.seed} GB`);
-
-// The bootstrap controller shares the same 8 GB home and now renders worm
-// telemetry, so hold it to the hard game limit too.
 const bootstrapRam = scriptRam(read("matrix/bootstrap.js"), { root });
-assert.deepEqual(bootstrapRam.unknown, [], `bootstrap.js uses NS functions with no known RAM cost: ${bootstrapRam.unknown.join(", ")}`);
+assert.deepEqual(bootstrapRam.unknown, [], `bootstrap.js uses unknown RAM APIs: ${bootstrapRam.unknown.join(", ")}`);
 assert.ok(bootstrapRam.ram <= 8, `bootstrap.js must fit an 8 GB home, is ${bootstrapRam.ram} GB`);
-
-// The worm hardcodes these costs because ns.getScriptRam() is RAM it cannot
-// spare. Drift between the constants and reality would silently over-subscribe
-// every server in the botnet, so pin them.
 const constantIn = (file, name) => {
     const line = read(file).split("\n").find(entry => entry.trim().startsWith(`const ${name} = `));
     return line ? Number(line.split("=")[1].replace(";", "").trim()) : NaN;
 };
-assert.equal(constantIn("matrix/worm/spread.js", "SPREAD_RAM"), wormRam.spread, "spread.js SPREAD_RAM constant is stale");
-assert.equal(constantIn("matrix/worm/spread.js", "DRONE_RAM"), wormRam.drone, "spread.js DRONE_RAM constant is stale");
-assert.equal(constantIn("matrix/worm/seed.js", "SPREAD_RAM"), wormRam.spread, "seed.js SPREAD_RAM constant is stale");
-
-// The kernel still seeds the worm so rooting/propagation survives every stage,
-// but autonomous earning is an early-game-only role. Once Home reaches the
-// 32 GB full stage, rolling HWGW owns all H/G/W work and drones must stand down.
-assert.match(read("matrix/kernel.js"), /worm\/seed\.js/, "kernel must be able to launch the worm seeder");
+assert.equal(constantIn("matrix/worm/spread.js", "SPREAD_RAM"), wormRam.spread);
+assert.equal(constantIn("matrix/worm/spread.js", "DRONE_RAM"), wormRam.drone);
+assert.equal(constantIn("matrix/worm/seed.js", "SPREAD_RAM"), wormRam.spread);
+assert.match(read("matrix/kernel.js"), /worm\/seed\.js/);
 const installerSource = read("install.js");
 for (const name of ["seed", "spread", "drone"]) {
-    assert.ok(
-        !installerSource.includes(`"matrix/worm/${name}.js"`),
-        `installer must not directly sweep matrix/worm/${name}.js - seed.js owns resident worm generation refresh`,
-    );
+    assert.ok(!installerSource.includes(`"matrix/worm/${name}.js"`),
+        `installer must not directly sweep matrix/worm/${name}.js`);
 }
-assert.equal(autonomousDronesAllowed(8), true, "8 GB bootstrap must retain worm earning");
-assert.equal(autonomousDronesAllowed(16), true, "16 GB early stage must retain worm earning");
-assert.equal(autonomousDronesAllowed(31), true, "pre-full stage must retain worm earning");
-assert.equal(autonomousDronesAllowed(32), false, "32 GB rolling HWGW handoff must disable autonomous drones");
-assert.equal(autonomousDronesAllowed(4096), false, "advanced saves must never re-enable autonomous drones");
-assert.match(
-    read("matrix/worm/seed.js"),
-    /scriptKill\(SPREAD, host\)[\s\S]*scriptKill\(DRONE, host\)/,
-    "seeder must kill the prior worm generation before planting the current one",
-);
-assert.doesNotMatch(
-    read("matrix/worm/spread.js"),
-    /DRONE_SHARE_WITH_HWGW/,
-    "rolling HWGW must not share a nominal RAM fraction with uncoordinated drones",
-);
-assert.match(
-    read("matrix/worm/spread.js"),
-    /if \(hwgwActive\)[\s\S]*scriptKill\(DRONE, host\)/,
-    "full-stage worm must actively kill resident drones instead of merely withholding new launches",
-);
+assert.equal(autonomousDronesAllowed(8), true);
+assert.equal(autonomousDronesAllowed(16), true);
+assert.equal(autonomousDronesAllowed(32), true, "32 GB remains worm-owned early economy");
+assert.equal(autonomousDronesAllowed(63), true, "worm earning must persist until HWGW actually owns H/G/W");
+assert.equal(autonomousDronesAllowed(64), false, "64 GB rolling HWGW handoff must disable autonomous drones");
+assert.equal(autonomousDronesAllowed(4096), false);
+assert.match(read("matrix/worm/seed.js"), /scriptKill\(SPREAD, host\)[\s\S]*scriptKill\(DRONE, host\)/);
+assert.doesNotMatch(read("matrix/worm/spread.js"), /DRONE_SHARE_WITH_HWGW/);
+assert.match(read("matrix/worm/spread.js"), /if \(hwgwActive\)[\s\S]*scriptKill\(DRONE, host\)/);
 
-// --- capabilities + hud: what MATRIX cannot automate, and rendering it --------
 const cap = await import(pathToFileURL(path.join(root, "matrix/lib/capabilities.js")));
 const hud = await import(pathToFileURL(path.join(root, "matrix/lib/hud.js")));
-
-// Bitburner's own formulas. If these drift, every cost MATRIX shows is a lie.
 const near = (actual, expected, label) =>
     assert.ok(Math.abs(actual - expected) / expected < 1e-6, `${label}: got ${actual}, expected ~${expected}`);
 near(cap.homeRamUpgradeCost(8), 1_009_743.872, "8->16GB Home RAM price");
 near(cap.homeRamUpgradeCost(16), 3_190_790.63552, "16->32GB Home RAM price");
 near(cap.homeRamUpgradeCost(64), 31_861_958.97, "64->128GB Home RAM price");
-assert.equal(cap.serverCost(8), 440_000, "purchased servers are $55k/GB");
-
-// A server too small to host a worker is money set on fire.
-assert.equal(cap.bestServerBuy(100_000), 0, "cannot afford the smallest useful server");
-assert.equal(cap.bestServerBuy(439_999), 0, "8GB is the floor, never buy 2GB or 4GB");
+assert.equal(cap.serverCost(8), 440_000);
+assert.equal(cap.bestServerBuy(100_000), 0);
+assert.equal(cap.bestServerBuy(439_999), 0);
 assert.equal(cap.bestServerBuy(440_000), 8);
 assert.equal(cap.bestServerBuy(1_000_000), 16);
-assert.ok(cap.bestServerBuy(1e12, 2.4) * 1 >= 8, "floor holds at any budget");
-
-// Singularity detection must be free (getResetInfo is 0 GB) and correct.
+assert.ok(cap.bestServerBuy(1e12, 2.4) * 1 >= 8);
 assert.equal(cap.singularityReady({ currentNode: 1, ownedSF: new Map() }), false);
-assert.equal(cap.singularityReady({ currentNode: 4, ownedSF: new Map() }), true, "inside BN4");
-assert.equal(cap.singularityReady({ currentNode: 1, ownedSF: new Map([[4, 1]]) }), true, "owns SF4");
-
+assert.equal(cap.singularityReady({ currentNode: 4, ownedSF: new Map() }), true);
+assert.equal(cap.singularityReady({ currentNode: 1, ownedSF: new Map([[4, 1]]) }), true);
 const nextProgram = cap.nextPortProgram(["BruteSSH.exe"], 92);
 assert.equal(nextProgram.file, "FTPCrack.exe");
 assert.equal(nextProgram.canCreate, false);
 assert.equal(nextProgram.levelsToGo, 8);
-assert.equal(cap.nextPortProgram(["BruteSSH.exe"], 100).canCreate, true, "free to create at the level gate");
-assert.equal(cap.nextPortProgram(cap.PORT_PROGRAMS.map(p => p.file), 999), null, "nothing left to get");
-
-// With Singularity there is nothing left for the player to do by hand.
+assert.equal(cap.nextPortProgram(["BruteSSH.exe"], 100).canCreate, true);
+assert.equal(cap.nextPortProgram(cap.PORT_PROGRAMS.map(p => p.file), 999), null);
 assert.deepEqual(cap.manualActions({ singularity: true }), []);
-
-// Every manual action must render inside the tail without clipping. This is the
-// regression guard for the HUD: a long label used to punch through the border.
 const labelWidth = hud.cols("  🟢 BUY SERVER  : ");
 for (const scenario of [
     { homeRam: 8, cash: 0, hackingLevel: 1, ownedPrograms: [] },
@@ -352,163 +320,115 @@ for (const scenario of [
             `manual action "${value}" is ${hud.cols(value)} cols, only ${hud.WIDTH - labelWidth} available`);
     }
 }
-
-// Every box line is exactly the same rendered width, whatever is thrown at it.
 const boxLines = [
-    hud.top(), hud.bottom(), hud.rule(), hud.rule("B O T N E T"),
-    hud.center("M A T R I X"), hud.row("🎯", "TARGET", "n00dles"),
-    hud.row("🕸️", "SWARM TGT", "x".repeat(400)),
-    hud.row("⏳", "EST. TIME", ""),
+    hud.top(), hud.bottom(), hud.rule(), hud.rule("B O T N E T"), hud.center("M A T R I X"),
+    hud.row("🎯", "TARGET", "n00dles"), hud.row("🕸️", "SWARM TGT", "x".repeat(400)), hud.row("⏳", "EST. TIME", ""),
 ];
-for (const line of boxLines) {
-    assert.equal(hud.cols(line), hud.WIDTH + 2, `box line drifted: ${JSON.stringify(line)}`);
-}
-assert.equal(hud.cols("🎯"), 2, "emoji are two columns wide in the tail font");
-assert.equal(hud.cols("⠹"), 1, "braille spinner is one column");
+for (const line of boxLines) assert.equal(hud.cols(line), hud.WIDTH + 2, `box line drifted: ${JSON.stringify(line)}`);
+assert.equal(hud.cols("🎯"), 2);
+assert.equal(hud.cols("⠹"), 1);
 assert.equal(hud.bar(0.5, 16), "████████░░░░░░░░");
 
-// --- the stage model must match measured RAM ---------------------------------
-// The service table in start.js declares how much Home RAM each manager needs.
-// Assert those numbers still cover the script's real static cost plus the update
-// reserve, so the stage model can never drift back into fiction. Costs are
-// verified against bitburner-src RamCostGenerator.ts.
-
-const { SERVICES } = await import(
-    `data:text/javascript;base64,${Buffer.from(asFileImports(read("matrix/start.js"))).toString("base64")}`
-);
+// Runtime service floors plus actual script-RAM model.
+const { SERVICES } = await importRewritten("matrix/start.js");
 const UPDATE_RESERVE = scriptRam(read("matrix/update.js"), { root }).ram;
-
 for (const service of SERVICES) {
     const relative = service.file.replace(/^\//, "");
-    // Singularity services are only reachable at SF4 level 3; price them there.
     const measured = scriptRam(read(relative), { sf4: service.sf4Level3 ? 3 : 0, root });
-    assert.deepEqual(measured.unknown, [], `${relative} uses NS functions with no known RAM cost: ${measured.unknown.join(", ")}`);
-    assert.ok(
-        service.minRam >= measured.ram + UPDATE_RESERVE,
-        `${relative} declares minRam ${service.minRam} but needs ${measured.ram} + ${UPDATE_RESERVE} reserve`,
-    );
+    assert.deepEqual(measured.unknown, [], `${relative} uses unknown RAM APIs: ${measured.unknown.join(", ")}`);
+    assert.ok(service.minRam >= measured.ram + UPDATE_RESERVE,
+        `${relative} declares minRam ${service.minRam} but needs ${measured.ram} + ${UPDATE_RESERVE} reserve`);
 }
 
-// The 32 GB set must actually co-exist in 32 GB, which is the promise the README
-// makes and the one that was previously false.
-const at32 = SERVICES.filter(s => s.minRam <= 32);
-const total32 = at32.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, "")), { root }).ram, 0)
+// The selected 64-GB full tier must coexist. Root/contracts intentionally wait
+// until 128 so service ordering cannot silently choose winners at 64.
+const at64 = SERVICES.filter(s => s.minRam <= 64);
+const total64 = at64.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, "")), { root }).ram, 0)
     + scriptRam(read("matrix/start.js"), { root }).ram + UPDATE_RESERVE;
-assert.ok(total32 <= 32, `the 32 GB stage needs ${Math.round(total32 * 100) / 100} GB and does not fit`);
-assert.ok(at32.some(s => s.file.includes("hacking.js")), "hacking must be in the 32 GB set");
-assert.ok(at32.some(s => s.file.includes("coordinator.js")), "the coordinator must be in the 32 GB set");
+assert.ok(total64 <= 64, `the 64 GB full tier needs ${Math.round(total64 * 100) / 100} GB and does not fit`);
+for (const requiredName of ["hacking.js", "dashboard", "telemetry.js", "coordinator.js", "hacknet.js", "cloud.js", "go.js"]) {
+    assert.ok(at64.some(s => s.file.includes(requiredName)), `${requiredName} must be eligible at 64 GB`);
+}
+assert.ok(!at64.some(s => s.file.includes("root.js")), "worm-backed root.js must be deferred at 64 GB");
+assert.ok(!at64.some(s => s.file.includes("contracts.js")), "contracts must be deferred at 64 GB");
 
-// Singularity is 1242 GB below SF4 level 3 - it must be flagged, or the
-// supervisor will retry it forever on a save that can never run it.
+const at128Ungated = SERVICES.filter(s => s.minRam <= 128 && s.sf === undefined);
+const total128Ungated = at128Ungated.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, "")), { root }).ram, 0)
+    + scriptRam(read("matrix/start.js"), { root }).ram + UPDATE_RESERVE;
+assert.ok(total128Ungated <= 128,
+    `the ungated 128 GB operations tier needs ${Math.round(total128Ungated * 100) / 100} GB and does not fit`);
+
 const sing = SERVICES.find(s => s.file.includes("singularity.js"));
-assert.ok(sing.sf4Level3, "singularity.js must be marked as requiring SF4 level 3");
-assert.ok(scriptRam(read("matrix/services/singularity.js"), { root }).ram > 1000, "singularity without SF4 is over 1 TB");
-assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3, root }).ram < 100, "singularity at SF4 L3 is under 100 GB");
+assert.ok(sing.sf4Level3);
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { root }).ram > 1000);
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3, root }).ram < 100);
 
-// --- coding-contract solvers -------------------------------------------------
-// A contract has limited attempts, so a wrong solver costs a real reward. Every
-// solver has at least one known-answer case here.
 const { solvers } = await import(pathToFileURL(path.join(root, "matrix/lib/solvers.js")));
-
 const solverCases = [
-    ["Find Largest Prime Factor", 13195, 29],
-    ["Find Largest Prime Factor", 48, 3],
+    ["Find Largest Prime Factor", 13195, 29], ["Find Largest Prime Factor", 48, 3],
     ["Subarray with Maximum Sum", [-2, 1, -3, 4, -1, 2, 1, -5, 4], 6],
-    ["Total Ways to Sum", 5, 6],
-    ["Total Ways to Sum II", [10, [1, 2, 5]], 10],
-    ["Spiralize Matrix", [[1, 2, 3], [4, 5, 6], [7, 8, 9]], [1, 2, 3, 6, 9, 8, 7, 4, 5]],
-    ["Array Jumping Game", [2, 3, 1, 1, 4], 1],
-    ["Array Jumping Game II", [2, 3, 1, 1, 4], 2],
-    ["Merge Overlapping Intervals", [[1, 3], [2, 6], [8, 10]], [[1, 6], [8, 10]]],
-    ["Algorithmic Stock Trader I", [7, 1, 5, 3, 6, 4], 5],
-    ["Algorithmic Stock Trader II", [7, 1, 5, 3, 6, 4], 7],
-    ["Algorithmic Stock Trader III", [3, 3, 5, 0, 0, 3, 1, 4], 6],
-    ["Algorithmic Stock Trader IV", [2, [3, 2, 6, 5, 0, 3]], 7],
-    ["Minimum Path Sum in a Triangle", [[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]], 11],
-    ["Unique Paths in a Grid I", [3, 7], 28],
-    ["Unique Paths in a Grid II", [[0, 0, 0], [0, 1, 0], [0, 0, 0]], 2],
-    ["Encryption I: Caesar Cipher", ["MEDIUM", 1], "LDCHTL"],
-    ["Encryption II: Vigenère Cipher", ["DASHBOARD", "LINUX"], "OIFBYZIEX"],
-    // previously unsolved types
-    ["Shortest Path in a Grid", [[0, 1, 0, 0, 0], [0, 0, 0, 1, 0]], "DRRURRD"],
-    ["Proper 2-Coloring of a Graph", [4, [[0, 2], [0, 3], [1, 2], [1, 3]]], [0, 0, 1, 1]],
-    ["Proper 2-Coloring of a Graph", [3, [[0, 1], [1, 2], [0, 2]]], []],
+    ["Total Ways to Sum", 5, 6], ["Total Ways to Sum II", [10, [1, 2, 5]], 10],
+    ["Spiralize Matrix", [[1,2,3],[4,5,6],[7,8,9]], [1,2,3,6,9,8,7,4,5]],
+    ["Array Jumping Game", [2,3,1,1,4], 1], ["Array Jumping Game II", [2,3,1,1,4], 2],
+    ["Merge Overlapping Intervals", [[1,3],[2,6],[8,10]], [[1,6],[8,10]]],
+    ["Algorithmic Stock Trader I", [7,1,5,3,6,4], 5],
+    ["Algorithmic Stock Trader II", [7,1,5,3,6,4], 7],
+    ["Algorithmic Stock Trader III", [3,3,5,0,0,3,1,4], 6],
+    ["Algorithmic Stock Trader IV", [2,[3,2,6,5,0,3]], 7],
+    ["Minimum Path Sum in a Triangle", [[2],[3,4],[6,5,7],[4,1,8,3]], 11],
+    ["Unique Paths in a Grid I", [3,7], 28],
+    ["Unique Paths in a Grid II", [[0,0,0],[0,1,0],[0,0,0]], 2],
+    ["Encryption I: Caesar Cipher", ["MEDIUM",1], "LDCHTL"],
+    ["Encryption II: Vigenère Cipher", ["DASHBOARD","LINUX"], "OIFBYZIEX"],
+    ["Shortest Path in a Grid", [[0,1,0,0,0],[0,0,0,1,0]], "DRRURRD"],
+    ["Proper 2-Coloring of a Graph", [4,[[0,2],[0,3],[1,2],[1,3]]], [0,0,1,1]],
+    ["Proper 2-Coloring of a Graph", [3,[[0,1],[1,2],[0,2]]], []],
     ["Compression I: RLE Compression", "aaaaabccc", "5a1b3c"],
     ["Compression II: LZ Decompression", "5aaabb450723abb", "aaabbaaababababaabb"],
     ["HammingCodes: Integer to Encoded Binary", 5, "0101101"],
     ["Square Root", "109882259804267570667338854624", "331484931489001"],
 ];
-
 for (const [type, input, expected] of solverCases) {
     const solver = solvers[type];
     assert.ok(solver, `no solver registered for ${type}`);
     assert.deepEqual(solver(input), expected, `${type} produced the wrong answer`);
 }
-
-// Sanitize returns a sorted set of maximal-length valid strings.
 assert.deepEqual(solvers["Sanitize Parentheses in Expression"]("()())()"), ["(())()", "()()()"]);
-// Math expressions must respect operator precedence and reject leading zeros.
 const mathAnswers = solvers["Find All Valid Math Expressions"](["123", 6]);
-assert.ok(mathAnswers.includes("1*2*3") && mathAnswers.includes("1+2+3"), "must find both routes to 6");
-assert.deepEqual(solvers["Find All Valid Math Expressions"](["105", 5]), ["1*0+5", "10-5"], "no leading-zero operands");
-
-// Hamming and LZ must round-trip, including single-bit error correction.
-for (const value of [1, 5, 8, 19, 1000, 123456]) {
+assert.ok(mathAnswers.includes("1*2*3") && mathAnswers.includes("1+2+3"));
+assert.deepEqual(solvers["Find All Valid Math Expressions"](["105", 5]), ["1*0+5", "10-5"]);
+for (const value of [1,5,8,19,1000,123456]) {
     const encoded = solvers["HammingCodes: Integer to Encoded Binary"](value);
-    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](encoded), value, `hamming round-trip for ${value}`);
+    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](encoded), value);
     const corrupted = encoded.split("");
     corrupted[3] = corrupted[3] === "1" ? "0" : "1";
-    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](corrupted.join("")), value,
-        `hamming must correct a single flipped bit for ${value}`);
+    assert.equal(solvers["HammingCodes: Encoded Binary to Integer"](corrupted.join("")), value);
 }
 for (const plain of ["aaaaabbbbbbbbbbbbbbbbbbbbbbccccc", "abcabcabcabcabc", "x", "mississippi"]) {
     const compressed = solvers["Compression III: LZ Compression"](plain);
-    assert.equal(solvers["Compression II: LZ Decompression"](compressed), plain, `LZ round-trip for ${plain}`);
+    assert.equal(solvers["Compression II: LZ Decompression"](compressed), plain);
 }
 
-// The solver must never consume one of a contract's limited attempts on a type
-// it does not know, or on a solver that threw.
 const contractWorker = read("matrix/workers/contract.js");
-assert.match(contractWorker, /if \(!solver\) return;/, "an unknown contract type must be skipped, never guessed at");
-assert.match(contractWorker, /catch \{ return; \}/, "a throwing solver must not attempt the contract");
-assert.ok(
-    contractWorker.indexOf("if (!solver) return;") < contractWorker.indexOf("codingcontract.attempt"),
-    "the unknown-type guard must come before the attempt",
-);
-// The expensive half must stay off home: 20 of its 21.6 GB is contract API.
+assert.match(contractWorker, /if \(!solver\) return;/);
+assert.match(contractWorker, /catch \{ return; \}/);
+assert.ok(contractWorker.indexOf("if (!solver) return;") < contractWorker.indexOf("codingcontract.attempt"));
 const solverRam = scriptRam(contractWorker, { root }).ram;
 const finderRam = scriptRam(read("matrix/services/contracts.js"), { root }).ram;
 assert.ok(solverRam > 20, `the solver carries the contract API (${solverRam} GB)`);
 assert.ok(finderRam < 6, `the finder must stay cheap enough to run early (${finderRam} GB)`);
-assert.match(read("matrix/early.js"), /dispatchContracts/, "the 16 GB stage must dispatch contracts too");
+assert.match(read("matrix/early.js"), /dispatchContracts/, "the 16-63 GB early stage must dispatch contracts too");
 
-
-// --- imports that actually exist ---------------------------------------------
-// esbuild parses each script but cannot see that a name is never bound. Adding
-// `${STATE_DIR}/faction-rep.txt` to a service that never imported STATE_DIR
-// parses perfectly and throws the moment the line runs - in game, unattended.
-//
-// Scoped to the UPPER_CASE constants. The function exports (config, event,
-// readJson) are routinely shadowed by locals and destructuring - the deck's
-// `const { data, config } = useStore()` is legitimate - and telling those apart
-// from a genuine miss needs real scope analysis. The constants are never
-// shadowed here, and they are the class that bites: a bare CONSTANT inside a
-// template literal reads as valid code right up until it runs.
+// Common constant import guard.
 {
     const constants = [...new Set([...read("matrix/lib/common.js")
         .matchAll(/export\s+const\s+([A-Z][A-Z0-9_]+)\s*=/g)].map(m => m[1]))];
-    assert.ok(constants.length >= 4, "expected common.js to export UPPER_CASE constants");
-
-    // Quoted strings are not code. Template literals are BOTH: the literal text
-    // is not code but every ${...} inside it is, and that is exactly where a
-    // missing constant hides - so keep the interpolations and drop the prose.
+    assert.ok(constants.length >= 4);
     const codeOnly = source => stripComments(source)
         .replace(/^\s*import[^;]*;/gm, "")
         .replace(/"(?:[^"\\]|\\.)*"/g, '""')
         .replace(/'(?:[^'\\]|\\.)*'/g, "''")
-        .replace(/`(?:[^`\\]|\\.)*`/g, match =>
-            [...match.matchAll(/\$\{([^{}]*)\}/g)].map(m => m[1]).join(";"));
-
+        .replace(/`(?:[^`\\]|\\.)*`/g, match => [...match.matchAll(/\$\{([^{}]*)\}/g)].map(m => m[1]).join(";"));
     for (const absolute of runtimeFiles) {
         const source = fs.readFileSync(absolute, "utf8");
         if (!source.includes('from "/matrix/lib/common.js"')) continue;
@@ -520,15 +440,13 @@ assert.match(read("matrix/early.js"), /dispatchContracts/, "the 16 GB stage must
         for (const name of constants) {
             const used = new RegExp(String.raw`(^|[^\w$.])` + name + String.raw`\b`).test(stripped);
             const declared = new RegExp(String.raw`(?:const|let|var)\s+` + name + String.raw`\b`).test(stripped);
-            if (used && !declared) {
-                assert.ok(imported.has(name),
-                    `${absolute} uses ${name} from common.js without importing it - parses fine, throws at runtime`);
-            }
+            if (used && !declared) assert.ok(imported.has(name), `${absolute} uses ${name} without importing it`);
         }
     }
 }
 
 console.log(`MATRIX-OS validation passed: ${runtimeFiles.length} scripts, ${manifest.files.length} manifest files.`);
-console.log(`  worm RAM: seed ${wormRam.seed} GB (one-shot on home), spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
+console.log(`  worm RAM: seed ${wormRam.seed} GB, spread ${wormRam.spread} GB, drone ${wormRam.drone} GB.`);
 console.log(`  bootstrap.js: ${bootstrapRam.ram} GB of the 8 GB fresh-save home.`);
+console.log(`  64 GB selected full tier: ${Math.round(total64 * 100) / 100} GB incl. updater reserve.`);
 console.log(`  ${Object.keys(solvers).length} coding-contract solvers, all known-answer tested.`);

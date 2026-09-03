@@ -1,5 +1,6 @@
 import { config, writeState, writeJson, readJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
 import { homeRamUpgradeCost as homeRamCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
+import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
@@ -268,7 +269,7 @@ export function planDirectives(data) {
     else if (id === "RESERVE_MILESTONE") phase = "MILESTONE";
     else if (id === "GANG_KARMA") phase = "KARMA_GANG";
     else if (id === "FACTION_REP" || id === "LIQUIDATE_STOCKS") phase = "FACTION_REP";
-    else if (id === "BUY_PROGRAMS" || (id === "BOOTSTRAP_INCOME" && homeRam < 32)) phase = "BOOTSTRAP";
+    else if (id === "BUY_PROGRAMS" || (id === "BOOTSTRAP_INCOME" && homeRam < FULL_ENGINE_HOME_RAM)) phase = "BOOTSTRAP";
     else phase = "HACK_ECON";
 
     // Reserve-heavy phases: stop feeding the infrastructure spenders so cash

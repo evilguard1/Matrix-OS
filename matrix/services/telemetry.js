@@ -4,14 +4,16 @@ import { manualActions, singularityReady, PORT_PROGRAMS, ramExpansionAdvice } fr
 import { factionDirectives, factionPlan, BACKDOOR_FACTIONS, companyDirectives } from "/matrix/lib/factions.js";
 import { narrate, moduleDirectives } from "/matrix/lib/voice.js";
 import { augmentationPlan, augmentationDirectives, bestFactionToGrind } from "/matrix/lib/augmentations.js";
+import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
 
 const SERVICES=["bootstrap","early","root","hacking","cloud","hacknet","contracts","stock","progression","coordinator","singularity","gang","sleeves","bladeburner","corporation"];
 
 // Which faction-gating servers the player can backdoor RIGHT NOW. Reading the
-// actual backdoor flag needs ns.getServer at 2 GB, which does not fit the 32 GB
-// stage - and is not needed: a backdoor produces an invitation immediately, so
-// "rooted, in level range, faction not joined" is the same instruction. Treating
-// an already-joined faction's server as done keeps it from nagging.
+// actual backdoor flag needs ns.getServer at 2 GB, which does not fit the lean
+// telemetry budget - and is not needed: a backdoor produces an invitation
+// immediately, so "rooted, in level range, faction not joined" is the same
+// instruction. Treating an already-joined faction's server as done keeps it
+// from nagging.
 function backdoorable(ns){
     const out=[];
     for(const host of Object.keys(BACKDOOR_FACTIONS)){
@@ -34,7 +36,6 @@ function backdoorDetail(ns,parent,crackers){
                 have:ns.getHackingLevel(),
                 ports:ns.getServerNumPortsRequired(host),
                 crackers,
-                rooted:ns.hasRootAccess(host),
                 // routeTo omits "home"; the hops are what the player types.
                 path:routeTo(parent,host).filter(h=>h!=="home"),
             };
@@ -84,8 +85,8 @@ export async function main(ns){
                 hackingLevel:player.skills?.hacking??1,
                 ownedPrograms:owned,
                 singularity,
-                // From 32 GB the cloud service buys servers itself.
-                cloudAutomated:ns.getServerMaxRam("home")>=32&&cfg.automation?.cloud!==false,
+                // From the 64 GB full stage the cloud service buys servers itself.
+                cloudAutomated:ns.getServerMaxRam("home")>=FULL_ENGINE_HOME_RAM&&cfg.automation?.cloud!==false,
             });
 
             // Faction guidance. Joining needs Singularity, but KNOWING what each
@@ -119,9 +120,9 @@ export async function main(ns){
                 // Employment and RAM value are both cases where the game shows
                 // a number but never its meaning.
                 // The fleet comes from cloud.js's own state file rather than
-                // ns.cloud.getServerNames(), which costs 1.05 GB and pushed the
-                // 32 GB stage over budget. Absent state means an empty fleet,
-                // which is the correct assumption before cloud.js runs.
+                // ns.cloud.getServerNames(), which costs 1.05 GB and would bloat
+                // the low-RAM telemetry service. Absent state means an empty
+                // fleet, which is the correct assumption before cloud.js runs.
                 const cloudState=serviceState.cloud??{};
                 const fleetSize=Number(cloudState.servers??0)||0;
                 const ramAdvice=ramExpansionAdvice({

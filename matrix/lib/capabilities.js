@@ -101,7 +101,7 @@ export function serverPurchasePlan(options = {}) {
     return { action: "wait", reason: `fleet full; next upgrade needs ${upgradeMultiple}x the smallest (${weakest.ram} GB)` };
 }
 
-/** Singularity is free to detect through getResetInfo(), which costs 0 GB. */
+/** Singularity capability from reset state. getResetInfo costs 1 GB in Bitburner 3.0.1. */
 export function singularityReady(reset) {
     return reset?.currentNode === 4 || (reset?.ownedSF?.get?.(4) ?? 0) > 0;
 }
@@ -195,9 +195,9 @@ export function manualActions(options = {}) {
 }
 
 function nextStageNote(ram) {
-    if (ram >= 128) return "unlocks the advanced Source-File managers";
-    if (ram >= 64) return "unlocks purchased-server upgrades and stock trading";
-    if (ram >= 32) return "unlocks the full command deck, HWGW batcher and auto-buying";
+    if (ram >= 256) return "unlocks advanced capability managers";
+    if (ram >= 128) return "unlocks contracts, stock and broader operations";
+    if (ram >= 64) return "unlocks the full command deck, rolling HWGW and automated infrastructure";
     if (ram >= 16) return "unlocks the distributed early engine";
     return "more RAM for MATRIX itself";
 }
@@ -260,7 +260,7 @@ export function ramExpansionAdvice(options = {}) {
     // start at all. Below the last stage threshold home RAM buys CAPABILITY and
     // the price is beside the point; above it, the purchase is pure throughput
     // and the price is the only thing that matters.
-    const stageThreshold = Number(options?.stageThreshold ?? 128);
+    const stageThreshold = Number(options?.stageThreshold ?? 256);
     const homeIsCapability = home < stageThreshold;
 
     return {
