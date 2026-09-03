@@ -397,6 +397,16 @@ function Hacking({ data }) {
                     <span>{extraction} EXTRACTION</span>
                 </div>
             </Panel>
+            <Panel title="Prep sweep" right={hacking.prep?.targets ? `${hacking.prep.targets} SERVERS` : "IDLE"} span={4}>
+                {hacking.prep?.targets ? (
+                    <>
+                        <div className="mxRow"><span>servers being prepped</span><span>{hacking.prep.targets}</span></div>
+                        <div className="mxRow"><span>threads</span><span>{Math.round(hacking.prep.threads ?? 0).toLocaleString()}</span></div>
+                        <div className="mxRow"><span>RAM working</span><span>{ram(hacking.prep.ram)}</span></div>
+                        <div className="mxHint" style={{ marginTop: 8 }}>Grow and weaken both pay hacking experience. Each server finished joins the wave.</div>
+                    </>
+                ) : <div className="mxEmpty">NO SPARE RAM TO SWEEP WITH</div>}
+            </Panel>
             <Panel title="Network reserve" right={percent(network.ramPct)} span={4}>
                 <div className="mxValue">{ram(network.maxRam ?? 0)}</div>
                 <div className="mxMeter"><i style={{ width: `${(network.ramPct ?? 0) * 100}%` }} /></div>

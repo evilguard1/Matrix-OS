@@ -121,4 +121,40 @@ for (const junk of [null, undefined, {}, { freeRam: NaN }, { freeRam: "x", gapMs
     assert.doesNotThrow(() => allocateWave([{ host: "a", shape: null }], junk));
 }
 
-console.log("MATRIX-OS batch passed: capacity follows the schedule, and a wave spreads across targets instead of idling the network.");
+// --- leftover RAM prepares the rest of the network ---------------------------
+// Hosts are only RAM; the limit is targets. So whatever the wave does not use
+// goes into making more servers batchable - which pays hacking experience while
+// it runs and money once each one joins the rotation.
+{
+    const { allocatePrep } = await import("../matrix/lib/batch.js");
+    const needs = [
+        { host: "a", op: "weaken", threads: 100, ram: 1.75 },
+        { host: "b", op: "grow", threads: 200, ram: 1.75 },
+        { host: "c", op: "weaken", threads: 50, ram: 1.75 },
+    ];
+    const full = allocatePrep(needs, { freeRam: 10_000 });
+    assert.equal(full.plan.length, 3, "with plenty of RAM every waiting target is prepped");
+    assert.deepEqual(full.plan.map(p => p.threads), [100, 200, 50], "each gets exactly what it needs");
+
+    // Tight RAM: serve in order, and give a partial pass rather than nothing -
+    // a half-finished weaken still lowers security and still earns experience.
+    const tight = allocatePrep(needs, { freeRam: 175 });
+    assert.equal(tight.plan[0].host, "a");
+    assert.equal(tight.plan[0].threads, 100);
+    assert.ok(tight.used <= 175, "never allocate more RAM than exists");
+    assert.ok(tight.plan.length < 3, "and stop when it runs out");
+
+    const partial = allocatePrep([{ host: "a", op: "weaken", threads: 100, ram: 1.75 }], { freeRam: 100 });
+    assert.ok(partial.plan[0].threads > 0 && partial.plan[0].threads < 100, "a partial pass is still launched");
+
+    assert.deepEqual(allocatePrep(needs, { freeRam: 0 }).plan, [], "no RAM, no prep");
+    assert.deepEqual(allocatePrep([], { freeRam: 1e6 }).plan, []);
+    assert.ok(allocatePrep(needs, { freeRam: 1e6, maxTargets: 1 }).plan.length <= 1);
+    for (const junk of [null, undefined, [null], [{}], [{ host: "x", ram: 0, threads: 5 }]]) {
+        assert.doesNotThrow(() => allocatePrep(junk, { freeRam: 100 }));
+    }
+    assert.doesNotThrow(() => allocatePrep(needs, null));
+}
+
+
+console.log("MATRIX-OS batch passed: capacity follows the schedule, waves spread across targets, and leftover RAM preps the rest of the network.");

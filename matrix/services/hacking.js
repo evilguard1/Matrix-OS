@@ -1,6 +1,6 @@
 import { config, event, writeState, sleepUntil, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
-import { allocateWave, mergeWave } from "/matrix/lib/batch.js";
+import { allocateWave, mergeWave, allocatePrep } from "/matrix/lib/batch.js";
 
 const H = "/matrix/workers/hack.js";
 const G = "/matrix/workers/grow.js";
@@ -207,6 +207,60 @@ function makeBatchEvents(shape, target, batches, gap) {
     return events.sort((a,b) => (a.finish-a.duration) - (b.finish-b.duration));
 }
 
+// Everything the wave does not use goes into making more servers batchable.
+//
+// Hosts are only RAM - a weaken thread helps its target wherever it runs - so
+// the limit is targets, not machines. Extra weakens against a server already at
+// minimum security do nothing, but the ninety-odd servers that are NOT prepped
+// each want threads, and every one finished joins the wave and starts paying.
+// Grow and weaken both award hacking experience while they run, so this is
+// earning even before the money arrives.
+//
+// Fire-and-forget: these workers are one-shot, so nothing here waits on them.
+async function backgroundPrep(ns, ranked, target, freeRam, hosts, cfg) {
+    if (freeRam < 2) return null;
+    const wRam = ns.getScriptRam(W, "home");
+    const gRam = ns.getScriptRam(G, "home");
+    const margin = cfg.hacking?.prepSecurityMargin ?? 0.5;
+    const moneyFrac = cfg.hacking?.prepMoneyFraction ?? 0.985;
+
+    const needs = [];
+    for (const host of ranked) {
+        if (host === target) continue;
+        if (needs.length >= (cfg.hacking?.maxPrepTargets ?? 8)) break;
+        try {
+            const max = ns.getServerMaxMoney(host);
+            if (max <= 0) continue;
+            const security = ns.getServerSecurityLevel(host);
+            const minSecurity = ns.getServerMinSecurityLevel(host);
+            // Security first: it gates how effective the grow that follows is.
+            if (security > minSecurity + margin) {
+                const per = Math.max(0.0001, ns.weakenAnalyze(1));
+                const threads = Math.max(1, Math.ceil((security - minSecurity) / per));
+                needs.push({ host, op: "weaken", threads, ram: wRam });
+                continue;
+            }
+            const money = ns.getServerMoneyAvailable(host);
+            if (money < max * moneyFrac) {
+                const factor = Math.max(1.01, max / Math.max(1, money));
+                const threads = Math.max(1, Math.ceil(ns.growthAnalyze(host, factor)));
+                needs.push({ host, op: "grow", threads, ram: gRam });
+            }
+        } catch {}
+    }
+    if (!needs.length) return null;
+
+    const prep = allocatePrep(needs, {
+        freeRam,
+        maxTargets: cfg.hacking?.maxPrepTargets ?? 8,
+    });
+    for (const entry of prep.plan) {
+        const script = entry.op === "weaken" ? W : G;
+        try { await execDistributed(ns, script, entry.threads, [entry.host, 0], hosts, cfg); } catch {}
+    }
+    return { targets: prep.plan.length, threads: prep.plan.reduce((n, e) => n + e.threads, 0), ram: prep.used };
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     let batchCounter = 0;
@@ -289,6 +343,22 @@ export async function main(ns) {
             pids.push(...r.pids);
             failedThreads += r.remaining;
         }
+        // Convert the RAM this wave did not claim into prep for the rest of
+        // the network, so it earns experience now and money shortly after.
+        const prepped = await backgroundPrep(ns, ranked, target, wave.remaining + wave.reserved * 0.5, hosts, cfg);
+        if (prepped) {
+            await writeState(ns, "hacking", {
+                status:"batching", phase:"HWGW", target,
+                hackFraction: shape.f, batches,
+                targets: wave.plan.map(entry => ({ host: entry.host, batches: entry.batches, ram: entry.ram })),
+                batchRam: shape.ram, expectedPerBatch: shape.expected,
+                waveRam: wave.used, freeRam: free,
+                utilisation: free > 0 ? (wave.used + prepped.ram) / free : 0,
+                prep: prepped,
+                gapMs: gap, batchCounter
+            });
+        }
+
         await waitPids(ns, pids);
         batchCounter += batches;
         if (failedThreads > 0) {

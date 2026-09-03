@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
   "protectedFiles": ["matrix/config.json"],
   "stages": [

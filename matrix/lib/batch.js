@@ -107,3 +107,39 @@ export function mergeWave(plan = [], makeEvents) {
     return events.sort((a, b) =>
         (Number(a.finish) - Number(a.duration)) - (Number(b.finish) - Number(b.duration)));
 }
+
+/**
+ * What to do with the RAM a wave does not use.
+ *
+ * Hosts are only RAM - a weaken thread helps its target wherever it runs, so
+ * spreading across 95 servers is already automatic. The limit is TARGETS: extra
+ * weakens against a server already at minimum security do nothing at all.
+ *
+ * So the leftover goes into preparing the servers that are not yet batchable.
+ * That is not idle time twice over: grow and weaken both pay hacking experience
+ * while they run, and each server they finish joins the wave rotation and starts
+ * paying money.
+ *
+ * `needs` arrives as [{ host, op, threads, ram }] - the caller works out how
+ * many threads each server actually wants, because that needs the game's
+ * formulas. This decides who gets them.
+ */
+export function allocatePrep(needs = [], options = {}) {
+    const { freeRam = 0, maxTargets = 8, minThreads = 1 } = options ?? {};
+    let remaining = Math.max(0, Number(freeRam) || 0);
+    const plan = [];
+    for (const need of (Array.isArray(needs) ? needs : []).slice(0, Math.max(0, maxTargets))) {
+        if (!need || !need.host) continue;
+        const perThread = Number(need.ram) || 0;
+        const wanted = Math.floor(Number(need.threads) || 0);
+        if (perThread <= 0 || wanted < 1) continue;
+        // Take as much of the need as fits; a partial pass still lowers security
+        // and still earns experience, so it is worth launching.
+        const threads = Math.min(wanted, Math.floor(remaining / perThread));
+        if (threads < minThreads) continue;
+        plan.push({ host: need.host, op: need.op, threads, ram: threads * perThread });
+        remaining -= threads * perThread;
+        if (remaining <= 0) break;
+    }
+    return { plan, used: Math.max(0, (Number(freeRam) || 0) - remaining), remaining };
+}
