@@ -3,6 +3,7 @@ import { scanAll, tryRoot } from "/matrix/lib/network.js";
 import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
 import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS, serverPurchasePlan } from "/matrix/lib/capabilities.js";
 import { dispatchContracts } from "/matrix/lib/dispatch.js";
+import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
 
 const EARLY = "/matrix/workers/early.js";
 const FLEET_PREFIX = "mx-early";
@@ -194,10 +195,10 @@ export async function main(ns) {
         try {
             if (await handoffInstaller(ns, ns.fileExists(UPDATE_REQUEST, "home"))) return;
             const cfg = config(ns);
-            if (ns.getServerMaxRam("home") < 32 && ns.read(INSTALLED_STAGE) !== "early") {
+            if (ns.getServerMaxRam("home") < FULL_ENGINE_HOME_RAM && ns.read(INSTALLED_STAGE) !== "early") {
                 if (await handoffInstaller(ns, true)) return;
             }
-            if (ns.getServerMaxRam("home") >= 32) {
+            if (ns.getServerMaxRam("home") >= FULL_ENGINE_HOME_RAM) {
                 if (await handoffInstaller(ns, true)) return;
             }
 
