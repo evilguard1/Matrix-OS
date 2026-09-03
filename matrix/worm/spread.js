@@ -36,6 +36,10 @@ const PROPAGATE_MIN_RAM = 16;
 // rolling batches even when they are limited to a nominal "slack" RAM share.
 const HWGW_HOME_RAM = 32;
 
+export function autonomousDronesAllowed(homeRam) {
+    return Number(homeRam) < HWGW_HOME_RAM;
+}
+
 const CYCLE_MS = 20_000;
 
 // Netscript port the worm reports botnet status on. Ports are 0 GB and
@@ -101,7 +105,7 @@ export async function main(ns) {
 
         const target = chooseTarget(ns, rooted);
         const retarget = target !== lastTarget;
-        const hwgwActive = ns.getServerMaxRam("home") >= HWGW_HOME_RAM;
+        const hwgwActive = !autonomousDronesAllowed(ns.getServerMaxRam("home"));
         lastTarget = target;
 
         let botnetRam = 0;
