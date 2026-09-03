@@ -5,6 +5,9 @@
  * kept whatever version it first received - forever. After an update home ran
  * new code and the rest of the network ran old code, with nothing to show for
  * it on any dashboard. These tests pin the detection that fixes it.
+ *
+ * The persistent worm is deliberately excluded: seed.js owns its generation
+ * replacement so a bounded worker sweep cannot leave mixed spread/drone code.
  */
 import assert from "node:assert/strict";
 import { stampFile, staleHosts, sweepNeeded, residentScripts, REMOTE_FILES } from "../matrix/lib/propagate.js";
@@ -75,10 +78,13 @@ for (const file of REMOTE_FILES) {
 // The distinction matters: a running script keeps the code it started with, so
 // copying over a long-running worker changes nothing until it is restarted.
 const resident = residentScripts();
-assert.ok(resident.includes("/matrix/worm/drone.js"), "drones run forever and must be restarted on update");
 assert.ok(resident.includes("/matrix/workers/share.js"));
 assert.ok(!resident.includes("/matrix/workers/hack.js"),
     "one-shot workers exit on their own - killing them would waste the batch in flight");
 assert.ok(!resident.includes("/matrix/lib/earlyloop.js"), "a library is not a process");
+assert.ok(!paths.includes("/matrix/worm/spread.js"),
+    "generic worker sweep must not kill/reseed the resident worm generation");
+assert.ok(!paths.includes("/matrix/worm/drone.js"),
+    "worm drones are refreshed by seed.js, not by the generic worker sweep");
 
 console.log(`MATRIX-OS propagate passed: ${REMOTE_FILES.length} remote files, ${resident.length} of them resident, staleness detected by stamped filename.`);

@@ -27,9 +27,14 @@ export function stampFile(version) {
 }
 
 /**
- * Files that must exist on a worker host. Long-running ones are listed with
- * `resident: true` because a running script keeps the code it started with -
- * copying over it changes nothing until the process is restarted.
+ * Files that must exist on scheduler/worker hosts. Long-running ones are listed
+ * with `resident: true` because a running script keeps the code it started with
+ * - copying over it changes nothing until the process is restarted.
+ *
+ * Worm files are intentionally NOT managed here. /matrix/worm/seed.js owns
+ * resident worm generation replacement atomically on kernel launch; allowing
+ * this generic sweep to kill spread.js mid-generation can strand or mix worm
+ * versions across the network.
  */
 export const REMOTE_FILES = [
     { path: "/matrix/workers/hack.js", resident: false },
@@ -38,8 +43,6 @@ export const REMOTE_FILES = [
     { path: "/matrix/workers/share.js", resident: true },
     { path: "/matrix/workers/early.js", resident: true },
     { path: "/matrix/lib/earlyloop.js", resident: false },
-    { path: "/matrix/worm/spread.js", resident: true },
-    { path: "/matrix/worm/drone.js", resident: true },
 ];
 
 /** Long-running scripts that have to be killed to pick up a new build. */
