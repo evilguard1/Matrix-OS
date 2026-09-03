@@ -55,7 +55,7 @@ const spread = await import("../matrix/worm/spread.js");
     assert.ok(droneHosts.length >= 3, `expected drones on several hosts, got ${droneHosts.length}`);
     assert.ok(!droneHosts.some(s => s.name === "home"), "the worm must never consume home RAM");
 
-    // n00dles is 4 GB: too small to host the 5.05 GB worm, big enough for one drone.
+    // n00dles is 4 GB: too small to host the 5.55 GB worm, big enough for one drone.
     const noodles = ns._servers.get("n00dles");
     assert.ok(noodles.procs.some(p => p.file.includes("drone.js")), "a 4 GB host must still earn");
     assert.ok(!noodles.procs.some(p => p.file.includes("spread.js")), "a 4 GB host must not host the worm");
@@ -204,15 +204,16 @@ console.log("MATRIX-OS integration passed: exactly one command deck survives.");
     const { expectedStage, stageInstalled } = await import(
         `data:text/javascript;base64,${Buffer.from(src).toString("base64")}`);
 
-    assert.equal(expectedStage(32), "full");
-    assert.equal(expectedStage(64), "operations");
-    assert.equal(expectedStage(128), "advanced");
+    assert.equal(expectedStage(32), "early");
+    assert.equal(expectedStage(64), "full");
+    assert.equal(expectedStage(128), "operations");
+    assert.equal(expectedStage(256), "advanced");
 
     const ns = createMockNs();
-    // The installer has already placed the full stage.
+    // The installer has already placed the stage payloads represented by the mock.
     assert.equal(stageInstalled(ns, "full"), true, "dashboard.jsx present means the full stage is installed");
-    // ...so no transition is attempted, whatever the marker file happens to say.
-    assert.equal(stageInstalled(ns, "operations"), true, "cloud.js ships in the manifest the mock mirrors");
+    assert.equal(stageInstalled(ns, "operations"), true, "stock.js present means the operations stage is installed");
+    assert.equal(stageInstalled(ns, "advanced"), true, "stanek.js present means the advanced stage is installed");
 
     // Remove the probe file and the transition becomes necessary again.
     ns._servers.get("home").files.delete("/matrix/dashboard.jsx");
