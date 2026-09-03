@@ -1,4 +1,3 @@
-// Bitburner video-game Netscript only. Host/root terminology below refers solely to simulated in-game servers.
 /**
  * MATRIX-OS worm propagator.
  *
@@ -22,9 +21,19 @@
 const SPREAD = "/matrix/worm/spread.js";
 const DRONE = "/matrix/worm/drone.js";
 
+// Hardcoded because ns.getScriptRam() costs 0.10 GB we cannot spare. The test
+// suite asserts these match the real computed cost of each file.
 const SPREAD_RAM = 5.55;
 const DRONE_RAM = 2.40;
+
+// A host only becomes a propagation node if it can carry the worm AND still
+// have meaningful room left for drones. Smaller hosts get drones only.
 const PROPAGATE_MIN_RAM = 16;
+
+// From 64 GB home the full rolling HWGW scheduler owns money-making H/G/W work.
+// The worm may continue rooting and propagating, but autonomous drones must stand
+// down completely: their uncoordinated hack/grow/weaken loops corrupt stable
+// rolling batches even when they are limited to a nominal "slack" RAM share.
 const HWGW_HOME_RAM = 64;
 
 export function autonomousDronesAllowed(homeRam) {
@@ -32,6 +41,9 @@ export function autonomousDronesAllowed(homeRam) {
 }
 
 const CYCLE_MS = 20_000;
+
+// Netscript port the worm reports botnet status on. Ports are 0 GB and
+// global across hosts, so this is telemetry the worm can actually afford.
 const STATUS_PORT = 1;
 
 function scanAll(ns) {
@@ -61,6 +73,7 @@ function tryRoot(ns, host) {
     return ns.hasRootAccess(host);
 }
 
+// Best server we are currently allowed to hack, by raw payout potential.
 function chooseTarget(ns, hosts) {
     const level = ns.getHackingLevel();
     let best = "n00dles";
@@ -71,6 +84,7 @@ function chooseTarget(ns, hosts) {
         if (money <= 0) continue;
         const required = ns.getServerRequiredHackingLevel(host);
         if (required > level) continue;
+        // Prefer big money that our level comfortably clears.
         const score = money / Math.max(1, required);
         if (score > bestScore) { bestScore = score; best = host; }
     }
@@ -104,14 +118,19 @@ export async function main(ns) {
             botnetRam += maxRam;
             if (maxRam < DRONE_RAM) continue;
 
+            // Carry the worm onward. scp is idempotent and cheap.
             if (host !== me) {
                 try { ns.scp([SPREAD, DRONE], host, me); } catch { continue; }
             }
 
+            // A better target invalidates every drone on this host.
             if (retarget) {
                 try { ns.scriptKill(DRONE, host); } catch {}
             }
 
+            // Big enough hosts become propagation nodes themselves. Reserve the
+            // worm's footprint whether or not it has started yet, so a restart
+            // always has room to land.
             let reserved = 0;
             if (maxRam >= PROPAGATE_MIN_RAM) {
                 nodes++;
@@ -125,6 +144,10 @@ export async function main(ns) {
             botnetUsed += used;
             if (used > 0) infected++;
 
+            // Once the rolling HWGW engine exists, kill any resident drone and
+            // leave all hacking RAM to the coordinated scheduler. Propagation and
+            // root assistance continue, so the worm still serves its early-game
+            // networking role without competing with stable H/W1/G/W2 batches.
             if (hwgwActive) {
                 try { ns.scriptKill(DRONE, host); } catch {}
                 continue;
@@ -136,6 +159,10 @@ export async function main(ns) {
             try { ns.exec(DRONE, host, { threads, preventDuplicates: true }, target); } catch {}
         }
 
+        // Report home. Netscript ports cost 0 GB and are global across every
+        // host, so this is the only channel the worm can afford. Each spread
+        // instance scans the whole network, so any single report is a complete
+        // picture and last-writer-wins is correct.
         try {
             ns.clearPort(STATUS_PORT);
             ns.writePort(STATUS_PORT, JSON.stringify({
