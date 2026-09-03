@@ -23,8 +23,9 @@ export const BACKDOOR_FACTIONS = {
     "fulcrumassets": "Fulcrum Secret Technologies",
 };
 
-// Megacorp factions are unlocked by company reputation, which cannot be read
-// without Singularity. They are listed so the deck can still name the path.
+// Megacorp factions are unlocked by company reputation - 400,000 of it, per
+// the game's CorpFactionRepRequirement. See FACTION_COMPANIES below for which
+// employers actually grant one.
 export const MEGACORP_FACTIONS = [
     "ECorp", "MegaCorp", "KuaiGong International", "Four Sigma", "NWO",
     "Blade Industries", "OmniTek Incorporated", "Bachman & Associates", "Clarke Incorporated",
@@ -284,4 +285,97 @@ export function factionDirectives(rawPlayer, options = {}) {
     }
 
     return out.slice(0, limit);
+}
+
+/**
+ * Companies that unlock a faction, and the reputation it takes.
+ *
+ * Only these ten do. Every other employer in the game - Alpha Enterprises,
+ * Storm Technologies, the police - pays a wage and grants nothing, so
+ * reputation earned there buys no augmentation and no faction. That is worth
+ * saying out loud, because the game never does: a player can grind a company
+ * for hours and find the door does not exist.
+ *
+ * Names and the threshold are taken from the game's own CompaniesMetadata and
+ * Constants (CorpFactionRepRequirement).
+ */
+export const COMPANY_FACTION_REP = 400_000;
+
+export const FACTION_COMPANIES = {
+    "ECorp": "ECorp",
+    "MegaCorp": "MegaCorp",
+    "Bachman & Associates": "Bachman & Associates",
+    "Blade Industries": "Blade Industries",
+    "NWO": "NWO",
+    "Clarke Incorporated": "Clarke Incorporated",
+    "OmniTek Incorporated": "OmniTek Incorporated",
+    "Four Sigma": "Four Sigma",
+    "KuaiGong International": "KuaiGong International",
+    // The only one where the company and the faction are named differently.
+    "Fulcrum Technologies": "Fulcrum Secret Technologies",
+};
+
+/**
+ * What each job the player holds is actually worth.
+ *
+ * `jobs` is getPlayer().jobs - a { company: position } map, free to read.
+ * Company reputation itself needs Singularity, so `rep` is optional and the
+ * report degrades to naming the target rather than the distance to it.
+ */
+export function companyStatus(jobs = {}, options = {}) {
+    // A parameter default fires only on undefined.
+    const { rep = {}, factions = [] } = options ?? {};
+    const held = jobs && typeof jobs === "object" ? jobs : {};
+    const joined = new Set(Array.isArray(factions) ? factions : []);
+    const reps = rep && typeof rep === "object" ? rep : {};
+    return Object.entries(held).map(([company, position]) => {
+        const faction = FACTION_COMPANIES[company] ?? null;
+        const earned = Number(reps[company] ?? NaN);
+        return {
+            company,
+            position: String(position ?? ""),
+            faction,
+            joined: faction ? joined.has(faction) : false,
+            rep: Number.isFinite(earned) ? earned : null,
+            needed: faction ? COMPANY_FACTION_REP : null,
+        };
+    });
+}
+
+/**
+ * Directives about employment. The important one is the negative case: a job at
+ * a company that grants nothing is invisible effort, and the player deserves to
+ * know before they spend more hours on it.
+ */
+export function companyDirectives(jobs = {}, options = {}) {
+    const { limit = 2 } = options ?? {};
+    const out = [];
+    for (const job of companyStatus(jobs, options)) {
+        if (out.length >= limit) break;
+        if (!job.faction) {
+            out.push({
+                id: `JOB_${job.company}`,
+                tag: "EMPLOYMENT",
+                label: `${job.company} unlocks no faction`,
+                detail: `reputation there buys nothing - only ${Object.keys(FACTION_COMPANIES).length} companies grant one, ` +
+                    `starting with ${Object.keys(FACTION_COMPANIES).slice(0, 3).join(", ")}`,
+                urgent: false,
+                ready: false,
+            });
+            continue;
+        }
+        if (job.joined) continue;
+        const distance = job.rep == null
+            ? `${COMPANY_FACTION_REP.toLocaleString()} company reputation unlocks it`
+            : `${Math.round(job.rep).toLocaleString()} / ${COMPANY_FACTION_REP.toLocaleString()} reputation`;
+        out.push({
+            id: `JOBFACTION_${job.company}`,
+            tag: "EMPLOYMENT",
+            label: `Work ${job.company} toward ${job.faction}`,
+            detail: distance,
+            urgent: false,
+            ready: false,
+        });
+    }
+    return out;
 }

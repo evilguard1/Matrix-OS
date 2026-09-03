@@ -78,6 +78,10 @@ const LINES = {
         "They will not sell to a stranger. Become someone they trust.",
         "Reputation is the only currency this faction accepts.",
     ],
+    EMPLOYMENT: [
+        "A wage is not the same as a way in. Check which door this job opens.",
+        "They pay you. They do not vouch for you. Those are different things.",
+    ],
     DEFAULT: [
         "Something here needs a hand that is not mine.",
     ],
@@ -103,6 +107,7 @@ export function speak(directive = {}) {
     else if (tag === "TOR") key = "TOR";
     else if (tag === "AUGMENT") key = "AUGMENT";
     else if (tag === "REPUTATION") key = "REPUTATION";
+    else if (tag === "EMPLOYMENT") key = "EMPLOYMENT";
     return pick(LINES[key], id);
 }
 

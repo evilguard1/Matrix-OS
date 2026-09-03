@@ -211,3 +211,76 @@ function fmt(n) {
     return `$${Math.round(a)}`;
 }
 export { fmt as formatCost };
+
+/**
+ * Home RAM or another server?
+ *
+ * Home RAM doubles in price every upgrade, so its cost per gigabyte climbs
+ * without limit: at 4 TB the next step is $31.7b for 4,096 GB - about $7.7
+ * MILLION per gigabyte. A purchased server is a flat $55,000 per gigabyte, for
+ * ever. That is a difference of two orders of magnitude, and it is invisible in
+ * game because the two purchases live on different screens.
+ *
+ * It is not unconditional. Home RAM is the only RAM that can run the services
+ * themselves, and the purchased fleet is capped - 25 machines, each with a RAM
+ * ceiling. Once that fleet is full and maxed, home is the only way left to
+ * grow, and the advice flips. So this compares what is actually still buyable.
+ *
+ * It also matters that below SF4 MATRIX cannot buy home RAM at all -
+ * upgradeHomeRam is a Singularity call - so this is advice for the player,
+ * while the servers are something MATRIX buys itself.
+ */
+export function ramExpansionAdvice(options = {}) {
+    const {
+        homeRam = 8,
+        ownedServers = [],
+        serverLimit = 25,
+        ramLimit = 1_048_576,
+    } = options ?? {};
+
+    const home = Math.max(1, Number(homeRam) || 1);
+    const homeCost = homeRamUpgradeCost(home);
+    const homeGain = home;                       // an upgrade doubles it
+    const homePerGb = homeGain > 0 && Number.isFinite(homeCost) ? homeCost / homeGain : Infinity;
+
+    const fleet = (Array.isArray(ownedServers) ? ownedServers : [])
+        .map(s => ({ host: String(s?.host ?? ""), ram: Number(s?.ram) || 0 }))
+        .filter(s => s.host);
+    const limit = Math.max(0, Number(serverLimit) || 0);
+    const cap = Math.max(0, Number(ramLimit) || 0);
+    const slotsLeft = Math.max(0, limit - fleet.length);
+    const upgradable = fleet.filter(s => s.ram < cap).length;
+    const serverRoom = slotsLeft > 0 || upgradable > 0;
+    const serverPerGb = serverCost(1);
+
+    // Purchased servers are cheaper per gigabyte at EVERY scale - even at 8 GB
+    // home costs $126k/GB against a flat $55k. But the two are not
+    // interchangeable: home RAM is the only RAM that can run the services, and
+    // each stage of MATRIX needs a certain amount of it before its modules can
+    // start at all. Below the last stage threshold home RAM buys CAPABILITY and
+    // the price is beside the point; above it, the purchase is pure throughput
+    // and the price is the only thing that matters.
+    const stageThreshold = Number(options?.stageThreshold ?? 128);
+    const homeIsCapability = home < stageThreshold;
+
+    return {
+        homePerGb,
+        serverPerGb,
+        homeCost,
+        homeGain,
+        slotsLeft,
+        upgradable,
+        homeIsCapability,
+        better: homeIsCapability ? "home"
+            : serverRoom && serverPerGb < homePerGb ? "servers"
+            : "home",
+        reason: homeIsCapability
+            ? `home is below ${stageThreshold} GB - upgrading it unlocks modules, which no server can do`
+            : !serverRoom ? "the purchased fleet is full and maxed, so home is the only way left to grow"
+            : "servers are pure worker RAM and far cheaper per gigabyte at this scale",
+        multiple: serverPerGb > 0 && Number.isFinite(homePerGb) ? homePerGb / serverPerGb : 1,
+        // What the same money would buy as purchased-server RAM.
+        equivalentServerGb: serverPerGb > 0 && Number.isFinite(homeCost)
+            ? Math.floor(homeCost / serverPerGb) : 0,
+    };
+}

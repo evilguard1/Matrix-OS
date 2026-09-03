@@ -1,7 +1,7 @@
 import { config, readJson, writeJson, STATE_DIR, EVENTS } from "/matrix/lib/common.js";
 import { scanAll, routeTo } from "/matrix/lib/network.js";
-import { manualActions, singularityReady, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
-import { factionDirectives, factionPlan, BACKDOOR_FACTIONS } from "/matrix/lib/factions.js";
+import { manualActions, singularityReady, PORT_PROGRAMS, ramExpansionAdvice } from "/matrix/lib/capabilities.js";
+import { factionDirectives, factionPlan, BACKDOOR_FACTIONS, companyDirectives } from "/matrix/lib/factions.js";
 import { narrate, moduleDirectives } from "/matrix/lib/voice.js";
 import { augmentationPlan, augmentationDirectives, bestFactionToGrind } from "/matrix/lib/augmentations.js";
 
@@ -116,8 +116,33 @@ export async function main(ns){
                 };
                 augs=augmentationPlan(augState);
                 grind=bestFactionToGrind(augState);
+                // Employment and RAM value are both cases where the game shows
+                // a number but never its meaning.
+                // The fleet comes from cloud.js's own state file rather than
+                // ns.cloud.getServerNames(), which costs 1.05 GB and pushed the
+                // 32 GB stage over budget. Absent state means an empty fleet,
+                // which is the correct assumption before cloud.js runs.
+                const cloudState=serviceState.cloud??{};
+                const fleetSize=Number(cloudState.servers??0)||0;
+                const ramAdvice=ramExpansionAdvice({
+                    homeRam:ns.getServerMaxRam("home"),
+                    ownedServers:Array.from({length:fleetSize},(_,i)=>({
+                        host:`pserv-${i}`,
+                        ram:fleetSize>0?(Number(cloudState.totalRam??0)/fleetSize):0,
+                    })),
+                    serverLimit:Number(cloudState.limit??25)||25,
+                    ramLimit:Number(cloudState.ramLimit??1048576)||1048576,
+                });
+                const ramDirective=ramAdvice.better==="servers"&&ramAdvice.multiple>4?[{
+                    id:"RAM_VALUE", tag:"HOME RAM",
+                    label:`Home RAM is ${Math.round(ramAdvice.multiple)}x the price of a server`,
+                    detail:`the same money buys ${Math.round(ramAdvice.equivalentServerGb/1024)} TB of purchased server RAM, which MATRIX buys itself`,
+                    urgent:false, ready:false,
+                }]:[];
                 directives=narrate([
                     ...factionDirectives(factionInput,{singularity}),
+                    ...companyDirectives(player.jobs,{factions:player.factions}),
+                    ...ramDirective,
                     ...augmentationDirectives(augState,{singularity}),
                     ...moduleDirectives([...(reset.ownedSF?.entries?.()??[])]),
                 ]);
