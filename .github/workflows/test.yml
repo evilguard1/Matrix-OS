@@ -1,6 +1,9 @@
 name: test
 
 on:
+  push:
+    branches:
+      - fix/ram-stage-64
   pull_request:
   workflow_dispatch:
 
