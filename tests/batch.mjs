@@ -95,6 +95,9 @@ assert.match(hacking, /capturePlanningSnapshot/);
 assert.match(hacking, /operationTimes/);
 assert.match(hacking, /finishShiftMs/);
 assert.match(hacking, /planBatchPlacement/);
+assert.match(hacking, /probePlanningSnapshot/);
+assert.match(hacking, /snapshot-stale-drain/);
+assert.match(hacking, /staleSnapshots\s*=\s*new Map/);
 assert.match(hacking, /execPlannedComponent/);
 
 // Ordinary batch W2 must use uncapped grow hardening.
@@ -115,6 +118,21 @@ assert.match(hacking, /if\s*\(!snapshot\)[\s\S]*snapshot-missing/);
 assert.match(hacking, /batchAdmissionDeferrals\s*\+=\s*1/);
 assert.match(hacking, /failedBatchIncidents\s*\+=\s*1/);
 assert.match(hacking, /taintedTargets\.set/);
+
+// A stable target-state snapshot must still drain/replan when CURRENT player/
+// global hacking conditions require more grow threads than the snapshot owns.
+// This is the long-run regression that appears as progressive target-money loss
+// while security remains healthy.
+assert.match(hacking, /currentGrowThreads\s*>\s*shape\.gt/);
+assert.match(hacking, /grow-thread-shortfall/);
+assert.match(hacking, /staleSnapshotCount/);
+assert.match(hacking, /snapshotStaleDrains/);
+assert.match(hacking, /probeRequiredGrowThreads/);
+
+// The probe must be gated to near-minimum security so it cannot reintroduce
+// transient target-state contamination.
+assert.match(hacking, /SNAPSHOT_PROBE_SECURITY_EPSILON/);
+assert.match(hacking, /live\.securityExcess\s*>\s*SNAPSHOT_PROBE_SECURITY_EPSILON/);
 
 // Telemetry histories stay bounded.
 assert.match(hacking, /FAILURE_RING\s*=\s*32/);
