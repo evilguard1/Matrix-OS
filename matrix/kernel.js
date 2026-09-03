@@ -33,10 +33,10 @@ export async function main(ns) {
     // self-propagating worm on the biggest rootable server and then spawns the
     // real stage, leaving home with zero resident botnet cost.
     //
-    // The worm now survives every stage. Below 32 GB it owns the botnet
-    // outright; from 32 GB it yields most of each host to the HWGW batcher and
-    // only fills what the batcher leaves idle between waves. hacking.js drains
-    // a whole wave before starting the next, so that idle RAM is real.
+    // The worm survives every stage for rooting and propagation. Below 32 GB
+    // its drones own the botnet economy. From 32 GB the rolling HWGW scheduler
+    // owns all money-making H/G/W work, so spread.js kills/withholds autonomous
+    // drones instead of competing with coordinated batches.
     if (ns.fileExists(SEED, "home")) {
         ns.spawn(SEED, { threads: 1, spawnDelay: 0 }, next);
         return;
