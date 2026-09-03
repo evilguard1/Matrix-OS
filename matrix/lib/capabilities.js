@@ -1,3 +1,5 @@
+import { HOME_RAM_TIERS } from "/matrix/lib/stages.js";
+
 /**
  * What MATRIX can automate right now, and what the player still has to do.
  *
@@ -35,15 +37,8 @@ export function serverCost(ram) {
     return ram * SERVER_COST_PER_GB;
 }
 
-/**
- * Largest power-of-two server that fits the spendable budget and is actually
- * worth owning. A server smaller than two workers is dead weight: MATRIX's
- * worker is 2.4 GB, so a 2 GB server cannot run a single one.
- */
+/** Largest useful purchased server that fits the spendable budget. */
 export function bestServerBuy(spendable, workerRam = 2.4, ramLimit = 1_048_576) {
-    // ns.getScriptRam returns 0 when the file is not on that host, and
-    // Math.log2(0) is -Infinity, so the floor became 0 and `ram *= 2` never
-    // advanced past it - an infinite loop inside a live service.
     const worker = Number(workerRam) > 0 ? Number(workerRam) : 2.4;
     const cap = Number(ramLimit) > 0 ? Number(ramLimit) : 1_048_576;
     const budget = Number(spendable);
@@ -57,22 +52,8 @@ export function bestServerBuy(spendable, workerRam = 2.4, ramLimit = 1_048_576) 
     return best;
 }
 
-/**
- * What to buy with the cloud budget, given the fleet already owned.
- *
- * Early on the correct answer is almost always "another server, now": a
- * purchased server is pure worker RAM, it pays for itself within minutes of
- * hacking, and every one bought raises the rate at which the next is afforded.
- * Waiting to afford a bigger one costs more than it gains, so this buys the
- * largest size the budget allows and buys again next cycle.
- *
- * Once the fleet is full, the only way forward is replacing the smallest server
- * with a bigger one - and that is only worth doing when the upgrade is a real
- * multiple, not a marginal step.
- */
+/** Decide what purchased-server action best uses the current budget. */
 export function serverPurchasePlan(options = {}) {
-    // Destructuring an argument defaults only on undefined, so a null caller
-    // would throw here rather than degrade.
     const {
         budget = 0,
         owned = [],
@@ -92,8 +73,6 @@ export function serverPurchasePlan(options = {}) {
         return { action: "buy", ram: affordable, cost: serverCost(affordable) };
     }
 
-    // Fleet is full: the only gain left is replacing the weakest machine, and
-    // only when the replacement is worth the disruption of killing its work.
     const weakest = fleet.reduce((worst, server) => server.ram < worst.ram ? server : worst, fleet[0]);
     if (affordable >= weakest.ram * upgradeMultiple) {
         return { action: "replace", host: weakest.host, from: weakest.ram, ram: affordable, cost: serverCost(affordable) };
@@ -101,7 +80,7 @@ export function serverPurchasePlan(options = {}) {
     return { action: "wait", reason: `fleet full; next upgrade needs ${upgradeMultiple}x the smallest (${weakest.ram} GB)` };
 }
 
-/** Singularity is free to detect through getResetInfo(), which costs 0 GB. */
+/** Singularity capability from reset state. getResetInfo costs 1 GB in v3.0.1. */
 export function singularityReady(reset) {
     return reset?.currentNode === 4 || (reset?.ownedSF?.get?.(4) ?? 0) > 0;
 }
@@ -120,44 +99,36 @@ export function nextPortProgram(owned, hackingLevel) {
 }
 
 /**
- * Actions the human still has to perform, most valuable first. Returns
- * [] once Singularity is available, because at that point MATRIX does all of it.
- *
- * @returns {{id:string,label:string,detail:string,cost:number,where:string,ready:boolean}[]}
+ * Actions the human still has to perform, most valuable first. Returns [] once
+ * Singularity is available, because at that point MATRIX can do those actions.
  */
 export function manualActions(options = {}) {
-    // A parameter default fires only on undefined; state files supply null.
     const {
-    homeRam = 8,
-    cash = 0,
-    hackingLevel = 1,
-    ownedPrograms = [],
-    singularity = false,
-    cloudAutomated = false,
-    workerRam = 2.4,
-} = options ?? {};
+        homeRam = 8,
+        cash = 0,
+        hackingLevel = 1,
+        ownedPrograms = [],
+        singularity = false,
+        cloudAutomated = false,
+        workerRam = 2.4,
+    } = options ?? {};
     if (singularity) return [];
     const out = [];
 
     const program = nextPortProgram(ownedPrograms, hackingLevel);
     if (program) {
         out.push(program.canCreate ? {
-            id: "CREATE_PROGRAM",
-            tag: "CREATE",
+            id: "CREATE_PROGRAM", tag: "CREATE",
             label: `Create ${program.file}`,
             short: `${program.file} - free, do it now`,
             detail: `free at Hacking ${program.level} - you qualify now`,
-            cost: 0,
-            where: "Create Program tab",
-            ready: true,
+            cost: 0, where: "Create Program tab", ready: true,
         } : {
-            id: "GET_PROGRAM",
-            tag: "PROGRAM",
+            id: "GET_PROGRAM", tag: "PROGRAM",
             label: `Get ${program.file}`,
             short: `${program.file} @ terminal`,
             detail: `create free at Hacking ${program.level} (${program.levelsToGo} to go), or buy now`,
-            cost: program.price,
-            where: `terminal: buy ${program.file}`,
+            cost: program.price, where: `terminal: buy ${program.file}`,
             ready: cash >= program.price,
         });
     }
@@ -166,39 +137,34 @@ export function manualActions(options = {}) {
         const server = bestServerBuy(cash, workerRam);
         const floorRam = Math.pow(2, Math.ceil(Math.log2(workerRam * 2)));
         out.push({
-            id: "BUY_SERVER",
-            tag: "BUY SERVER",
+            id: "BUY_SERVER", tag: "BUY SERVER",
             label: server ? `Buy ${server}GB cloud server` : `Buy ${floorRam}GB cloud server`,
             short: `${server || floorRam}GB @ Alpha Ent.`,
             detail: server
                 ? `${Math.floor(server / workerRam)} more workers - cheapest RAM in the game`
                 : `need ${fmt(serverCost(floorRam))}; anything smaller cannot host a worker`,
             cost: serverCost(server || floorRam),
-            where: "Alpha Ent. (Sector-12)",
-            ready: Boolean(server),
+            where: "Alpha Ent. (Sector-12)", ready: Boolean(server),
         });
     }
 
     const ramCost = homeRamUpgradeCost(homeRam);
     out.push({
-        id: "UPGRADE_HOME_RAM",
-        tag: "HOME RAM",
+        id: "UPGRADE_HOME_RAM", tag: "HOME RAM",
         label: `Upgrade Home RAM ${homeRam} -> ${homeRam * 2}GB`,
         short: `${homeRam}->${homeRam * 2}GB @ Alpha Ent.`,
         detail: nextStageNote(homeRam * 2),
-        cost: ramCost,
-        where: "Alpha Ent. (Sector-12)",
-        ready: cash >= ramCost,
+        cost: ramCost, where: "Alpha Ent. (Sector-12)", ready: cash >= ramCost,
     });
 
     return out.sort((a, b) => (b.ready ? 1 : 0) - (a.ready ? 1 : 0) || a.cost - b.cost);
 }
 
 function nextStageNote(ram) {
-    if (ram >= 128) return "unlocks the advanced Source-File managers";
-    if (ram >= 64) return "unlocks purchased-server upgrades and stock trading";
-    if (ram >= 32) return "unlocks the full command deck, HWGW batcher and auto-buying";
-    if (ram >= 16) return "unlocks the distributed early engine";
+    if (ram >= HOME_RAM_TIERS.advanced) return "unlocks advanced capability managers";
+    if (ram >= HOME_RAM_TIERS.operations) return "unlocks contracts, stock and broader operations";
+    if (ram >= HOME_RAM_TIERS.full) return "unlocks the full command deck, rolling HWGW and automated infrastructure";
+    if (ram >= HOME_RAM_TIERS.early) return "unlocks the distributed early engine";
     return "more RAM for MATRIX itself";
 }
 
@@ -212,24 +178,7 @@ function fmt(n) {
 }
 export { fmt as formatCost };
 
-/**
- * Home RAM or another server?
- *
- * Home RAM doubles in price every upgrade, so its cost per gigabyte climbs
- * without limit: at 4 TB the next step is $31.7b for 4,096 GB - about $7.7
- * MILLION per gigabyte. A purchased server is a flat $55,000 per gigabyte, for
- * ever. That is a difference of two orders of magnitude, and it is invisible in
- * game because the two purchases live on different screens.
- *
- * It is not unconditional. Home RAM is the only RAM that can run the services
- * themselves, and the purchased fleet is capped - 25 machines, each with a RAM
- * ceiling. Once that fleet is full and maxed, home is the only way left to
- * grow, and the advice flips. So this compares what is actually still buyable.
- *
- * It also matters that below SF4 MATRIX cannot buy home RAM at all -
- * upgradeHomeRam is a Singularity call - so this is advice for the player,
- * while the servers are something MATRIX buys itself.
- */
+/** Compare Home RAM expansion against purchased-server expansion. */
 export function ramExpansionAdvice(options = {}) {
     const {
         homeRam = 8,
@@ -240,7 +189,7 @@ export function ramExpansionAdvice(options = {}) {
 
     const home = Math.max(1, Number(homeRam) || 1);
     const homeCost = homeRamUpgradeCost(home);
-    const homeGain = home;                       // an upgrade doubles it
+    const homeGain = home;
     const homePerGb = homeGain > 0 && Number.isFinite(homeCost) ? homeCost / homeGain : Infinity;
 
     const fleet = (Array.isArray(ownedServers) ? ownedServers : [])
@@ -253,14 +202,7 @@ export function ramExpansionAdvice(options = {}) {
     const serverRoom = slotsLeft > 0 || upgradable > 0;
     const serverPerGb = serverCost(1);
 
-    // Purchased servers are cheaper per gigabyte at EVERY scale - even at 8 GB
-    // home costs $126k/GB against a flat $55k. But the two are not
-    // interchangeable: home RAM is the only RAM that can run the services, and
-    // each stage of MATRIX needs a certain amount of it before its modules can
-    // start at all. Below the last stage threshold home RAM buys CAPABILITY and
-    // the price is beside the point; above it, the purchase is pure throughput
-    // and the price is the only thing that matters.
-    const stageThreshold = Number(options?.stageThreshold ?? 128);
+    const stageThreshold = Number(options?.stageThreshold ?? HOME_RAM_TIERS.advanced);
     const homeIsCapability = home < stageThreshold;
 
     return {
@@ -279,26 +221,12 @@ export function ramExpansionAdvice(options = {}) {
             : !serverRoom ? "the purchased fleet is full and maxed, so home is the only way left to grow"
             : "servers are pure worker RAM and far cheaper per gigabyte at this scale",
         multiple: serverPerGb > 0 && Number.isFinite(homePerGb) ? homePerGb / serverPerGb : 1,
-        // What the same money would buy as purchased-server RAM.
         equivalentServerGb: serverPerGb > 0 && Number.isFinite(homeCost)
             ? Math.floor(homeCost / serverPerGb) : 0,
     };
 }
 
-/**
- * How much of home to keep out of the worker pool.
- *
- * The reserve is not waste - it is the headroom the supervisor needs to
- * (re)launch a service. A flat 24 GB was sized for a 32 GB home and never grew:
- * at 4 TB it still held back 24 GB, which happens to fit contracts.js at 21.8
- * but not two services at once, and not singularity.js at 79.7 GB once SF4
- * arrives. A service that cannot relaunch is a module silently missing.
- *
- * Scaling with home avoids hand-maintaining a table of service sizes: bigger
- * homes run bigger services, and 2% of a large home is far more than the
- * largest of them. The cap stops it becoming silly on a very large home, and
- * the configured value is always a floor.
- */
+/** How much of Home to keep out of the distributed worker pool. */
 export function homeReserveFor(homeRam, cfg = {}) {
     const configured = Math.max(0, Number(cfg?.hacking?.homeReserveGb ?? 24) || 24);
     const home = Math.max(0, Number(homeRam) || 0);
