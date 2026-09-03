@@ -284,3 +284,24 @@ export function ramExpansionAdvice(options = {}) {
             ? Math.floor(homeCost / serverPerGb) : 0,
     };
 }
+
+/**
+ * How much of home to keep out of the worker pool.
+ *
+ * The reserve is not waste - it is the headroom the supervisor needs to
+ * (re)launch a service. A flat 24 GB was sized for a 32 GB home and never grew:
+ * at 4 TB it still held back 24 GB, which happens to fit contracts.js at 21.8
+ * but not two services at once, and not singularity.js at 79.7 GB once SF4
+ * arrives. A service that cannot relaunch is a module silently missing.
+ *
+ * Scaling with home avoids hand-maintaining a table of service sizes: bigger
+ * homes run bigger services, and 2% of a large home is far more than the
+ * largest of them. The cap stops it becoming silly on a very large home, and
+ * the configured value is always a floor.
+ */
+export function homeReserveFor(homeRam, cfg = {}) {
+    const configured = Math.max(0, Number(cfg?.hacking?.homeReserveGb ?? 24) || 24);
+    const home = Math.max(0, Number(homeRam) || 0);
+    const scaled = home * 0.02;
+    return Math.min(Math.max(configured, scaled), Math.max(configured, 512));
+}

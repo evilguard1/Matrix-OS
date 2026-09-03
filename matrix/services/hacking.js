@@ -1,6 +1,7 @@
 import { config, event, writeState, sleepUntil, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts, totalFreeRam } from "/matrix/lib/network.js";
 import { allocateWave, mergeWave, allocatePrep } from "/matrix/lib/batch.js";
+import { homeReserveFor } from "/matrix/lib/capabilities.js";
 
 const H = "/matrix/workers/hack.js";
 const G = "/matrix/workers/grow.js";
@@ -52,7 +53,7 @@ function chooseTarget(ns, hosts, cfg, mode = "money") {
 }
 
 function freePool(ns, hosts, cfg) {
-    return workerHosts(ns, hosts, cfg.hacking?.homeReserveGb ?? 24);
+    return workerHosts(ns, hosts, homeReserveFor(ns.getServerMaxRam('home'), cfg));
 }
 
 async function execDistributed(ns, script, threads, args, hosts, cfg) {
@@ -65,7 +66,7 @@ async function execDistributed(ns, script, threads, args, hosts, cfg) {
             try { await ns.scp(script, item.host, "home"); } catch {}
         }
         const nowFree = Math.max(0, ns.getServerMaxRam(item.host) - ns.getServerUsedRam(item.host) -
-            (item.host === "home" ? (cfg.hacking?.homeReserveGb ?? 24) : 0));
+            (item.host === "home" ? (homeReserveFor(ns.getServerMaxRam('home'), cfg)) : 0));
         const fit = Math.floor(nowFree / ram);
         if (fit <= 0) continue;
         const use = Math.min(fit, remaining);
@@ -301,7 +302,7 @@ export async function main(ns) {
         }
         const shape = shaped[0].shape;
 
-        const free = totalFreeRam(ns, hosts, cfg.hacking?.homeReserveGb ?? 24);
+        const free = totalFreeRam(ns, hosts, homeReserveFor(ns.getServerMaxRam('home'), cfg));
         const gap = cfg.hacking?.batchGapMs ?? 120;
         const wave = allocateWave(shaped, {
             freeRam: free,

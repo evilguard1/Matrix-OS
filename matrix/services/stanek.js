@@ -13,6 +13,7 @@
 import { config, writeState, event, hasSF } from "/matrix/lib/common.js";
 import { scanAll } from "/matrix/lib/network.js";
 import { weakestFragment, chargeHosts } from "/matrix/lib/gift.js";
+import { homeReserveFor } from "/matrix/lib/capabilities.js";
 
 const CHARGER = "/matrix/workers/stanek-charge.js";
 const IDLE = 5000;
@@ -69,7 +70,7 @@ export async function main(ns) {
                 .map(h => ({
                     host: h,
                     free: ns.getServerMaxRam(h) - ns.getServerUsedRam(h)
-                        - (h === "home" ? (cfg.hacking?.homeReserveGb ?? 24) : 0),
+                        - (h === "home" ? (homeReserveFor(ns.getServerMaxRam('home'), cfg)) : 0),
                 }));
 
             let dispatched = 0;

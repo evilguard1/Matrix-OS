@@ -100,4 +100,33 @@ for (const junk of [{}, null, undefined, { owned: null }, { owned: [null, {}], b
     assert.doesNotThrow(() => serverPurchasePlan(junk), `serverPurchasePlan threw on ${JSON.stringify(junk)}`);
 }
 
+
+// --- the home reserve is headroom, not waste ---------------------------------
+// It exists so the supervisor can relaunch a service. A flat 24 GB was sized
+// for a 32 GB home and never grew: at 4 TB it still held back 24 GB, which fits
+// contracts.js at 21.8 but not two at once, and not singularity.js at 79.7 once
+// SF4 arrives. A service that cannot relaunch is a module silently missing.
+{
+    const { homeReserveFor } = await import("../matrix/lib/capabilities.js");
+    assert.equal(homeReserveFor(32, {}), 24, "small homes keep the configured floor");
+    assert.equal(homeReserveFor(1024, {}), 24, "2% of 1 TB is still under the floor");
+    assert.ok(homeReserveFor(4096, {}) > 79.7,
+        "a 4 TB home must be able to relaunch singularity.js at 79.7 GB");
+    assert.ok(homeReserveFor(8192, {}) > homeReserveFor(4096, {}), "it scales with home");
+    assert.equal(homeReserveFor(1_048_576, {}), 512, "and is capped so it never becomes silly");
+
+    // The reserve must never eat a meaningful share of a large home.
+    for (const home of [4096, 8192, 65536]) {
+        assert.ok(homeReserveFor(home, {}) / home <= 0.021, `reserve is over 2% at ${home} GB`);
+    }
+    // An explicit configuration is always honoured as a floor.
+    assert.equal(homeReserveFor(32, { hacking: { homeReserveGb: 100 } }), 100);
+    assert.ok(homeReserveFor(1_048_576, { hacking: { homeReserveGb: 900 } }) >= 900,
+        "a configured value above the cap still wins");
+    for (const junk of [null, undefined, NaN, -5, "x"]) {
+        assert.ok(Number.isFinite(homeReserveFor(junk, {})), `homeReserveFor(${junk}) must be a number`);
+        assert.ok(homeReserveFor(4096, junk) > 0);
+    }
+}
+
 console.log("MATRIX-OS economy passed: $1m now buys a server, the reserve never exceeds the balance, aggression is early-only.");
