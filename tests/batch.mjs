@@ -157,4 +157,30 @@ for (const junk of [null, undefined, {}, { freeRam: NaN }, { freeRam: "x", gapMs
 }
 
 
+// --- the target cap must not be the binding constraint -----------------------
+// A cap of 12 held an 800 TB network to ~37%: every target was already at its
+// schedule limit, so the ceiling itself was the thing leaving RAM idle. A cap
+// only earns its place by being generous enough that RAM binds first.
+{
+    const freeRam = 804_300;
+    const targets = Array.from({ length: 60 }, (_, i) => ({ host: `t${i}`, shape: { ram: 200, wTime: 60_000 } }));
+
+    const capped = allocateWave(targets, { freeRam, maxTargets: 12 });
+    assert.ok(capped.used / freeRam < 0.45, "a cap of 12 provably cannot fill this network");
+    assert.equal(capped.plan.length, 12, "and it is the cap, not the RAM, that stopped it");
+
+    const generous = allocateWave(targets, { freeRam, maxTargets: 32 });
+    assert.ok(generous.used / freeRam > 0.7,
+        `a generous cap must use most of the network, got ${(100 * generous.used / freeRam).toFixed(1)}%`);
+    assert.ok(generous.remaining < capped.remaining, "and leave less idle");
+
+    // With enough targets, RAM is what stops the allocation - which is correct.
+    const unlimited = allocateWave(targets, { freeRam, maxTargets: 60 });
+    assert.ok(unlimited.plan.length < 60, "RAM should run out before the target list does");
+    // What "RAM ran out" means here is that less than one more batch fits -
+    // not that the remainder is zero.
+    assert.ok(unlimited.remaining < 200,
+        `less than one batch should remain, got ${unlimited.remaining.toFixed(0)} GB`);
+}
+
 console.log("MATRIX-OS batch passed: capacity follows the schedule, waves spread across targets, and leftover RAM preps the rest of the network.");

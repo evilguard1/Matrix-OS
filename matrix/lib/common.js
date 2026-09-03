@@ -8,7 +8,7 @@ const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/ma
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 
 const DEFAULT_CONFIG = {
-    version: "1.5.0",
+    version: "1.5.1",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -30,7 +30,11 @@ const DEFAULT_CONFIG = {
         minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: 24,
         minTargetMoney: 1_000_000,
         // maxBatches is a ceiling, not the working limit - the schedule decides.
-        maxTargets: 12, waveReserveFraction: 0.05, maxPrepTargets: 8,
+        // These are ceilings, not working limits: allocateWave stops as soon as
+        // the RAM runs out, so a generous cap simply lets RAM be the constraint
+        // instead of an arbitrary number. At 804 TB a cap of 12 held the network
+        // to ~37% - it was the whole reason utilisation plateaued there.
+        maxTargets: 32, waveReserveFraction: 0.05, maxPrepTargets: 20,
     },
     progression: {
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,
