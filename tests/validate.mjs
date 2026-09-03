@@ -277,7 +277,7 @@ const installerSource = read("install.js");
 for (const name of ["seed", "spread", "drone"]) {
     assert.ok(
         !installerSource.includes(`"matrix/worm/${name}.js"`),
-        `installer must not directly sweep matrix/worm/${name}.js - supervisor propagation owns resident refresh`,
+        `installer must not directly sweep matrix/worm/${name}.js - seed.js owns resident worm generation refresh`,
     );
 }
 assert.equal(autonomousDronesAllowed(8), true, "8 GB bootstrap must retain worm earning");
@@ -285,6 +285,11 @@ assert.equal(autonomousDronesAllowed(16), true, "16 GB early stage must retain w
 assert.equal(autonomousDronesAllowed(31), true, "pre-full stage must retain worm earning");
 assert.equal(autonomousDronesAllowed(32), false, "32 GB rolling HWGW handoff must disable autonomous drones");
 assert.equal(autonomousDronesAllowed(4096), false, "advanced saves must never re-enable autonomous drones");
+assert.match(
+    read("matrix/worm/seed.js"),
+    /scriptKill\(SPREAD, host\)[\s\S]*scriptKill\(DRONE, host\)/,
+    "seeder must kill the prior worm generation before planting the current one",
+);
 assert.doesNotMatch(
     read("matrix/worm/spread.js"),
     /DRONE_SHARE_WITH_HWGW/,
