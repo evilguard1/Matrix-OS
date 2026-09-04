@@ -24,6 +24,9 @@ function normalizeMode(mode) {
     return null;
 }
 
+// Bitburner's process table may drop a leading slash and normalize separators.
+// Share ownership and legacy H/G/W drain reconstruction must therefore compare
+// normalized script identities rather than raw ns.ps().filename strings.
 export function normalizeScriptPath(value) {
     return String(value ?? "")
         .trim()
