@@ -99,4 +99,4 @@ assert.match(coordinator, /directives\.reputationBoost/);
 assert.match(worker, /--ends/);
 assert.match(worker, /Date\.now\(\)\s*<\s*endsAt/);
 
-console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, drain gating, cleanup guards.");
+console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, drain gating, verified selective cleanup.");
