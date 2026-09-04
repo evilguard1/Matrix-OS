@@ -25,9 +25,9 @@ function formulaFacts(ns, target) {
 /**
  * Build the minimum synthetic Server object the hacking formulas need.
  *
- * The object deliberately comes from formulas.mockServer() rather than
- * ns.getServer(): the latter costs 2 GB. The only extra paid accessor is
- * getServerGrowth() (0.1 GB); getPlayer() is captured once per scheduler loop.
+ * The object deliberately comes from formulas.mockServer() rather than the
+ * 2 GB getServer() call. The only extra paid accessor is getServerGrowth()
+ * (0.1 GB); getPlayer() is captured once per scheduler loop.
  */
 export function formulaServer(ns, facts, options = {}) {
     const server = ns.formulas.mockServer();
