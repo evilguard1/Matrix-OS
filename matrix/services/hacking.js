@@ -16,6 +16,14 @@ import {
     selectPlanningContext,
 } from "/matrix/lib/hacking-planner.js";
 import {
+    homeCoreBatchVariant,
+    homeCorePrepGrowThreads,
+    homeCorePrepWeakenThreads,
+    homeCoreProbePlanningSnapshot,
+    normalizeCores,
+    planWholeHomeCoreBatch,
+} from "/matrix/lib/core-aware.js";
+import {
     BOOST_MODE_MAX,
     BOOST_MODE_NORMAL,
     BOOST_REQUEST_STATE,
@@ -156,6 +164,14 @@ function operationTimes(ns, target) {
     };
 }
 
+function homeCpuCores(ns) {
+    try {
+        return normalizeCores(ns.getServer("home")?.cpuCores);
+    } catch {
+        return 1;
+    }
+}
+
 // Validated native planner. Keep this implementation intact as the capability
 // fallback; Formulas.exe only replaces clean-state planning/ranking, never the
 // execution layer or the launch-time native timing resample.
@@ -216,13 +232,17 @@ function batchShape(ns, target, cfg) {
     return best;
 }
 
-function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner) {
+function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner, homeCores) {
     const live = targetLiveState(ns, target);
     const useFormulas = planner?.kind === PLANNER_FORMULAS;
     const shape = useFormulas
         ? formulaBatchShape(ns, target, cfg, planner)
         : batchShape(ns, target, cfg);
     if (!shape) return null;
+    let coreShape = null;
+    try {
+        coreShape = homeCoreBatchVariant(ns, target, shape, planner, homeCores);
+    } catch {}
     const depth = pipelineDepth({
         weakenTimeMs: shape.wTime,
         gapMs: gap,
@@ -239,9 +259,12 @@ function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner) {
             ? clamp(shape.hackPerThread, 0, 1)
             : clamp(ns.hackAnalyze(target), 0, 1),
         shape,
+        coreShape,
+        coreCount: coreShape?.coreCount ?? normalizeCores(homeCores),
         depth,
         used: false,
         lastProbe: null,
+        lastCoreProbe: null,
     };
 }
 
@@ -790,6 +813,7 @@ function prepNeed(ns, target, cfg) {
             host: target,
             op: "grow",
             threads,
+            factor,
             ram: ns.getScriptRam(G, "home"),
             securityExcess: Math.max(0, sec - minSec),
             moneyFraction: money / maxMoney,
@@ -809,9 +833,11 @@ async function launchBackgroundPrep(ns, {
     cfg,
     freeRam,
     boost,
+    homeCores,
 }) {
+    const stats = { coreLaunches: 0, coreFallbacks: 0 };
     const maxPrep = Math.max(0, cfg.hacking?.maxPrepTargets ?? 20);
-    if (maxPrep <= 0 || activePrep.size >= maxPrep || freeRam < 2) return;
+    if (maxPrep <= 0 || activePrep.size >= maxPrep || freeRam < 2) return stats;
 
     const needs = [];
     for (const target of ranked) {
@@ -823,7 +849,7 @@ async function launchBackgroundPrep(ns, {
         const need = prepNeed(ns, target, cfg);
         if (need) needs.push(need);
     }
-    if (!needs.length) return;
+    if (!needs.length) return stats;
 
     const allocation = allocatePrep(needs, {
         freeRam,
@@ -832,16 +858,56 @@ async function launchBackgroundPrep(ns, {
 
     for (const entry of allocation.plan) {
         const script = entry.op === "weaken" ? W : G;
+        const sourceNeed = needs.find(need => need.host === entry.host) ?? null;
         const started = Date.now();
-        const result = await execDistributed(
-            ns,
-            script,
-            entry.threads,
-            [entry.host, 0],
-            hosts,
-            cfg,
-            boost,
-        );
+        let result = null;
+        let coreAware = false;
+
+        if (homeCores > 1 && sourceNeed) {
+            let coreThreads = 0;
+            if (entry.op === "weaken") {
+                coreThreads = homeCorePrepWeakenThreads(ns, entry.threads, homeCores);
+            } else if (entry.threads >= sourceNeed.threads) {
+                // A partial grow allocation has no exact multiplicative target of
+                // its own, so only resize a grow prep when the full one-core need
+                // was admitted. Partial allocations keep the old distributed path.
+                coreThreads = homeCorePrepGrowThreads(ns, entry.host, sourceNeed.factor, homeCores);
+            }
+
+            const ramPerThread = ns.getScriptRam(script, "home");
+            const home = schedulablePool(ns, hosts, cfg, boost).find(item => item.host === "home");
+            const coreRam = coreThreads * ramPerThread;
+            if (coreThreads > 0 && coreThreads <= entry.threads && home && home.free + 1e-9 >= coreRam) {
+                result = await execPlannedComponent(ns, {
+                    op: entry.op === "weaken" ? "PREP-W" : "PREP-G",
+                    script,
+                    threads: coreThreads,
+                    requestedThreads: coreThreads,
+                    ramPerThread,
+                    placements: [{ host: "home", threads: coreThreads }],
+                }, [entry.host, 0], cfg, boost);
+                if (result.workers.length > 0) {
+                    coreAware = true;
+                    stats.coreLaunches += 1;
+                } else {
+                    result = null;
+                }
+            } else if (coreThreads > 0 || entry.op === "grow") {
+                stats.coreFallbacks += 1;
+            }
+        }
+
+        if (!result) {
+            result = await execDistributed(
+                ns,
+                script,
+                entry.threads,
+                [entry.host, 0],
+                hosts,
+                cfg,
+                boost,
+            );
+        }
         if (result.workers.length > 0) {
             activePrep.set(entry.host, {
                 target: entry.host,
@@ -850,12 +916,15 @@ async function launchBackgroundPrep(ns, {
                 ram: result.workers.reduce((sum, w) => sum + w.ram, 0),
                 startedAt: started,
                 expectedFinishAt: null,
-                securityExcess: needs.find(n => n.host === entry.host)?.securityExcess ?? null,
-                moneyFraction: needs.find(n => n.host === entry.host)?.moneyFraction ?? null,
+                securityExcess: sourceNeed?.securityExcess ?? null,
+                moneyFraction: sourceNeed?.moneyFraction ?? null,
+                coreAware,
+                coreCount: coreAware ? homeCores : null,
                 workers: result.workers,
             });
         }
     }
+    return stats;
 }
 
 function targetTelemetry(ns, {
@@ -872,6 +941,7 @@ function targetTelemetry(ns, {
     for (const target of ranked.slice(0, TARGET_TELEMETRY_LIMIT)) {
         const snapshot = snapshots.get(target);
         const shape = snapshot?.shape ?? null;
+        const coreShape = snapshot?.coreShape ?? null;
         const live = targetLiveState(ns, target);
         let liveTimes = null;
         try { liveTimes = operationTimes(ns, target); } catch {}
@@ -906,6 +976,13 @@ function targetTelemetry(ns, {
             planningHackTime: shape?.hTime ?? null,
             planningGrowTime: shape?.gTime ?? null,
             planningWeakenTime: shape?.wTime ?? null,
+            planningCoreAwareAvailable: Boolean(coreShape),
+            planningCoreCount: coreShape?.coreCount ?? null,
+            planningCoreBatchRam: coreShape?.ram ?? null,
+            planningCoreGrowThreads: coreShape?.gt ?? null,
+            planningCoreW1Threads: coreShape?.wt1 ?? null,
+            planningCoreW2Threads: coreShape?.wt2 ?? null,
+            planningCoreRamSavings: coreShape && shape ? Math.max(0, shape.ram - coreShape.ram) : null,
             snapshotStale: Boolean(stale),
             snapshotStaleSince: stale?.staleSince ?? null,
             snapshotStaleReason: stale?.reason ?? null,
@@ -913,6 +990,9 @@ function targetTelemetry(ns, {
             probeHackFraction: snapshot?.lastProbe?.currentHackFraction ?? null,
             probeRequiredGrowThreads: snapshot?.lastProbe?.currentGrowThreads ?? null,
             probeGrowThreadShortfall: snapshot?.lastProbe?.growThreadShortfall ?? null,
+            coreProbeCount: snapshot?.lastCoreProbe?.coreCount ?? null,
+            coreProbeRequiredGrowThreads: snapshot?.lastCoreProbe?.currentGrowThreads ?? null,
+            coreProbeGrowThreadShortfall: snapshot?.lastCoreProbe?.growThreadShortfall ?? null,
             liveMoneyFraction: live.moneyFraction,
             liveSecurityExcess: live.securityExcess,
             liveHackTime: liveTimes?.hTime ?? null,
@@ -947,6 +1027,11 @@ export async function main(ns) {
     let snapshotStaleDrains = 0;
     let snapshotRefreshes = 0;
     let plannerSnapshotSwitches = 0;
+    let coreAwareBatchLaunches = 0;
+    let coreAwareBatchFallbacks = 0;
+    let coreAwarePrepLaunches = 0;
+    let coreAwarePrepFallbacks = 0;
+    let lastCoreFallbackReason = null;
     let formulaRankedCache = [];
     let formulaRankRefreshAt = 0;
     let boostRuntime = null;
@@ -966,6 +1051,7 @@ export async function main(ns) {
         }
 
         const planner = selectPlanningContext(ns);
+        const homeCores = homeCpuCores(ns);
         const { hosts } = scanAll(ns);
         const directiveState = getDirectives(ns);
         const directive = directiveState?.directives?.hacking;
@@ -1143,11 +1229,25 @@ export async function main(ns) {
                 : probePlanningSnapshot(ns, target, snapshot);
             if (!probe) continue;
             snapshot.lastProbe = probe;
-            if (probe.requiresDrain) {
+            let coreProbe = null;
+            if (snapshot.coreShape) {
+                try {
+                    coreProbe = homeCoreProbePlanningSnapshot(ns, target, snapshot, planner, homeCores);
+                } catch {}
+            }
+            snapshot.lastCoreProbe = coreProbe;
+            if (probe.requiresDrain || coreProbe?.requiresDrain) {
+                const coreStale = Boolean(coreProbe?.requiresDrain);
                 staleSnapshots.set(target, {
-                    staleSince: probe.observedAt,
-                    reason: "grow-thread-shortfall",
+                    staleSince: coreStale ? coreProbe.observedAt : probe.observedAt,
+                    reason: coreStale ? "core-grow-thread-shortfall" : "grow-thread-shortfall",
                     ...probe,
+                    coreCount: coreProbe?.coreCount ?? null,
+                    plannedCoreCount: coreProbe?.plannedCoreCount ?? null,
+                    coreCurrentGrowThreads: coreProbe?.currentGrowThreads ?? null,
+                    corePlannedGrowThreads: coreProbe?.plannedGrowThreads ?? null,
+                    coreGrowThreadShortfall: coreProbe?.growThreadShortfall ?? null,
+                    requiresDrain: true,
                 });
                 snapshotStaleDrains += 1;
             }
@@ -1242,6 +1342,7 @@ export async function main(ns) {
                         gap,
                         configuredMax,
                         planner,
+                        homeCores,
                     );
                     if (!snapshot) {
                         schedulerState.set(host, "no-shape");
@@ -1275,15 +1376,42 @@ export async function main(ns) {
                 const ramNow = liveRam(ns, hosts, cfg, boost);
                 const schedulerReserveRam = ramNow.schedulableFree * reserveFraction;
                 const schedulerUsableIdleRam = Math.max(0, ramNow.schedulableFree - schedulerReserveRam);
-
-                if (schedulerUsableIdleRam < snapshot.shape.ram) break fill;
-
                 const pool = schedulablePool(ns, hosts, cfg, boost).map(item => ({
                     host: item.host,
                     free: item.free,
                 }));
-                const components = batchComponents(ns, snapshot.shape);
-                const plan = planBatchPlacement(pool, components);
+
+                let launchShape = snapshot.shape;
+                let plan = null;
+                let coreFastPath = false;
+                let fallbackReason = null;
+                const coreShape = snapshot.coreShape;
+
+                if (coreShape?.homeCoreAware && homeCores >= coreShape.coreCount) {
+                    if (schedulerUsableIdleRam + 1e-9 >= coreShape.ram) {
+                        const candidate = planWholeHomeCoreBatch(pool, batchComponents(ns, coreShape));
+                        if (candidate.ok) {
+                            plan = candidate;
+                            launchShape = coreShape;
+                            coreFastPath = true;
+                        } else {
+                            fallbackReason = candidate.reason ?? "core-placement";
+                        }
+                    } else {
+                        fallbackReason = "scheduler-capacity";
+                    }
+                } else if (coreShape) {
+                    fallbackReason = "core-count";
+                }
+
+                if (!plan) {
+                    if (schedulerUsableIdleRam < snapshot.shape.ram) break fill;
+                    plan = planBatchPlacement(pool, batchComponents(ns, snapshot.shape));
+                    if (coreShape) {
+                        coreAwareBatchFallbacks += 1;
+                        lastCoreFallbackReason = fallbackReason ?? "core-unavailable";
+                    }
+                }
 
                 if (!plan.ok) {
                     batchAdmissionDeferrals += 1;
@@ -1296,7 +1424,8 @@ export async function main(ns) {
                         targetRank: rank,
                         activeBatches: active,
                         pipelineDepth: snapshot.depth,
-                        shapeRam: snapshot.shape.ram,
+                        shapeRam: launchShape.ram,
+                        coreFastPath,
                         networkMaxRam: ramNow.max,
                         networkUsedRam: ramNow.used,
                         nominalFreeRam: ramNow.free,
@@ -1327,7 +1456,7 @@ export async function main(ns) {
 
                 const result = await launchBatch(ns, {
                     target: host,
-                    shape: snapshot.shape,
+                    shape: launchShape,
                     plan,
                     baseFinish,
                     gap,
@@ -1362,13 +1491,15 @@ export async function main(ns) {
                         requestedComponentRam: first?.requestedRam ?? 0,
                         launchedComponentRam: first?.launchedRam ?? 0,
                         missingComponentRam: first?.missingRam ?? 0,
-                        totalBatchShapeRam: snapshot.shape.ram,
-                        batchHThreads: snapshot.shape.ht,
-                        batchW1Threads: snapshot.shape.wt1,
-                        batchGThreads: snapshot.shape.gt,
-                        batchW2Threads: snapshot.shape.wt2,
-                        batchExpectedMoney: snapshot.shape.expected,
-                        batchMetric: snapshot.shape.metric,
+                        totalBatchShapeRam: launchShape.ram,
+                        batchHThreads: launchShape.ht,
+                        batchW1Threads: launchShape.wt1,
+                        batchGThreads: launchShape.gt,
+                        batchW2Threads: launchShape.wt2,
+                        batchExpectedMoney: launchShape.expected,
+                        batchMetric: launchShape.metric,
+                        coreFastPath,
+                        coreCount: coreFastPath ? launchShape.coreCount : null,
                         pipelineDepth: snapshot.depth,
                         targetRank: rank,
                         activeBatches: active,
@@ -1404,7 +1535,8 @@ export async function main(ns) {
                             workers: result.workers,
                             startedAt: Date.now(),
                             baseFinish: result.baseFinish,
-                            shape: snapshot.shape,
+                            shape: launchShape,
+                            coreFastPath,
                             partial: true,
                         });
                     }
@@ -1423,10 +1555,12 @@ export async function main(ns) {
                     workers: result.workers,
                     startedAt: Date.now(),
                     baseFinish: result.baseFinish,
-                    shape: snapshot.shape,
+                    shape: launchShape,
+                    coreFastPath,
                     partial: false,
                 });
                 successfulBatchLaunches += 1;
+                if (coreFastPath) coreAwareBatchLaunches += 1;
                 snapshot.used = true;
                 active += 1;
                 activeCounts.set(host, active);
@@ -1438,7 +1572,7 @@ export async function main(ns) {
         const prepReserve = afterHwgw.schedulableFree * reserveFraction;
         const prepUsable = Math.max(0, afterHwgw.schedulableFree - prepReserve);
         if (!admissionPaused) {
-            await launchBackgroundPrep(ns, {
+            const prepStats = await launchBackgroundPrep(ns, {
                 ranked,
                 activeCounts,
                 legacyByTarget: legacy.byTarget,
@@ -1448,7 +1582,10 @@ export async function main(ns) {
                 cfg,
                 freeRam: prepUsable,
                 boost,
+                homeCores,
             });
+            coreAwarePrepLaunches += prepStats.coreLaunches;
+            coreAwarePrepFallbacks += prepStats.coreFallbacks;
         }
 
         let afterAll = liveRam(ns, hosts, cfg, boost);
@@ -1558,6 +1695,8 @@ export async function main(ns) {
             op: prep.op,
             threads: prep.threads,
             ram: prep.ram,
+            coreAware: Boolean(prep.coreAware),
+            coreCount: prep.coreCount ?? null,
             startTimestamp: prep.startedAt,
             expectedCompletionTimestamp: prep.expectedFinishAt,
             securityExcess: prep.securityExcess,
@@ -1581,6 +1720,12 @@ export async function main(ns) {
             plannerFallbackReason: planner.fallbackReason,
             plannerSnapshotSwitches,
             formulaRankRefreshAt: formulaRankRefreshAt || null,
+            homeCpuCores: homeCores,
+            coreAwareBatchLaunches,
+            coreAwareBatchFallbacks,
+            coreAwarePrepLaunches,
+            coreAwarePrepFallbacks,
+            lastCoreFallbackReason,
             target: leadTarget,
             gapMs: gap,
             candidateCount: ranked.length,
@@ -1606,6 +1751,11 @@ export async function main(ns) {
                 planningGrowThreads: meta.plannedGrowThreads ?? null,
                 requiredGrowThreads: meta.currentGrowThreads ?? null,
                 growThreadShortfall: meta.growThreadShortfall ?? null,
+                coreCount: meta.coreCount ?? null,
+                plannedCoreCount: meta.plannedCoreCount ?? null,
+                planningCoreGrowThreads: meta.corePlannedGrowThreads ?? null,
+                requiredCoreGrowThreads: meta.coreCurrentGrowThreads ?? null,
+                coreGrowThreadShortfall: meta.coreGrowThreadShortfall ?? null,
                 planningHackFraction: meta.plannedHackFraction ?? null,
                 observedHackFraction: meta.currentHackFraction ?? null,
                 planningHackingLevel: planningSnapshots.get(target)?.hackingLevel ?? null,
