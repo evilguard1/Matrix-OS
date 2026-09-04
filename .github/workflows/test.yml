@@ -1,6 +1,9 @@
 name: test
 
-on:
+'on':
+  push:
+    branches:
+      - feat/reputation-boost
   pull_request:
   workflow_dispatch:
 
@@ -28,15 +31,14 @@ jobs:
           p = Path("matrix/services/hacking.js")
           text = p.read_text()
           old = '''    shareArgs,
-              shareCapacityThreads,
-              shareProcessMeta,
-          } from "/matrix/lib/reputation-boost.js";'''
-          if old not in text:
-              old = '''    shareArgs,
     shareCapacityThreads,
     shareProcessMeta,
 } from "/matrix/lib/reputation-boost.js";'''
-          new = old.replace('    shareProcessMeta,', '    shareProcessMeta,\n    sameScriptPath,')
+          new = '''    shareArgs,
+    shareCapacityThreads,
+    shareProcessMeta,
+    sameScriptPath,
+} from "/matrix/lib/reputation-boost.js";'''
           if text.count(old) != 1:
               raise SystemExit(f"hacking import marker count={text.count(old)}")
           text = text.replace(old, new, 1)
@@ -47,8 +49,8 @@ jobs:
           new = '''        for (const proc of processes) {
             // ns.ps() normalizes script filenames (notably dropping the leading
             // slash). After a hacking-service restart, surviving H/G/W children
-            // are therefore legacy drain work even though the new process has no
-            // in-memory batch/prep tracker for their PIDs.
+            // are legacy drain work even though the new service has no in-memory
+            // batch/prep tracker for their PIDs.
             if (![H, G, W].some(script => sameScriptPath(proc.filename, script))) continue;
             if (trackedPids.has(proc.pid)) continue;'''
           if text.count(old) != 1:
