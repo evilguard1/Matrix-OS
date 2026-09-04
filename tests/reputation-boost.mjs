@@ -89,7 +89,7 @@ assert.match(hacking, /reclaimBoostShareForRam/);
 assert.match(hacking, /maxBoostReady/);
 assert.match(hacking, /admissionPaused/);
 assert.match(hacking, /activateMaxBoostRequest/);
-assert.match(hacking, /status:\s*"completed"/);
+assert.match(hacking, /runtimeExpired\s*\?\s*"completed"\s*:\s*"cancelled"/);
 assert.match(coordinator, /directives\.reputationBoost/);
 assert.match(worker, /--ends/);
 assert.match(worker, /Date\.now\(\)\s*<\s*endsAt/);
