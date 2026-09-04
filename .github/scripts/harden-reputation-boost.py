@@ -1,0 +1,204 @@
+from pathlib import Path
+
+
+def replace_once(path, old, new):
+    p = Path(path)
+    text = p.read_text()
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{path}: expected one replacement, found {count}\n--- needle ---\n{old}")
+    p.write_text(text.replace(old, new, 1))
+
+
+path = "matrix/services/hacking.js"
+
+replace_once(
+    path,
+    'import { config, event, writeState, clamp, getDirectives } from "/matrix/lib/common.js";',
+    'import { config, event, writeState, readJson, writeJson, clamp, getDirectives } from "/matrix/lib/common.js";',
+)
+
+replace_once(
+    path,
+    '''import {
+    BOOST_MODE_MAX,
+    BOOST_MODE_NORMAL,
+    BOOST_TYPE,
+    isOwnedShareProcess,
+    maxBoostReady,
+    normalShareBudget,
+    normalizeBoostRequest,
+    planShareThreads,
+    shareArgs,
+    shareCapacityThreads,
+    shareProcessMeta,
+} from "/matrix/lib/reputation-boost.js";''',
+    '''import {
+    BOOST_MODE_MAX,
+    BOOST_MODE_NORMAL,
+    BOOST_REQUEST_STATE,
+    BOOST_TYPE,
+    activateMaxBoostRequest,
+    maxBoostReady,
+    normalShareBudget,
+    normalizeBoostRequest,
+    planShareThreads,
+    shareArgs,
+    shareCapacityThreads,
+    shareProcessMeta,
+} from "/matrix/lib/reputation-boost.js";''',
+)
+
+replace_once(
+    path,
+    '''        const requestedBoost = normalizeBoostRequest(
+            directiveState?.directives?.reputationBoost,
+            now,
+        );
+        const automaticShare = !requestedBoost && directive === "share" ? {''',
+    '''        const directiveBoost = normalizeBoostRequest(
+            directiveState?.directives?.reputationBoost,
+            now,
+        );
+        // Coordinator publishes the command into directives; the raw request is
+        // also read as an immediate revocation/expiry guard so cancel cannot be
+        // delayed by a stale directives file.
+        const requestRecord = readJson(ns, BOOST_REQUEST_STATE, null);
+        const requestRecordActive = normalizeBoostRequest(requestRecord, now);
+        const requestRevoked = Boolean(
+            directiveBoost &&
+            requestRecord?.type === BOOST_TYPE &&
+            String(requestRecord?.boostId ?? "") === directiveBoost.boostId &&
+            !requestRecordActive
+        );
+        const requestedBoost = requestRevoked ? null : directiveBoost;
+        const automaticShare = !requestedBoost && directive === "share" ? {''',
+)
+
+replace_once(
+    path,
+    '''        const announcedBoost = requestedBoost ?? automaticShare;
+
+        if (boostRuntime && (!announcedBoost ||
+            announcedBoost.boostId !== boostRuntime.boostId ||
+            announcedBoost.mode !== boostRuntime.mode)) {
+            const prior = boostRuntime;
+            const stopped = await stopOwnedBoostShares(ns, hosts, prior.boostId);
+            await writeState(ns, "boost", {
+                status: prior.source === "command" && now >= prior.endsAt ? "completed" : "cancelled",''',
+    '''        let announcedBoost = requestedBoost ?? automaticShare;
+        const runtimeExpired = Boolean(
+            boostRuntime?.source === "command" &&
+            Number.isFinite(boostRuntime?.endsAt) &&
+            now >= boostRuntime.endsAt
+        );
+
+        if (boostRuntime && (runtimeExpired || !announcedBoost ||
+            announcedBoost.boostId !== boostRuntime.boostId ||
+            announcedBoost.mode !== boostRuntime.mode)) {
+            const prior = boostRuntime;
+            const stopped = await stopOwnedBoostShares(ns, hosts, prior.boostId);
+            const controlLost = Boolean(
+                prior.source === "command" &&
+                !runtimeExpired &&
+                !announcedBoost &&
+                requestRecordActive?.boostId === prior.boostId
+            );
+            if (prior.source === "command" && (runtimeExpired || controlLost)) {
+                await writeJson(ns, BOOST_REQUEST_STATE, {
+                    type: BOOST_TYPE,
+                    status: runtimeExpired ? "completed" : "cancelled",
+                    mode: prior.mode,
+                    boostId: prior.boostId,
+                    requestedAt: prior.requestedAt ?? null,
+                    startedAt: prior.startedAt ?? null,
+                    durationMs: prior.durationMs ?? null,
+                    endsAt: prior.endsAt ?? null,
+                    completedAt: runtimeExpired ? now : null,
+                    cancelledAt: controlLost ? now : null,
+                    reason: controlLost ? "control-plane-lost" : null,
+                });
+                announcedBoost = null;
+            }
+            await writeState(ns, "boost", {
+                status: runtimeExpired ? "completed" : "cancelled",''',
+)
+
+replace_once(
+    path,
+    '''                durationMs: prior.durationMs ?? null,
+                startedAt: prior.startedAt,
+                endsAt: prior.source === "command" ? prior.endsAt : null,''',
+    '''                durationMs: prior.durationMs ?? null,
+                requestedAt: prior.requestedAt ?? null,
+                startedAt: prior.startedAt ?? null,
+                endsAt: prior.source === "command" ? prior.endsAt ?? null : null,''',
+)
+
+replace_once(
+    path,
+    '''        if (drainReady && boost && !boost.drainedAt) boost.drainedAt = Date.now();
+        const boostPhase = boost?.mode === BOOST_MODE_MAX
+            ? (drainReady ? "sharing" : "draining")
+            : boost ? "sharing-idle" : null;
+        const shouldShare = Boolean(boost && (boost.mode === BOOST_MODE_NORMAL || drainReady));''',
+    '''        if (drainReady && boost && !boost.drainedAt) {
+            const drainedAt = Date.now();
+            boost.drainedAt = drainedAt;
+            if (boost.mode === BOOST_MODE_MAX && boost.source === "command" && !Number.isFinite(boost.endsAt)) {
+                const activated = activateMaxBoostRequest(boost, drainedAt);
+                if (activated) {
+                    Object.assign(boost, activated);
+                    await writeJson(ns, BOOST_REQUEST_STATE, activated);
+                } else {
+                    boostStats.error = "max-activation-failed";
+                }
+            }
+        }
+        const boostPhase = boost?.mode === BOOST_MODE_MAX
+            ? (drainReady ? "sharing" : "draining")
+            : boost ? "sharing-idle" : null;
+        const maxTimingReady = boost?.mode !== BOOST_MODE_MAX ||
+            boost?.source !== "command" || Number.isFinite(boost?.endsAt);
+        const shouldShare = Boolean(
+            boost && maxTimingReady && (boost.mode === BOOST_MODE_NORMAL || drainReady)
+        );''',
+)
+
+replace_once(
+    path,
+    '''                durationMs: boost.durationMs ?? null,
+                startedAt: boost.startedAt,
+                activatedAt: boost.activatedAt,''',
+    '''                durationMs: boost.durationMs ?? null,
+                requestedAt: boost.requestedAt ?? null,
+                startedAt: boost.startedAt ?? null,
+                activatedAt: boost.activatedAt,''',
+)
+
+# Harden the pre-existing Formula rank cache while this scheduler file is
+# already changing: a removed candidate must invalidate the cache.
+replace_once(
+    path,
+    '''            const candidateSetChanged = cachedEligible.length !== candidates.length;
+            if (now >= formulaRankRefreshAt || formulaRankedCache.length === 0 || candidateSetChanged) {
+                formulaRankedCache = rankTargets(ns, hosts, cfg, mode, planner);
+                formulaRankRefreshAt = now + FORMULA_RANK_REFRESH_MS;
+            }
+            ranked = formulaRankedCache;''',
+    '''            const candidateSetChanged = cachedEligible.length !== formulaRankedCache.length ||
+                cachedEligible.length !== candidates.length;
+            if (now >= formulaRankRefreshAt || formulaRankedCache.length === 0 || candidateSetChanged) {
+                formulaRankedCache = rankTargets(ns, hosts, cfg, mode, planner);
+                formulaRankRefreshAt = now + FORMULA_RANK_REFRESH_MS;
+                ranked = formulaRankedCache;
+            } else {
+                ranked = cachedEligible;
+            }''',
+)
+
+for version_path in ("manifest.json", "matrix/config.json"):
+    replace_once(version_path, '"version": "1.9.0"', '"version": "1.10.0"')
+replace_once("matrix/VERSION.txt", "MATRIX-OS 1.9.0", "MATRIX-OS 1.10.0")
+replace_once("matrix/lib/common.js", 'version: "1.9.0"', 'version: "1.10.0"')
+replace_once("package.json", '"version": "1.9.0"', '"version": "1.10.0"')
