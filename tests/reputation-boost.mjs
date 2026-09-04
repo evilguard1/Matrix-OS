@@ -5,6 +5,7 @@ import {
     BOOST_MODE_NORMAL,
     BOOST_TYPE,
     SHARE_SCRIPT,
+    activateMaxBoostRequest,
     isOwnedShareProcess,
     makeBoostRequest,
     makeCancelRequest,
@@ -26,16 +27,30 @@ assert.equal(parseDuration("20"), null);
 const normal = makeBoostRequest("rep", 600_000, 1_000, "boost-a");
 assert.equal(normal.type, BOOST_TYPE);
 assert.equal(normal.mode, BOOST_MODE_NORMAL);
+assert.equal(normal.requestedAt, 1_000);
+assert.equal(normal.startedAt, 1_000);
 assert.equal(normal.endsAt, 601_000);
 
 const maximum = makeBoostRequest("max", 1_200_000, 2_000, "boost-b");
 assert.equal(maximum.mode, BOOST_MODE_MAX);
-assert.equal(maximum.endsAt, 1_202_000);
+assert.equal(maximum.requestedAt, 2_000);
+assert.equal(maximum.startedAt, null);
+assert.equal(maximum.endsAt, null, "MAX duration must not start while HWGW is draining");
+const draining = normalizeBoostRequest(maximum, 9_999_999);
+assert.equal(draining.boostId, "boost-b");
+assert.equal(draining.endsAt, null, "a long drain must not consume the requested share duration");
+assert.equal(draining.remainingMs, 1_200_000);
+const activatedMaximum = activateMaxBoostRequest(maximum, 9_999_999);
+assert.equal(activatedMaximum.startedAt, 9_999_999);
+assert.equal(activatedMaximum.endsAt, 11_199_999);
+assert.equal(normalizeBoostRequest(activatedMaximum, 10_099_999).remainingMs, 1_100_000);
+assert.equal(normalizeBoostRequest(activatedMaximum, activatedMaximum.endsAt), null,
+    "MAX must fail safe back to normal after its all-share duration");
 
 const active = normalizeBoostRequest(normal, 101_000);
 assert.equal(active.boostId, "boost-a");
 assert.equal(active.remainingMs, 500_000);
-assert.equal(normalizeBoostRequest(normal, normal.endsAt), null, "expiry must fail safe to normal mode");
+assert.equal(normalizeBoostRequest(normal, normal.endsAt), null, "normal boost expiry must fail safe to normal mode");
 assert.equal(normalizeBoostRequest(makeCancelRequest(normal, 5_000), 5_001), null);
 
 const args = shareArgs(normal, 3);
@@ -73,6 +88,8 @@ assert.doesNotMatch(hacking, /killall/i);
 assert.match(hacking, /reclaimBoostShareForRam/);
 assert.match(hacking, /maxBoostReady/);
 assert.match(hacking, /admissionPaused/);
+assert.match(hacking, /activateMaxBoostRequest/);
+assert.match(hacking, /status:\s*"completed"/);
 assert.match(coordinator, /directives\.reputationBoost/);
 assert.match(worker, /--ends/);
 assert.match(worker, /Date\.now\(\)\s*<\s*endsAt/);
