@@ -1,4 +1,4 @@
-name: workflow-smoke
+name: legacy-drain-builder
 
 'on':
   push:
@@ -6,10 +6,27 @@ name: workflow-smoke
       - feat/reputation-boost
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  smoke:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - run: echo ok
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/reputation-boost
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: python .github/apply-legacy-drain-fix.py
+      - run: npm ci
+      - run: npm test
+      - name: Commit fixed candidate
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Reconstruct legacy HGW workers after hacking restart"
+          git push origin HEAD:feat/reputation-boost
