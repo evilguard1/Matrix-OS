@@ -24,6 +24,17 @@ function normalizeMode(mode) {
     return null;
 }
 
+function normalizeScriptPath(value) {
+    return String(value ?? "")
+        .trim()
+        .replace(/\\/g, "/")
+        .replace(/^\/+/, "");
+}
+
+export function isShareScriptPath(value) {
+    return normalizeScriptPath(value) === normalizeScriptPath(SHARE_SCRIPT);
+}
+
 export function parseDuration(value) {
     const raw = (Array.isArray(value) ? value.join(" ") : String(value ?? ""))
         .trim()
@@ -120,8 +131,6 @@ export function normalizeBoostRequest(raw, now = Date.now()) {
     const requestedAt = finite(source.requestedAt, finite(source.startedAt, NaN));
     if (!mode || !boostId || durationMs <= 0 || !Number.isFinite(requestedAt)) return null;
 
-    // MAX mode's requested duration belongs to the all-share phase, not to the
-    // drain. A fresh request therefore intentionally has no end timestamp yet.
     if (mode === BOOST_MODE_MAX && requestStatus !== "active") {
         return {
             type: BOOST_TYPE,
@@ -167,7 +176,7 @@ export function shareArgs(boost, slot = 0) {
 
 export function shareProcessMeta(proc) {
     const source = objectValue(proc);
-    if (String(source.filename ?? "") !== SHARE_SCRIPT) return null;
+    if (!isShareScriptPath(source.filename)) return null;
     const args = Array.isArray(source.args) ? source.args.map(value => String(value)) : [];
     const valueAfter = key => {
         const index = args.indexOf(key);
