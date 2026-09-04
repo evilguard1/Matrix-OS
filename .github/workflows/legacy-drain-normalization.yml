@@ -1,0 +1,107 @@
+name: legacy-drain-normalization
+
+'on':
+  push:
+    branches:
+      - feat/reputation-boost
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/reputation-boost
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Fix legacy HGW path reconstruction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path("matrix/services/hacking.js")
+          text = p.read_text()
+          old = '''    shareArgs,
+    shareCapacityThreads,
+    shareProcessMeta,
+} from "/matrix/lib/reputation-boost.js";'''
+          new = '''    shareArgs,
+    shareCapacityThreads,
+    shareProcessMeta,
+    sameScriptPath,
+} from "/matrix/lib/reputation-boost.js";'''
+          if text.count(old) != 1:
+              raise SystemExit("hacking import marker not found exactly once")
+          text = text.replace(old, new, 1)
+
+          old = '''        for (const proc of processes) {
+            if (![H, G, W].includes(proc.filename)) continue;
+            if (trackedPids.has(proc.pid)) continue;'''
+          new = '''        for (const proc of processes) {
+            // ns.ps() normalizes script filenames (for example dropping the
+            // leading slash). A replacement hacking service has no in-memory
+            // batch tracker, so surviving H/G/W workers must be reconstructed
+            // from the process table using normalized path comparison.
+            if (![H, G, W].some(script => sameScriptPath(proc.filename, script))) continue;
+            if (trackedPids.has(proc.pid)) continue;'''
+          if text.count(old) != 1:
+              raise SystemExit("legacy worker marker not found exactly once")
+          p.write_text(text.replace(old, new, 1))
+
+          p = Path("tests/reputation-boost.mjs")
+          text = p.read_text()
+          old = '''    shareCapacityThreads,
+    shareProcessMeta,
+} from "../matrix/lib/reputation-boost.js";'''
+          new = '''    shareCapacityThreads,
+    shareProcessMeta,
+    sameScriptPath,
+} from "../matrix/lib/reputation-boost.js";'''
+          if text.count(old) != 1:
+              raise SystemExit("test import marker not found exactly once")
+          text = text.replace(old, new, 1)
+
+          marker = '''assert.equal(isOwnedShareProcess({ ...owned, filename: "/matrix/workers/other.js" }, "boost-a"), false,
+    "ownership matching must remain script-specific");
+'''
+          insertion = marker + '''assert.equal(sameScriptPath("matrix/workers/hack.js", "/matrix/workers/hack.js"), true,
+    "legacy H/G/W reconstruction must tolerate ns.ps dropping the leading slash");
+assert.equal(sameScriptPath("\\\\matrix\\\\workers\\\\grow.js", "/matrix/workers/grow.js"), true,
+    "legacy H/G/W reconstruction must tolerate normalized separators");
+assert.equal(sameScriptPath("matrix/workers/share.js", "/matrix/workers/weaken.js"), false,
+    "legacy reconstruction must remain worker-script-specific");
+'''
+          if text.count(marker) != 1:
+              raise SystemExit("path test marker not found exactly once")
+          text = text.replace(marker, insertion, 1)
+
+          marker = '''assert.match(hacking, /maxBoostReady/);
+assert.match(hacking, /admissionPaused/);'''
+          replacement = '''assert.match(hacking, /maxBoostReady/);
+assert.match(hacking, /sameScriptPath\\(proc\\.filename, script\\)/,
+    "legacy drain reconstruction must normalize ns.ps H/G/W filenames");
+assert.doesNotMatch(hacking, /\\[H, G, W\\]\\.includes\\(proc\\.filename\\)/,
+    "MAX drain must not use leading-slash-sensitive legacy worker matching");
+assert.match(hacking, /admissionPaused/);'''
+          if text.count(marker) != 1:
+              raise SystemExit("static assertion marker not found exactly once")
+          p.write_text(text.replace(marker, replacement, 1))
+          PY
+      - run: npm ci
+      - run: npm test
+      - name: Commit legacy drain fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/legacy-drain-normalization.yml
+          git add -A
+          git commit -m "Reconstruct legacy HGW workers after hacking restart"
+          git push origin HEAD:feat/reputation-boost
