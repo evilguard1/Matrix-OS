@@ -12,6 +12,16 @@ import {
 const DEFAULT_SEED_INTERVAL_MS = 120_000;
 const LOOP_MS = 2_000;
 const DEFAULT_MAX_DEPTH = 5;
+// The current worker historically parsed numeric depth 0 through `value || -1`,
+// which resets that legitimate first-hop value and can make a bounded walk
+// effectively unbounded. The controller therefore uses a strictly-positive
+// internal depth domain. Home starts at 1; Darknet server depth -1 maps to 2;
+// game depth 0 maps to 3, so logical depth N maps to N+3. Worker maxDepth is
+// capped at 12, therefore the public controller depth is conservatively capped
+// at 9 until the worker parser itself is replaced.
+const WORKER_DEPTH_OFFSET = 3;
+const WORKER_SEED_DEPTH = 1;
+const MAX_LOGICAL_DEPTH = 9;
 
 function option(args, name, fallback) {
     const index = args.indexOf(name);
@@ -60,11 +70,12 @@ function nodeStats(knowledge) {
 }
 
 async function seed(ns, maxDepth) {
+    const workerMaxDepth = maxDepth + WORKER_DEPTH_OFFSET;
     const pid = ns.run(
         DARKNET_WORKER,
         1,
-        "--depth", -1,
-        "--max-depth", maxDepth,
+        "--depth", WORKER_SEED_DEPTH,
+        "--max-depth", workerMaxDepth,
         "--lineage", JSON.stringify(["home"]),
     );
     return pid || 0;
@@ -77,7 +88,7 @@ export async function main(ns) {
         option(args, "--max-depth", DEFAULT_MAX_DEPTH),
         DEFAULT_MAX_DEPTH,
         0,
-        12,
+        MAX_LOGICAL_DEPTH,
     ));
     const seedIntervalMs = Math.floor(boundedNumber(
         option(args, "--seed-ms", DEFAULT_SEED_INTERVAL_MS),
@@ -115,6 +126,7 @@ export async function main(ns) {
                 activeSeedPid: 0,
                 lastSeedAt,
                 maxDepth,
+                workerDepthOffset: WORKER_DEPTH_OFFSET,
                 seedIntervalMs,
                 error: null,
             });
@@ -130,6 +142,7 @@ export async function main(ns) {
                 activeSeedPid: 0,
                 lastSeedAt,
                 maxDepth,
+                workerDepthOffset: WORKER_DEPTH_OFFSET,
                 seedIntervalMs,
                 error: "worker-missing",
             });
@@ -156,6 +169,7 @@ export async function main(ns) {
             navigator: DARKNET_NAVIGATOR,
             port: DARKNET_PORT,
             maxDepth,
+            workerDepthOffset: WORKER_DEPTH_OFFSET,
             seedIntervalMs,
             ...stats,
             cacheOpened: Number(knowledge?.cacheOpened ?? 0),
