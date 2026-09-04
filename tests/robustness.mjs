@@ -27,7 +27,15 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname).replac
 const libDir = path.join(root, "matrix/lib");
 
 // Libraries that take an `ns` and therefore cannot be called without a game.
-const NEEDS_NS = new Set(["common.js", "network.js", "dispatch.js", "hud.js", "singleton.js", "solvers.js"]);
+const NEEDS_NS = new Set([
+    "common.js",
+    "network.js",
+    "dispatch.js",
+    "hud.js",
+    "singleton.js",
+    "solvers.js",
+    "hacking-planner.js",
+]);
 
 const HOSTILE = [
     [], [null], [undefined], [{}], [null, null], [{}, {}],

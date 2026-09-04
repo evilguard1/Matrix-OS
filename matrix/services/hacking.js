@@ -7,6 +7,14 @@ import {
     planBatchPlacement,
 } from "/matrix/lib/batch.js";
 import { homeReserveFor } from "/matrix/lib/capabilities.js";
+import {
+    PLANNER_NATIVE,
+    PLANNER_FORMULAS,
+    formulaBatchShape,
+    formulaProbePlanningSnapshot,
+    formulaTargetScore,
+    selectPlanningContext,
+} from "/matrix/lib/hacking-planner.js";
 
 const H = "/matrix/workers/hack.js";
 const G = "/matrix/workers/grow.js";
@@ -19,6 +27,7 @@ const DEFERRAL_RING = 16;
 const TARGET_TELEMETRY_LIMIT = 40;
 const LAUNCH_MARGIN_MS = 300;
 const SNAPSHOT_PROBE_SECURITY_EPSILON = 0.01;
+const FORMULA_RANK_REFRESH_MS = 5_000;
 
 function pushBounded(list, value, limit) {
     list.push(value);
@@ -51,8 +60,13 @@ function xpScore(ns, h) {
     return req * chance / hackTime;
 }
 
-function rankTargets(ns, hosts, cfg, mode = "money") {
-    const scorer = mode === "xp" ? xpScore : targetScore;
+function rankTargets(ns, hosts, cfg, mode = "money", planner = null) {
+    const formulaMoney = mode === "money" && planner?.kind === PLANNER_FORMULAS;
+    const scorer = mode === "xp"
+        ? xpScore
+        : formulaMoney
+            ? (_ns, h) => formulaTargetScore(ns, h, cfg, planner)
+            : targetScore;
     return candidateTargets(ns, hosts, cfg)
         .map(h => ({ host: h, score: scorer(ns, h) }))
         .sort((a, b) => b.score - a.score)
@@ -113,6 +127,9 @@ function operationTimes(ns, target) {
     };
 }
 
+// Validated native planner. Keep this implementation intact as the capability
+// fallback; Formulas.exe only replaces clean-state planning/ranking, never the
+// execution layer or the launch-time native timing resample.
 function batchShape(ns, target, cfg) {
     const max = ns.getServerMaxMoney(target);
     const chance = clamp(ns.hackAnalyzeChance(target), 0.0001, 1);
@@ -170,9 +187,12 @@ function batchShape(ns, target, cfg) {
     return best;
 }
 
-function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax) {
+function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner) {
     const live = targetLiveState(ns, target);
-    const shape = batchShape(ns, target, cfg);
+    const useFormulas = planner?.kind === PLANNER_FORMULAS;
+    const shape = useFormulas
+        ? formulaBatchShape(ns, target, cfg, planner)
+        : batchShape(ns, target, cfg);
     if (!shape) return null;
     const depth = pipelineDepth({
         weakenTimeMs: shape.wTime,
@@ -181,11 +201,14 @@ function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax) {
     });
     return {
         target,
+        planner: useFormulas ? PLANNER_FORMULAS : PLANNER_NATIVE,
         capturedAt: Date.now(),
         hackingLevel: ns.getHackingLevel(),
         moneyFraction: live.moneyFraction,
         securityExcess: live.securityExcess,
-        hackPerThread: clamp(ns.hackAnalyze(target), 0, 1),
+        hackPerThread: useFormulas
+            ? clamp(shape.hackPerThread, 0, 1)
+            : clamp(ns.hackAnalyze(target), 0, 1),
         shape,
         depth,
         used: false,
@@ -194,8 +217,8 @@ function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax) {
 }
 
 /**
- * Probe whether a stable planning snapshot still has enough grow threads under
- * the CURRENT player/global hacking conditions.
+ * Probe whether a stable native planning snapshot still has enough grow threads
+ * under the CURRENT player/global hacking conditions.
  *
  * We intentionally probe only when the target is essentially at minimum
  * security. hackAnalyze() and growthAnalyze() both depend on live security, so
@@ -222,6 +245,7 @@ function probePlanningSnapshot(ns, target, snapshot) {
 
     return {
         observedAt: Date.now(),
+        planner: PLANNER_NATIVE,
         hackingLevel: ns.getHackingLevel(),
         securityExcess: live.securityExcess,
         currentHackPerThread,
@@ -373,6 +397,9 @@ async function launchBatch(ns, {
     schedulerReserveRam,
     schedulerUsableIdleRam,
 }) {
+    // Execution timing remains native and live. The planner may predict from a
+    // stable clean Formula snapshot, but dispatch always resamples real operation
+    // times and applies one coherent finish shift to preserve H/W1/G/W2 order.
     const liveTimes = operationTimes(ns, target);
     const original = eventFinishes(baseFinish, gap);
     const now = Date.now();
@@ -656,6 +683,7 @@ function targetTelemetry(ns, {
             activeBatches: active,
             pipelineDepth: depth,
             availableSlots: depth == null ? null : Math.max(0, depth - active),
+            planningPlanner: snapshot?.planner ?? null,
             planningSnapshotCapturedAt: snapshot?.capturedAt ?? null,
             planningHackingLevel: snapshot?.hackingLevel ?? null,
             planningHackPerThread: snapshot?.hackPerThread ?? null,
@@ -712,6 +740,9 @@ export async function main(ns) {
     let failedThreadsTotal = 0;
     let snapshotStaleDrains = 0;
     let snapshotRefreshes = 0;
+    let plannerSnapshotSwitches = 0;
+    let formulaRankedCache = [];
+    let formulaRankRefreshAt = 0;
 
     while (true) {
         const cfg = config(ns);
@@ -724,6 +755,7 @@ export async function main(ns) {
             continue;
         }
 
+        const planner = selectPlanningContext(ns);
         const { hosts } = scanAll(ns);
         const directive = getDirectives(ns)?.directives?.hacking;
         await applyShare(ns, hosts, cfg, directive === "share");
@@ -734,14 +766,39 @@ export async function main(ns) {
         const legacy = legacyWorkers(ns, hosts, trackedPids);
         const activeCounts = activeByTarget(activeBatches);
 
-        // Stable target-state planning must not mean permanently frozen
-        // player/global assumptions. Probe only at near-minimum security and
-        // drain a target when its fixed grow threads can no longer recover the
-        // money removed by its fixed hack threads under current conditions.
+        // A capability change is a generation boundary. Existing in-flight
+        // batches keep their original immutable shape and drain normally; only
+        // clean idle targets may capture a snapshot from the new planner.
         for (const [target, snapshot] of planningSnapshots.entries()) {
+            const snapshotPlanner = snapshot.planner ?? PLANNER_NATIVE;
+            if (snapshotPlanner !== planner.kind && !staleSnapshots.has(target)) {
+                plannerSnapshotSwitches += 1;
+                const inFlight = activeCounts.get(target) ?? 0;
+                if (inFlight > 0) {
+                    const observedAt = Date.now();
+                    staleSnapshots.set(target, {
+                        staleSince: observedAt,
+                        observedAt,
+                        reason: "planner-switch",
+                        fromPlanner: snapshotPlanner,
+                        toPlanner: planner.kind,
+                        hackingLevel: ns.getHackingLevel(),
+                        requiresDrain: true,
+                    });
+                    snapshotStaleDrains += 1;
+                } else {
+                    planningSnapshots.delete(target);
+                    nextFinishByTarget.delete(target);
+                    staleRefreshPending.add(target);
+                }
+                continue;
+            }
+
             if (staleSnapshots.has(target)) continue;
             if ((activeCounts.get(target) ?? 0) <= 0) continue;
-            const probe = probePlanningSnapshot(ns, target, snapshot);
+            const probe = snapshotPlanner === PLANNER_FORMULAS
+                ? formulaProbePlanningSnapshot(ns, target, snapshot, planner)
+                : probePlanningSnapshot(ns, target, snapshot);
             if (!probe) continue;
             snapshot.lastProbe = probe;
             if (probe.requiresDrain) {
@@ -761,7 +818,24 @@ export async function main(ns) {
             }
         }
 
-        const ranked = rankTargets(ns, hosts, cfg, mode);
+        let ranked;
+        if (mode === "money" && planner.kind === PLANNER_FORMULAS) {
+            const now = Date.now();
+            const candidates = candidateTargets(ns, hosts, cfg);
+            const eligible = new Set(candidates);
+            const cachedEligible = formulaRankedCache.filter(host => eligible.has(host));
+            const candidateSetChanged = cachedEligible.length !== candidates.length;
+            if (now >= formulaRankRefreshAt || formulaRankedCache.length === 0 || candidateSetChanged) {
+                formulaRankedCache = rankTargets(ns, hosts, cfg, mode, planner);
+                formulaRankRefreshAt = now + FORMULA_RANK_REFRESH_MS;
+            }
+            ranked = formulaRankedCache;
+        } else {
+            ranked = rankTargets(ns, hosts, cfg, mode, planner);
+            formulaRankedCache = [];
+            formulaRankRefreshAt = 0;
+        }
+
         const rankMap = new Map(ranked.map((host, index) => [host, index + 1]));
         const maxTargets = Math.max(1, cfg.hacking?.maxTargets ?? 32);
         const gap = Math.max(1, cfg.hacking?.batchGapMs ?? 120);
@@ -821,6 +895,7 @@ export async function main(ns) {
                         cfg,
                         gap,
                         configuredMax,
+                        planner,
                     );
                     if (!snapshot) {
                         schedulerState.set(host, "no-shape");
@@ -1053,6 +1128,11 @@ export async function main(ns) {
             status: ready.length || activeBatches.length ? "batching" : "preparing",
             scheduler: "rolling",
             phase: "HWGW-ROLLING",
+            planner: planner.kind,
+            formulasAvailable: planner.formulasAvailable,
+            plannerFallbackReason: planner.fallbackReason,
+            plannerSnapshotSwitches,
+            formulaRankRefreshAt: formulaRankRefreshAt || null,
             target: leadTarget,
             gapMs: gap,
             candidateCount: ranked.length,
@@ -1073,13 +1153,15 @@ export async function main(ns) {
                 target,
                 staleSince: meta.staleSince,
                 reason: meta.reason,
-                planningGrowThreads: meta.plannedGrowThreads,
-                requiredGrowThreads: meta.currentGrowThreads,
-                growThreadShortfall: meta.growThreadShortfall,
-                planningHackFraction: meta.plannedHackFraction,
-                observedHackFraction: meta.currentHackFraction,
+                fromPlanner: meta.fromPlanner ?? null,
+                toPlanner: meta.toPlanner ?? null,
+                planningGrowThreads: meta.plannedGrowThreads ?? null,
+                requiredGrowThreads: meta.currentGrowThreads ?? null,
+                growThreadShortfall: meta.growThreadShortfall ?? null,
+                planningHackFraction: meta.plannedHackFraction ?? null,
+                observedHackFraction: meta.currentHackFraction ?? null,
                 planningHackingLevel: planningSnapshots.get(target)?.hackingLevel ?? null,
-                observedHackingLevel: meta.hackingLevel,
+                observedHackingLevel: meta.hackingLevel ?? null,
                 activeBatchesRemaining: refreshedCounts.get(target) ?? 0,
             })),
             recentAdmissionDeferrals,
