@@ -1,4 +1,4 @@
-import { PLANNER_FORMULAS, formulaServer } from "/matrix/lib/hacking-planner.js";
+import { PLANNER_FORMULAS, formulaServer } from "./hacking-planner.js";
 
 export const CORE_HOST = "home";
 
