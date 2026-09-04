@@ -1,5 +1,5 @@
 {
-  "version": "1.10.0",
+  "version": "1.10.1",
   "masterEnabled": true,
   "mode": "balanced",
   "ui": {
@@ -37,6 +37,7 @@
     "minHackFraction": 0.05,
     "maxHackFraction": 0.4,
     "maxBatches": null,
+    "maxTargets": 1024,
     "minTargetMoney": 1000000
   },
   "progression": {
