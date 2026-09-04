@@ -7,6 +7,7 @@ import {
     SHARE_SCRIPT,
     activateMaxBoostRequest,
     isOwnedShareProcess,
+    isShareScriptPath,
     makeBoostRequest,
     makeCancelRequest,
     maxBoostReady,
@@ -60,6 +61,15 @@ assert.equal(shareProcessMeta(owned).slot, 3);
 assert.equal(isOwnedShareProcess(owned, "boost-a"), true);
 assert.equal(isOwnedShareProcess(owned, "boost-b"), false);
 assert.equal(isOwnedShareProcess({ filename: SHARE_SCRIPT, args: [] }, "boost-a"), false);
+assert.equal(isShareScriptPath(SHARE_SCRIPT), true);
+assert.equal(isShareScriptPath("matrix/workers/share.js"), true,
+    "ns.ps filename without a leading slash must still be recognized");
+assert.equal(isShareScriptPath("\\matrix\\workers\\share.js"), true,
+    "path separators must not break ownership recognition");
+assert.equal(isOwnedShareProcess({ ...owned, filename: "matrix/workers/share.js" }, "boost-a"), true,
+    "ownership matching must tolerate ns.ps path normalization");
+assert.equal(isOwnedShareProcess({ ...owned, filename: "/matrix/workers/other.js" }, "boost-a"), false,
+    "ownership matching must remain script-specific");
 
 assert.equal(shareCapacityThreads({ maxRam: 64, usedRam: 20, reserveRam: 8, ownedRam: 0, scriptRam: 4 }), 9);
 assert.equal(shareCapacityThreads({ maxRam: 64, usedRam: 52, reserveRam: 8, ownedRam: 16, scriptRam: 4 }), 5,
@@ -99,4 +109,4 @@ assert.match(coordinator, /directives\.reputationBoost/);
 assert.match(worker, /--ends/);
 assert.match(worker, /Date\.now\(\)\s*<\s*endsAt/);
 
-console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, drain gating, verified selective cleanup.");
+console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, drain gating, normalized-path cleanup.");
