@@ -7,6 +7,10 @@ function finite(value, fallback = 0) {
     return Number.isFinite(n) ? n : fallback;
 }
 
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, finite(value, 0)));
+}
+
 export function normalizeCores(value) {
     return Math.max(1, Math.floor(finite(value, 1)));
 }
@@ -83,6 +87,61 @@ export function homeCoreBatchVariant(ns, target, baseline, planner, cores) {
 
     if (!Number.isFinite(gt) || gt < 1) return null;
     return finishVariant(ns, baseline, gt, c);
+}
+
+/**
+ * Re-probe a stored core-aware snapshot under the current player/core state.
+ * Callers retain the same near-min-security guard used by the canonical snapshot
+ * probe before invoking this for a native planner. Formula mode is reconstructed
+ * from a synthetic clean server and is therefore independent of transient money.
+ */
+export function homeCoreProbePlanningSnapshot(ns, target, snapshot, planner, cores) {
+    const baseline = snapshot?.shape;
+    const planned = snapshot?.coreShape;
+    if (!baseline || !planned?.homeCoreAware) return null;
+
+    const c = normalizeCores(cores);
+    let currentHackPerThread;
+    let currentHackFraction;
+    let currentGrowThreads;
+
+    if (planner?.kind === PLANNER_FORMULAS && planner.player) {
+        const serverFacts = facts(ns, target);
+        if (!(serverFacts.moneyMax > 0)) return null;
+        const clean = formulaServer(ns, serverFacts);
+        currentHackPerThread = clamp(ns.formulas.hacking.hackPercent(clean, planner.player), 0, 1);
+        currentHackFraction = clamp(currentHackPerThread * baseline.ht, 0.001, 0.90);
+        const postHack = formulaServer(ns, serverFacts, {
+            moneyAvailable: serverFacts.moneyMax * (1 - currentHackFraction),
+            hackDifficulty: serverFacts.minDifficulty,
+        });
+        currentGrowThreads = Math.ceil(ns.formulas.hacking.growThreads(
+            postHack,
+            planner.player,
+            serverFacts.moneyMax,
+            c,
+        ));
+    } else {
+        currentHackPerThread = clamp(ns.hackAnalyze(target), 0, 1);
+        currentHackFraction = clamp(currentHackPerThread * baseline.ht, 0.001, 0.90);
+        const factor = 1 / Math.max(0.10, 1 - currentHackFraction);
+        currentGrowThreads = Math.ceil(ns.growthAnalyze(target, factor, c));
+    }
+
+    if (!Number.isFinite(currentGrowThreads) || currentGrowThreads < 1) return null;
+    return {
+        observedAt: Date.now(),
+        coreHost: CORE_HOST,
+        coreCount: c,
+        plannedCoreCount: normalizeCores(planned.coreCount),
+        currentHackPerThread,
+        currentHackFraction,
+        plannedHackFraction: baseline.f,
+        currentGrowThreads,
+        plannedGrowThreads: planned.gt,
+        growThreadShortfall: Math.max(0, currentGrowThreads - planned.gt),
+        requiresDrain: currentGrowThreads > planned.gt || c < normalizeCores(planned.coreCount),
+    };
 }
 
 function clonePool(hosts = []) {
