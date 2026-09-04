@@ -24,15 +24,19 @@ function normalizeMode(mode) {
     return null;
 }
 
-function normalizeScriptPath(value) {
+export function normalizeScriptPath(value) {
     return String(value ?? "")
         .trim()
         .replace(/\\/g, "/")
         .replace(/^\/+/, "");
 }
 
+export function sameScriptPath(a, b) {
+    return normalizeScriptPath(a) === normalizeScriptPath(b);
+}
+
 export function isShareScriptPath(value) {
-    return normalizeScriptPath(value) === normalizeScriptPath(SHARE_SCRIPT);
+    return sameScriptPath(value, SHARE_SCRIPT);
 }
 
 export function parseDuration(value) {
