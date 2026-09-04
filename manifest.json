@@ -42,6 +42,8 @@
     { "path": "matrix/lib/dispatch.js", "stage": "early" },
     { "path": "matrix/workers/contract.js", "stage": "early" },
     { "path": "matrix/lib/hacking-planner.js", "stage": "full" },
+    { "path": "matrix/lib/reputation-boost.js", "stage": "full" },
+    { "path": "matrix/boost.js", "stage": "full" },
     { "path": "matrix/services/root.js", "stage": "full" },
     { "path": "matrix/services/hacking.js", "stage": "full" },
     { "path": "matrix/services/telemetry.js", "stage": "full" },

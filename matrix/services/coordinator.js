@@ -1,6 +1,7 @@
 import { config, writeState, writeJson, readJson, STATE_DIR, formatMoney } from "/matrix/lib/common.js";
 import { homeRamUpgradeCost as homeRamCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
+import { BOOST_REQUEST_STATE, normalizeBoostRequest } from "/matrix/lib/reputation-boost.js";
 
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
@@ -418,6 +419,11 @@ export async function main(ns) {
 
             const result = evaluateObjective(data);
             const plan = planDirectives({ ...data, objective: result });
+            const reputationBoost = normalizeBoostRequest(
+                readJson(ns, BOOST_REQUEST_STATE, null),
+                Date.now(),
+            );
+            if (reputationBoost) plan.directives.reputationBoost = reputationBoost;
 
             await writeJson(ns, COORDINATOR_STATE, {
                 service: "coordinator",
