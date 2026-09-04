@@ -19,6 +19,11 @@ import {
     shareCapacityThreads,
     shareProcessMeta,
 } from "../matrix/lib/reputation-boost.js";
+import {
+    DIRECTIVES,
+    durableReputationBoost,
+    getDirectives,
+} from "../matrix/lib/common.js";
 
 assert.equal(parseDuration("10m"), 600_000);
 assert.equal(parseDuration("20 minutes"), 1_200_000);
@@ -47,6 +52,49 @@ assert.equal(activatedMaximum.endsAt, 11_199_999);
 assert.equal(normalizeBoostRequest(activatedMaximum, 10_099_999).remainingMs, 1_100_000);
 assert.equal(normalizeBoostRequest(activatedMaximum, activatedMaximum.endsAt), null,
     "MAX must fail safe back to normal after its all-share duration");
+
+// The command file is the durable authority. A MAX request must survive an
+// arbitrarily long drain and a missing/restarting coordinator until it is
+// explicitly cancelled or its activated share interval expires.
+const durableDrain = durableReputationBoost(maximum, 99_999_999);
+assert.equal(durableDrain.boostId, "boost-b");
+assert.equal(durableDrain.mode, BOOST_MODE_MAX);
+assert.equal(durableDrain.startedAt, null);
+assert.equal(durableDrain.endsAt, null);
+assert.equal(durableDrain.remainingMs, 1_200_000);
+assert.equal(durableReputationBoost(activatedMaximum, 10_099_999).remainingMs, 1_100_000);
+assert.equal(durableReputationBoost(makeCancelRequest(maximum, 50_000), 50_001), null);
+
+const mockFiles = new Map();
+const mockNs = {
+    read(path) { return mockFiles.get(path) ?? ""; },
+};
+const boostRequestPath = "/matrix/state/boost-request.txt";
+mockFiles.set(boostRequestPath, JSON.stringify(maximum));
+let durableDirectives = getDirectives(mockNs);
+assert.equal(durableDirectives.directives.reputationBoost.boostId, "boost-b",
+    "MAX command must remain visible even when coordinator directives are absent");
+
+const coordinatorNow = Date.now();
+mockFiles.set(DIRECTIVES, JSON.stringify({
+    service: "coordinator",
+    updated: coordinatorNow,
+    directives: { hacking: "money" },
+}));
+durableDirectives = getDirectives(mockNs);
+assert.equal(durableDirectives.directives.hacking, "money");
+assert.equal(durableDirectives.directives.reputationBoost.boostId, "boost-b",
+    "durable command must overlay a coordinator publication that temporarily omitted it");
+
+mockFiles.set(boostRequestPath, JSON.stringify(makeCancelRequest(maximum, coordinatorNow + 1)));
+mockFiles.set(DIRECTIVES, JSON.stringify({
+    service: "coordinator",
+    updated: coordinatorNow,
+    directives: { hacking: "money", reputationBoost: maximum },
+}));
+durableDirectives = getDirectives(mockNs);
+assert.equal(durableDirectives.directives.reputationBoost, undefined,
+    "explicit cancel must revoke a stale coordinator boost mirror immediately");
 
 const active = normalizeBoostRequest(normal, 101_000);
 assert.equal(active.boostId, "boost-a");
@@ -96,6 +144,7 @@ assert.equal(maxBoostReady({ activeBatches: 0, activePrep: 0, legacyWorkers: 1 }
 const hacking = fs.readFileSync("matrix/services/hacking.js", "utf8");
 const coordinator = fs.readFileSync("matrix/services/coordinator.js", "utf8");
 const worker = fs.readFileSync("matrix/workers/share.js", "utf8");
+const common = fs.readFileSync("matrix/lib/common.js", "utf8");
 assert.doesNotMatch(hacking, /SHARE_FRACTION/);
 assert.doesNotMatch(hacking, /scriptKill\s*\(\s*SHARE/);
 assert.doesNotMatch(hacking, /killall/i);
@@ -110,7 +159,9 @@ assert.match(hacking, /cleanup\.remaining > 0/);
 assert.match(hacking, /status:\s*"cleanup-pending"/);
 assert.match(hacking, /runtimeExpired\s*\?\s*"completed"\s*:\s*"cancelled"/);
 assert.match(coordinator, /directives\.reputationBoost/);
+assert.match(common, /durableReputationBoost/);
+assert.match(common, /out\.directives\.reputationBoost = durableBoost/);
 assert.match(worker, /--ends/);
 assert.match(worker, /Date\.now\(\)\s*<\s*endsAt/);
 
-console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, drain gating, normalized-path cleanup.");
+console.log("MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, durable MAX control, normalized-path cleanup.");
