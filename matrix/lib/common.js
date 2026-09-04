@@ -32,11 +32,12 @@ const DEFAULT_CONFIG = {
         minHackFraction: 0.05, maxHackFraction: 0.4, maxBatches: null,   // no ceiling: the batch schedule decides
         minTargetMoney: 1_000_000,
         // maxBatches is a ceiling, not the working limit - the schedule decides.
-        // These are ceilings, not working limits: allocateWave stops as soon as
-        // the RAM runs out, so a generous cap simply lets RAM be the constraint
-        // instead of an arbitrary number. At 804 TB a cap of 12 held the network
-        // to ~37% - it was the whole reason utilisation plateaued there.
-        maxTargets: 32, waveReserveFraction: 0.05, maxPrepTargets: 20,
+        // These are ceilings, not working limits: the rolling scheduler stops as
+        // soon as RAM/schedulability runs out, so a generous target cap simply
+        // lets ranked targets and RAM be the constraint instead of an arbitrary
+        // small number. L00 proved the old cap of 32 pinned a 28 PB network to
+        // exactly 14,813 batches and ~6.27% utilisation with zero deferrals.
+        maxTargets: 1024, waveReserveFraction: 0.05, maxPrepTargets: 20,
     },
     progression: {
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,
@@ -96,6 +97,12 @@ export const CONFIG_MIGRATIONS = [
         stale: 24,
         next: null,
         why: "a flat 24-batch cap per target held a large network at a fraction of its capacity; the schedule decides now",
+    },
+    {
+        path: ["hacking", "maxTargets"],
+        stale: 32,
+        next: 1024,
+        why: "live L00 accounting proved the old 32-target ceiling saturated every admitted pipeline while leaving about 94% of a 28 PB network idle",
     },
     {
         path: ["hacking", "fullEngineHomeRam"],
