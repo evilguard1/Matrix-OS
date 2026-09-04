@@ -1,4 +1,4 @@
-import { config, event, writeState, clamp, getDirectives } from "/matrix/lib/common.js";
+import { config, event, writeState, readJson, writeJson, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts } from "/matrix/lib/network.js";
 import {
     allocatePrep,
@@ -18,8 +18,9 @@ import {
 import {
     BOOST_MODE_MAX,
     BOOST_MODE_NORMAL,
+    BOOST_REQUEST_STATE,
     BOOST_TYPE,
-    isOwnedShareProcess,
+    activateMaxBoostRequest,
     maxBoostReady,
     normalShareBudget,
     normalizeBoostRequest,
@@ -937,10 +938,22 @@ export async function main(ns) {
         const directiveState = getDirectives(ns);
         const directive = directiveState?.directives?.hacking;
         const now = Date.now();
-        const requestedBoost = normalizeBoostRequest(
+        const directiveBoost = normalizeBoostRequest(
             directiveState?.directives?.reputationBoost,
             now,
         );
+        // Coordinator publishes the command into directives; the raw request is
+        // also read as an immediate revocation/expiry guard so cancel cannot be
+        // delayed by a stale directives file.
+        const requestRecord = readJson(ns, BOOST_REQUEST_STATE, null);
+        const requestRecordActive = normalizeBoostRequest(requestRecord, now);
+        const requestRevoked = Boolean(
+            directiveBoost &&
+            requestRecord?.type === BOOST_TYPE &&
+            String(requestRecord?.boostId ?? "") === directiveBoost.boostId &&
+            !requestRecordActive
+        );
+        const requestedBoost = requestRevoked ? null : directiveBoost;
         const automaticShare = !requestedBoost && directive === "share" ? {
             type: BOOST_TYPE,
             status: "active",
@@ -951,22 +964,50 @@ export async function main(ns) {
             endsAt: Number.MAX_SAFE_INTEGER,
             remainingMs: null,
         } : null;
-        const announcedBoost = requestedBoost ?? automaticShare;
+        let announcedBoost = requestedBoost ?? automaticShare;
+        const runtimeExpired = Boolean(
+            boostRuntime?.source === "command" &&
+            Number.isFinite(boostRuntime?.endsAt) &&
+            now >= boostRuntime.endsAt
+        );
 
-        if (boostRuntime && (!announcedBoost ||
+        if (boostRuntime && (runtimeExpired || !announcedBoost ||
             announcedBoost.boostId !== boostRuntime.boostId ||
             announcedBoost.mode !== boostRuntime.mode)) {
             const prior = boostRuntime;
             const stopped = await stopOwnedBoostShares(ns, hosts, prior.boostId);
+            const controlLost = Boolean(
+                prior.source === "command" &&
+                !runtimeExpired &&
+                !announcedBoost &&
+                requestRecordActive?.boostId === prior.boostId
+            );
+            if (prior.source === "command" && (runtimeExpired || controlLost)) {
+                await writeJson(ns, BOOST_REQUEST_STATE, {
+                    type: BOOST_TYPE,
+                    status: runtimeExpired ? "completed" : "cancelled",
+                    mode: prior.mode,
+                    boostId: prior.boostId,
+                    requestedAt: prior.requestedAt ?? null,
+                    startedAt: prior.startedAt ?? null,
+                    durationMs: prior.durationMs ?? null,
+                    endsAt: prior.endsAt ?? null,
+                    completedAt: runtimeExpired ? now : null,
+                    cancelledAt: controlLost ? now : null,
+                    reason: controlLost ? "control-plane-lost" : null,
+                });
+                announcedBoost = null;
+            }
             await writeState(ns, "boost", {
-                status: prior.source === "command" && now >= prior.endsAt ? "completed" : "cancelled",
+                status: runtimeExpired ? "completed" : "cancelled",
                 type: BOOST_TYPE,
                 mode: prior.mode,
                 source: prior.source,
                 boostId: prior.boostId,
                 durationMs: prior.durationMs ?? null,
-                startedAt: prior.startedAt,
-                endsAt: prior.source === "command" ? prior.endsAt : null,
+                requestedAt: prior.requestedAt ?? null,
+                startedAt: prior.startedAt ?? null,
+                endsAt: prior.source === "command" ? prior.endsAt ?? null : null,
                 remainingMs: 0,
                 phase: "restored",
                 admissionPaused: false,
@@ -1067,12 +1108,15 @@ export async function main(ns) {
             const candidates = candidateTargets(ns, hosts, cfg);
             const eligible = new Set(candidates);
             const cachedEligible = formulaRankedCache.filter(host => eligible.has(host));
-            const candidateSetChanged = cachedEligible.length !== candidates.length;
+            const candidateSetChanged = cachedEligible.length !== formulaRankedCache.length ||
+                cachedEligible.length !== candidates.length;
             if (now >= formulaRankRefreshAt || formulaRankedCache.length === 0 || candidateSetChanged) {
                 formulaRankedCache = rankTargets(ns, hosts, cfg, mode, planner);
                 formulaRankRefreshAt = now + FORMULA_RANK_REFRESH_MS;
+                ranked = formulaRankedCache;
+            } else {
+                ranked = cachedEligible;
             }
-            ranked = formulaRankedCache;
         } else {
             ranked = rankTargets(ns, hosts, cfg, mode, planner);
             formulaRankedCache = [];
@@ -1355,11 +1399,27 @@ export async function main(ns) {
             activePrep: activePrep.size,
             legacyWorkers: legacy.workers.length,
         });
-        if (drainReady && boost && !boost.drainedAt) boost.drainedAt = Date.now();
+        if (drainReady && boost && !boost.drainedAt) {
+            const drainedAt = Date.now();
+            boost.drainedAt = drainedAt;
+            if (boost.mode === BOOST_MODE_MAX && boost.source === "command" && !Number.isFinite(boost.endsAt)) {
+                const activated = activateMaxBoostRequest(boost, drainedAt);
+                if (activated) {
+                    Object.assign(boost, activated);
+                    await writeJson(ns, BOOST_REQUEST_STATE, activated);
+                } else {
+                    boostStats.error = "max-activation-failed";
+                }
+            }
+        }
         const boostPhase = boost?.mode === BOOST_MODE_MAX
             ? (drainReady ? "sharing" : "draining")
             : boost ? "sharing-idle" : null;
-        const shouldShare = Boolean(boost && (boost.mode === BOOST_MODE_NORMAL || drainReady));
+        const maxTimingReady = boost?.mode !== BOOST_MODE_MAX ||
+            boost?.source !== "command" || Number.isFinite(boost?.endsAt);
+        const shouldShare = Boolean(
+            boost && maxTimingReady && (boost.mode === BOOST_MODE_NORMAL || drainReady)
+        );
 
         if (boost && !shouldShare && boostStats.workerCount > 0) {
             await stopOwnedBoostShares(ns, hosts, boost.boostId);
@@ -1389,7 +1449,8 @@ export async function main(ns) {
                 source: boost.source,
                 boostId: boost.boostId,
                 durationMs: boost.durationMs ?? null,
-                startedAt: boost.startedAt,
+                requestedAt: boost.requestedAt ?? null,
+                startedAt: boost.startedAt ?? null,
                 activatedAt: boost.activatedAt,
                 endsAt: boost.source === "command" ? boost.endsAt : null,
                 remainingMs: boost.source === "command" ? Math.max(0, boost.endsAt - stateNow) : null,
