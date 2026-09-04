@@ -179,4 +179,15 @@ assert.match(source, /\bns\.getServerGrowth\s*\(/,
 assert.match(source, /\bns\.getPlayer\s*\(/,
     "Formulas planner needs one current player snapshot");
 
+// rankTargets invokes every scorer as scorer(ns, host). The Formula adapter must
+// therefore accept the same two-argument scorer interface; a one-argument arrow
+// silently receives ns as the target and collapses every Formula score to -Infinity.
+const hackingSource = fs.readFileSync("matrix/services/hacking.js", "utf8");
+assert.match(hackingSource,
+    /\(_ns,\s*h\)\s*=>\s*formulaTargetScore\(ns,\s*h,\s*cfg,\s*planner\)/,
+    "Formula target scorer must preserve the common (ns, host) scorer signature");
+assert.doesNotMatch(hackingSource,
+    /\?\s*h\s*=>\s*formulaTargetScore\(ns,\s*h,\s*cfg,\s*planner\)/,
+    "one-argument Formula scorer drops the real host when rankTargets calls scorer(ns, host)");
+
 console.log("MATRIX-OS planner passed: native fallback, synthetic Formula shapes, ranking, and stale probes.");
