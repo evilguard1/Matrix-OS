@@ -21,6 +21,7 @@ import {
     BOOST_REQUEST_STATE,
     BOOST_TYPE,
     activateMaxBoostRequest,
+    isOwnedShareProcess,
     maxBoostReady,
     normalShareBudget,
     normalizeBoostRequest,
@@ -631,17 +632,47 @@ function schedulablePool(ns, hosts, cfg, boost) {
         }));
 }
 
-async function stopOwnedBoostShares(ns, hosts, boostId) {
-    if (!boostId) return 0;
-    let stopped = 0;
-    for (const host of hosts) {
-        for (const proc of boostProcessesOnHost(ns, host, boostId)) {
-            try {
-                if (ns.kill(proc.pid, host)) stopped += 1;
-            } catch {}
-        }
+function killOwnedBoostShare(ns, host, proc, boostId) {
+    if (!isOwnedShareProcess(proc, boostId)) return false;
+    const args = Array.isArray(proc.args) ? proc.args : [];
+
+    // Prefer the fully-qualified filename/host/args overload. This is
+    // both server-scoped and ownership-exact. PID is a fallback only.
+    try {
+        if (ns.kill(SHARE, host, ...args)) return true;
+    } catch {}
+    try {
+        return Boolean(ns.kill(proc.pid));
+    } catch {
+        return false;
     }
-    return stopped;
+}
+
+async function stopOwnedBoostShares(ns, hosts, boostId) {
+    if (!boostId) {
+        return { stopped: 0, remaining: 0, remainingHosts: 0, remainingThreads: 0 };
+    }
+    let stopped = 0;
+    // Netscript kill is synchronous, but use two bounded passes so a
+    // process list mutation cannot leave a skipped owned worker.
+    for (let pass = 0; pass < 2; pass += 1) {
+        let found = false;
+        for (const host of hosts) {
+            const owned = boostProcessesOnHost(ns, host, boostId);
+            if (owned.length > 0) found = true;
+            for (const proc of owned) {
+                if (killOwnedBoostShare(ns, host, proc, boostId)) stopped += 1;
+            }
+        }
+        if (!found) break;
+    }
+    const inventory = boostShareInventory(ns, hosts, boostId);
+    return {
+        stopped,
+        remaining: inventory.workerCount,
+        remainingHosts: inventory.hostCount,
+        remainingThreads: inventory.threadCount,
+    };
 }
 
 async function cleanupOrphanBoostShares(ns, hosts, activeBoostId) {
@@ -650,9 +681,7 @@ async function cleanupOrphanBoostShares(ns, hosts, activeBoostId) {
         for (const proc of boostProcessesOnHost(ns, host, null)) {
             const meta = shareProcessMeta(proc);
             if (!meta || meta.boostId === activeBoostId) continue;
-            try {
-                if (ns.kill(proc.pid, host)) stopped += 1;
-            } catch {}
+            if (killOwnedBoostShare(ns, host, proc, meta.boostId)) stopped += 1;
         }
     }
     return stopped;
@@ -668,9 +697,7 @@ async function reclaimBoostShareForRam(ns, host, neededRam, cfg, boost) {
     if (physicalFree + 1e-9 >= Math.max(0, Number(neededRam) || 0)) return 0;
     let stopped = 0;
     for (const proc of boostProcessesOnHost(ns, host, boost.boostId)) {
-        try {
-            if (ns.kill(proc.pid, host)) stopped += 1;
-        } catch {}
+        if (killOwnedBoostShare(ns, host, proc, boost.boostId)) stopped += 1;
     }
     return stopped;
 }
@@ -710,7 +737,7 @@ async function reconcileBoostShares(ns, hosts, cfg, boost, budgetRam) {
         if (stable) continue;
 
         for (const proc of owned) {
-            try { ns.kill(proc.pid, item.host); } catch {}
+            killOwnedBoostShare(ns, item.host, proc, boost.boostId);
         }
         if (wanted <= 0) continue;
         if (!(await ensureScript(ns, SHARE, item.host))) {
@@ -975,7 +1002,33 @@ export async function main(ns) {
             announcedBoost.boostId !== boostRuntime.boostId ||
             announcedBoost.mode !== boostRuntime.mode)) {
             const prior = boostRuntime;
-            const stopped = await stopOwnedBoostShares(ns, hosts, prior.boostId);
+            const cleanup = await stopOwnedBoostShares(ns, hosts, prior.boostId);
+            if (cleanup.remaining > 0) {
+                await writeState(ns, "boost", {
+                    status: "cleanup-pending",
+                    type: BOOST_TYPE,
+                    mode: prior.mode,
+                    source: prior.source,
+                    boostId: prior.boostId,
+                    durationMs: prior.durationMs ?? null,
+                    requestedAt: prior.requestedAt ?? null,
+                    startedAt: prior.startedAt ?? null,
+                    endsAt: prior.source === "command" ? prior.endsAt ?? null : null,
+                    remainingMs: 0,
+                    phase: "cleanup-pending",
+                    admissionPaused: prior.mode === BOOST_MODE_MAX,
+                    admissionState: prior.mode === BOOST_MODE_MAX ? "paused" : "open",
+                    shareHosts: cleanup.remainingHosts,
+                    shareWorkers: cleanup.remaining,
+                    shareThreads: cleanup.remainingThreads,
+                    restoreState: "cleanup-pending",
+                    shareWorkersStopped: cleanup.stopped,
+                    error: "owned-share-cleanup-incomplete",
+                });
+                await ns.sleep(250);
+                continue;
+            }
+            const stopped = cleanup.stopped;
             const controlLost = Boolean(
                 prior.source === "command" &&
                 !runtimeExpired &&
@@ -1422,8 +1475,16 @@ export async function main(ns) {
         );
 
         if (boost && !shouldShare && boostStats.workerCount > 0) {
-            await stopOwnedBoostShares(ns, hosts, boost.boostId);
-            boostStats = { hostCount: 0, workerCount: 0, threadCount: 0, ram: 0, error: null };
+            const cleanup = await stopOwnedBoostShares(ns, hosts, boost.boostId);
+            boostStats = cleanup.remaining > 0
+                ? {
+                    hostCount: cleanup.remainingHosts,
+                    workerCount: cleanup.remaining,
+                    threadCount: cleanup.remainingThreads,
+                    ram: cleanup.remainingThreads * Math.max(0, ns.getScriptRam(SHARE, "home")),
+                    error: "owned-share-cleanup-incomplete",
+                }
+                : { hostCount: 0, workerCount: 0, threadCount: 0, ram: 0, error: null };
         }
         if (shouldShare && Date.now() - lastBoostReconcileAt >= BOOST_RECONCILE_MS) {
             const capacities = boostCapacities(ns, hosts, cfg, boost.boostId);
