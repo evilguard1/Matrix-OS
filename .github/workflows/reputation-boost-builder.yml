@@ -36,6 +36,16 @@ jobs:
           end = old.index("\n          PY\n", start)
           lines = old[start:end].splitlines()
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in lines)
+          for fragment in (
+              "const schedulerReserveRam = ramNow.free * reserveFraction;",
+              "const schedulerReserveRam = ramNow.schedulableFree * reserveFraction;",
+              "const schedulerUsableIdleRam = Math.max(0, ramNow.free - schedulerReserveRam);",
+              "const schedulerUsableIdleRam = Math.max(0, ramNow.schedulableFree - schedulerReserveRam);",
+              "if (schedulerUsableIdleRam < snapshot.shape.ram) break fill;",
+              "const pool = freePool(ns, hosts, cfg).map(item => ({",
+              "const pool = schedulablePool(ns, hosts, cfg, boost).map(item => ({",
+          ):
+              script = script.replace("\n            " + fragment, "\n                " + fragment)
           Path("/tmp/apply-reputation-boost.py").write_text(script + "\n")
           PY
           python /tmp/apply-reputation-boost.py
