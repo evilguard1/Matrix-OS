@@ -61,6 +61,7 @@ export const SERVICES = [
     { file: "/matrix/services/root.js", key: "rooting", minRam: 128 },
     { file: "/matrix/services/contracts.js", key: "contracts", minRam: 128 },
     { file: "/matrix/services/stock.js", key: "stock", minRam: 128 },
+    { file: "/matrix/services/darknet.js", key: "darknet", minRam: 128, requiresFile: "DarkscapeNavigator.exe" },
     { file: "/matrix/services/progression.js", key: "progression", minRam: 128, sf: 4 },
 
     // Capability-gated expansion. The nominal floor only makes a service
@@ -176,6 +177,7 @@ function drawSupervisor(ns, homeRam, report, reason, stuck) {
         const detail = entry.state === "ram-blocked" ? `BLOCKED - needs ${entry.need}GB, ${entry.free}GB free`
             : entry.state === "needs-home-ram" ? `needs ${entry.minRam}GB home`
             : entry.state === "needs-source-file" ? `needs Source-File ${entry.sf}`
+            : entry.state === "needs-program" ? `needs ${entry.program}`
             : entry.state === "needs-sf4-level-3" ? "needs SF4 level 3 (16x RAM below it)"
             : entry.state === "not-installed" ? "not downloaded"
             : entry.state === "gave-up" ? `KILLED REPEATEDLY - stopped after ${entry.launches} launches`
@@ -347,6 +349,10 @@ export async function main(ns) {
             if (service.sf4Level3 && sfLevel(reset, 4) < 3 && reset.currentNode !== 4) {
                 // 16x Singularity cost below SF4 level 3 puts this out of reach.
                 report.push({ file: service.file, state: "needs-sf4-level-3" });
+                continue;
+            }
+            if (service.requiresFile && !ns.fileExists(service.requiresFile, "home")) {
+                report.push({ file: service.file, state: "needs-program", program: service.requiresFile });
                 continue;
             }
             if (homeRam < service.minRam) {
