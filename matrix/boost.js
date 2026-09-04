@@ -61,6 +61,7 @@ export async function main(ns) {
         mode,
         boostId,
         durationMs,
+        requestedAt: request.requestedAt,
         startedAt: request.startedAt,
         endsAt: request.endsAt,
         remainingMs: durationMs,
@@ -69,5 +70,9 @@ export async function main(ns) {
         restoreState: "pending",
         error: null,
     });
-    ns.tprint(`[MATRIX] ${mode === BOOST_MODE_MAX ? "BOOST MAX REP" : "BOOST REP"} active for ${Math.ceil(durationMs / 1000)}s (${boostId}).`);
+    if (mode === BOOST_MODE_MAX) {
+        ns.tprint(`[MATRIX] BOOST MAX REP requested (${boostId}): drain HWGW, then share at maximum safe capacity for ${Math.ceil(durationMs / 1000)}s.`);
+    } else {
+        ns.tprint(`[MATRIX] BOOST REP active for ${Math.ceil(durationMs / 1000)}s (${boostId}).`);
+    }
 }
