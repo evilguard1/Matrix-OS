@@ -1,0 +1,143 @@
+name: max-control-plane-durability
+
+'on':
+  push:
+    branches:
+      - feat/reputation-boost
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/reputation-boost
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Make command request state authoritative
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one replacement, found {count}\n--- needle ---\n{old}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              "matrix/services/hacking.js",
+              '''        const directiveBoost = normalizeBoostRequest(
+              directiveState?.directives?.reputationBoost,
+              now,
+          );
+          // Coordinator publishes the command into directives; the raw request is
+          // also read as an immediate revocation/expiry guard so cancel cannot be
+          // delayed by a stale directives file.
+          const requestRecord = readJson(ns, BOOST_REQUEST_STATE, null);
+          const requestRecordActive = normalizeBoostRequest(requestRecord, now);
+          const requestRevoked = Boolean(
+              directiveBoost &&
+              requestRecord?.type === BOOST_TYPE &&
+              String(requestRecord?.boostId ?? "") === directiveBoost.boostId &&
+              !requestRecordActive
+          );
+          const requestedBoost = requestRevoked ? null : directiveBoost;
+''',
+              '''        // boost-request.txt is the durable command authority. The coordinator
+          // mirrors it into directives for observability, but a transient coordinator
+          // restart or stale directives file must never cancel an active command.
+          const requestRecord = readJson(ns, BOOST_REQUEST_STATE, null);
+          const requestedBoost = normalizeBoostRequest(requestRecord, now);
+''',
+          )
+
+          replace_once(
+              "matrix/services/hacking.js",
+              '''            const stopped = cleanup.stopped;
+              const controlLost = Boolean(
+                  prior.source === "command" &&
+                  !runtimeExpired &&
+                  !announcedBoost &&
+                  requestRecordActive?.boostId === prior.boostId
+              );
+              if (prior.source === "command" && (runtimeExpired || controlLost)) {
+                  await writeJson(ns, BOOST_REQUEST_STATE, {
+                      type: BOOST_TYPE,
+                      status: runtimeExpired ? "completed" : "cancelled",
+                      mode: prior.mode,
+                      boostId: prior.boostId,
+                      requestedAt: prior.requestedAt ?? null,
+                      startedAt: prior.startedAt ?? null,
+                      durationMs: prior.durationMs ?? null,
+                      endsAt: prior.endsAt ?? null,
+                      completedAt: runtimeExpired ? now : null,
+                      cancelledAt: controlLost ? now : null,
+                      reason: controlLost ? "control-plane-lost" : null,
+                  });
+                  announcedBoost = null;
+              }
+              await writeState(ns, "boost", {
+                  status: runtimeExpired ? "completed" : "cancelled",
+''',
+              '''            const stopped = cleanup.stopped;
+              const finalStatus = runtimeExpired ? "completed" : "cancelled";
+              // Explicit cancel is already durable in boost-request.txt. On natural
+              // expiry, mark only the SAME request complete; never overwrite a newer
+              // command that may have replaced this runtime while cleanup was running.
+              if (prior.source === "command" && runtimeExpired &&
+                  String(requestRecord?.boostId ?? "") === prior.boostId) {
+                  await writeJson(ns, BOOST_REQUEST_STATE, {
+                      type: BOOST_TYPE,
+                      status: "completed",
+                      mode: prior.mode,
+                      boostId: prior.boostId,
+                      requestedAt: prior.requestedAt ?? null,
+                      startedAt: prior.startedAt ?? null,
+                      durationMs: prior.durationMs ?? null,
+                      endsAt: prior.endsAt ?? null,
+                      completedAt: now,
+                  });
+              }
+              await writeState(ns, "boost", {
+                  status: finalStatus,
+''',
+          )
+
+          p = Path("tests/reputation-boost.mjs")
+          text = p.read_text()
+          marker = '''assert.match(hacking, /runtimeExpired\\s*\\?\\s*"completed"\\s*:\\s*"cancelled"/);
+assert.match(coordinator, /directives\\.reputationBoost/);
+'''
+          replacement = '''assert.match(hacking, /const requestedBoost = normalizeBoostRequest\\(\\s*requestRecord,/,
+    "durable boost-request state must be the command authority");
+assert.doesNotMatch(hacking, /requestRevoked|controlLost|control-plane-lost/,
+    "transient coordinator/directive loss must not cancel a durable command");
+assert.match(hacking, /const finalStatus = runtimeExpired \\? "completed" : "cancelled"/);
+assert.match(coordinator, /directives\\.reputationBoost/,
+    "coordinator still mirrors boost state into the shared directive plane");
+'''
+          if marker not in text:
+              raise SystemExit("tests: control-plane marker not found")
+          p.write_text(text.replace(marker, replacement, 1))
+          PY
+      - run: npm ci
+      - run: npm test
+      - name: Commit durable command control fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/max-control-plane-durability.yml
+          git add -A
+          git commit -m "Keep MAX boost alive across coordinator restarts"
+          git push origin HEAD:feat/reputation-boost
