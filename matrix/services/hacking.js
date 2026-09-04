@@ -65,7 +65,7 @@ function rankTargets(ns, hosts, cfg, mode = "money", planner = null) {
     const scorer = mode === "xp"
         ? xpScore
         : formulaMoney
-            ? h => formulaTargetScore(ns, h, cfg, planner)
+            ? (_ns, h) => formulaTargetScore(ns, h, cfg, planner)
             : targetScore;
     return candidateTargets(ns, hosts, cfg)
         .map(h => ({ host: h, score: scorer(ns, h) }))
