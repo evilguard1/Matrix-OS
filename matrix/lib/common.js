@@ -6,6 +6,8 @@ export const DIRECTIVES = `${STATE_DIR}/directives.txt`;
 
 const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
 const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
+const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
+const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
     version: "1.10.0",
@@ -225,13 +227,83 @@ export function baselineReserveMoney(ns, cfg = config(ns)) {
     return reserveFloor(ns.getServerMoneyAvailable("home"), cfg);
 }
 
-// Live per-manager directive protocol published by the coordinator. Returns null
-// when there is no fresh coordinator (fresh save, coordinator paused, or a
-// crashed coordinator) so every consumer falls back to its own local defaults.
+// Minimal durable normalization for the command/control boundary. This mirrors
+// reputation-boost.js without importing the full-stage helper into common.js,
+// because common.js must still load during bootstrap/early stages where that
+// helper is intentionally not installed yet.
+export function durableReputationBoost(raw, now = Date.now()) {
+    const source = raw && typeof raw === "object" ? raw : null;
+    if (!source || source.type !== REPUTATION_BOOST_TYPE) return null;
+    const status = String(source.status ?? "requested").trim().toLowerCase();
+    if (["cancelled", "canceled", "completed"].includes(status)) return null;
+
+    const modeRaw = String(source.mode ?? "").trim().toLowerCase();
+    const mode = modeRaw === "rep" ? "normal" : modeRaw === "max-rep" || modeRaw === "maxrep" ? "max" : modeRaw;
+    if (mode !== "normal" && mode !== "max") return null;
+    const boostId = String(source.boostId ?? "").trim();
+    const durationMs = Number(source.durationMs);
+    const requestedAt = Number(source.requestedAt ?? source.startedAt);
+    if (!boostId || !Number.isFinite(durationMs) || durationMs <= 0 || !Number.isFinite(requestedAt)) return null;
+
+    if (mode === "max" && status !== "active") {
+        return {
+            type: REPUTATION_BOOST_TYPE,
+            status: "requested",
+            mode,
+            boostId,
+            requestedAt,
+            startedAt: null,
+            durationMs,
+            endsAt: null,
+            remainingMs: durationMs,
+        };
+    }
+
+    const startedAt = Number(source.startedAt);
+    const endsAt = Number(source.endsAt);
+    if (!Number.isFinite(startedAt) || !Number.isFinite(endsAt) || endsAt <= now) return null;
+    return {
+        type: REPUTATION_BOOST_TYPE,
+        status: "active",
+        mode,
+        boostId,
+        requestedAt,
+        startedAt,
+        shareStartedAt: Number.isFinite(Number(source.shareStartedAt)) ? Number(source.shareStartedAt) : startedAt,
+        durationMs,
+        endsAt,
+        remainingMs: Math.max(0, endsAt - now),
+    };
+}
+
+// Live per-manager directive protocol published by the coordinator. Reputation
+// boost commands are additionally overlaid from their durable request file. A
+// coordinator restart or one stale/missing directive publication must not cancel
+// a still-valid MAX drain. Explicit cancellation remains immediate because the
+// durable request itself changes to a terminal status.
 export function getDirectives(ns) {
-    const raw = readJson(ns, DIRECTIVES, null);
-    if (!raw || Date.now() - Number(raw.updated ?? 0) > 30_000) return null;
-    return raw;
+    const now = Date.now();
+    const coordinator = readJson(ns, DIRECTIVES, null);
+    const coordinatorFresh = Boolean(coordinator && now - Number(coordinator.updated ?? 0) <= 30_000);
+
+    const unreadable = {};
+    const requestRecord = readJson(ns, BOOST_REQUEST_STATE, unreadable);
+    const requestReadable = requestRecord !== unreadable;
+    const durableBoost = requestReadable ? durableReputationBoost(requestRecord, now) : null;
+
+    if (!coordinatorFresh && !durableBoost) return null;
+
+    const out = coordinatorFresh
+        ? { ...coordinator, directives: { ...(coordinator.directives ?? {}) } }
+        : { service: "boost-command", updated: now, directives: {} };
+
+    if (durableBoost) {
+        out.directives.reputationBoost = durableBoost;
+    } else if (requestReadable && requestRecord?.type === REPUTATION_BOOST_TYPE) {
+        // A successfully-read terminal/invalid command revokes any stale mirror.
+        delete out.directives.reputationBoost;
+    }
+    return out;
 }
 
 // Discretionary spend ceiling for an infrastructure manager ("hacknet", "cloud",
