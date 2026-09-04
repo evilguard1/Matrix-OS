@@ -61,6 +61,10 @@ assert.equal(shareProcessMeta(owned).slot, 3);
 assert.equal(isOwnedShareProcess(owned, "boost-a"), true);
 assert.equal(isOwnedShareProcess(owned, "boost-b"), false);
 assert.equal(isOwnedShareProcess({ filename: SHARE_SCRIPT, args: [] }, "boost-a"), false);
+
+// Live Bitburner can expose ns.ps().filename in a normalized form that differs
+// from the leading-slash path used at ns.exec() time. Cleanup ownership must not
+// silently become an empty set merely because of that representation difference.
 assert.equal(isShareScriptPath(SHARE_SCRIPT), true);
 assert.equal(isShareScriptPath("matrix/workers/share.js"), true,
     "ns.ps filename without a leading slash must still be recognized");
