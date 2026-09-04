@@ -28,7 +28,7 @@ jobs:
           import subprocess
 
           old = subprocess.check_output(
-              ["git", "show", "HEAD^:.github/workflows/reputation-boost-builder.yml"],
+              ["git", "show", "6665ad2c7dd66242708280a923b4419037b5319d:.github/workflows/reputation-boost-builder.yml"],
               text=True,
           )
           marker = "          python - <<'PY'\n"
