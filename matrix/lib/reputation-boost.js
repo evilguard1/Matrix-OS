@@ -12,6 +12,7 @@ function objectValue(value) {
 }
 
 function finite(value, fallback = 0) {
+    if (value == null || value === "") return fallback;
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
 }
@@ -57,17 +58,41 @@ export function parseDuration(value) {
 export function makeBoostRequest(mode, durationMs, now = Date.now(), boostId = "") {
     const normalizedMode = normalizeMode(mode);
     const duration = finite(durationMs, 0);
-    const startedAt = finite(now, Date.now());
+    const requestedAt = finite(now, Date.now());
     if (!normalizedMode || duration <= 0) return null;
-    const id = String(boostId ?? "").trim() || `boost-${Math.floor(startedAt).toString(36)}`;
+    const id = String(boostId ?? "").trim() || `boost-${Math.floor(requestedAt).toString(36)}`;
+    const deferred = normalizedMode === BOOST_MODE_MAX;
     return {
         type: BOOST_TYPE,
         status: "requested",
         mode: normalizedMode,
         boostId: id,
-        startedAt,
+        requestedAt,
+        startedAt: deferred ? null : requestedAt,
         durationMs: duration,
-        endsAt: startedAt + duration,
+        endsAt: deferred ? null : requestedAt + duration,
+    };
+}
+
+export function activateMaxBoostRequest(raw, now = Date.now()) {
+    const source = objectValue(raw);
+    const boostId = String(source.boostId ?? "").trim();
+    const durationMs = finite(source.durationMs, 0);
+    const startedAt = finite(now, Date.now());
+    const requestedAt = finite(source.requestedAt, finite(source.startedAt, startedAt));
+    if (source.type !== BOOST_TYPE || normalizeMode(source.mode) !== BOOST_MODE_MAX || !boostId || durationMs <= 0) {
+        return null;
+    }
+    return {
+        type: BOOST_TYPE,
+        status: "active",
+        mode: BOOST_MODE_MAX,
+        boostId,
+        requestedAt,
+        startedAt,
+        shareStartedAt: startedAt,
+        durationMs,
+        endsAt: startedAt + durationMs,
     };
 }
 
@@ -76,6 +101,7 @@ export function makeCancelRequest(previous, now = Date.now()) {
     return {
         type: BOOST_TYPE,
         status: "cancelled",
+        mode: normalizeMode(prior.mode),
         boostId: String(prior.boostId ?? "") || null,
         cancelledAt: finite(now, Date.now()),
     };
@@ -84,22 +110,44 @@ export function makeCancelRequest(previous, now = Date.now()) {
 export function normalizeBoostRequest(raw, now = Date.now()) {
     const source = objectValue(raw);
     if (source.type !== BOOST_TYPE) return null;
-    if (["cancelled", "canceled"].includes(String(source.status ?? "").toLowerCase())) return null;
+    const requestStatus = String(source.status ?? "requested").trim().toLowerCase();
+    if (["cancelled", "canceled", "completed"].includes(requestStatus)) return null;
+
     const mode = normalizeMode(source.mode);
     const boostId = String(source.boostId ?? "").trim();
+    const observedAt = finite(now, Date.now());
+    const durationMs = finite(source.durationMs, 0);
+    const requestedAt = finite(source.requestedAt, finite(source.startedAt, NaN));
+    if (!mode || !boostId || durationMs <= 0 || !Number.isFinite(requestedAt)) return null;
+
+    // MAX mode's requested duration belongs to the all-share phase, not to the
+    // drain. A fresh request therefore intentionally has no end timestamp yet.
+    if (mode === BOOST_MODE_MAX && requestStatus !== "active") {
+        return {
+            type: BOOST_TYPE,
+            status: "requested",
+            mode,
+            boostId,
+            requestedAt,
+            startedAt: null,
+            durationMs,
+            endsAt: null,
+            remainingMs: durationMs,
+        };
+    }
+
     const startedAt = finite(source.startedAt, NaN);
     const endsAt = finite(source.endsAt, NaN);
-    const observedAt = finite(now, Date.now());
-    if (!mode || !boostId || !Number.isFinite(startedAt) || !Number.isFinite(endsAt)) return null;
-    if (endsAt <= observedAt) return null;
-    const durationMs = finite(source.durationMs, endsAt - startedAt);
+    if (!Number.isFinite(startedAt) || !Number.isFinite(endsAt) || endsAt <= observedAt) return null;
     return {
         type: BOOST_TYPE,
         status: "active",
         mode,
         boostId,
+        requestedAt,
         startedAt,
-        durationMs: Math.max(0, durationMs),
+        shareStartedAt: finite(source.shareStartedAt, startedAt),
+        durationMs,
         endsAt,
         remainingMs: Math.max(0, endsAt - observedAt),
     };
