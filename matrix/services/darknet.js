@@ -9,9 +9,19 @@ import {
     parseWorkerMessage,
 } from "/matrix/lib/darknet.js";
 
-const SEED_INTERVAL_MS = 120_000;
+const DEFAULT_SEED_INTERVAL_MS = 120_000;
 const LOOP_MS = 2_000;
-const MAX_DEPTH = 5;
+const DEFAULT_MAX_DEPTH = 5;
+
+function option(args, name, fallback) {
+    const index = args.indexOf(name);
+    return index >= 0 && index + 1 < args.length ? args[index + 1] : fallback;
+}
+
+function boundedNumber(value, fallback, min, max) {
+    const number = Number(value);
+    return Math.max(min, Math.min(max, Number.isFinite(number) ? number : fallback));
+}
 
 function sameScript(a, b) {
     return String(a ?? "").replace(/^\/+/, "") === String(b ?? "").replace(/^\/+/, "");
@@ -49,12 +59,12 @@ function nodeStats(knowledge) {
     };
 }
 
-async function seed(ns) {
+async function seed(ns, maxDepth) {
     const pid = ns.run(
         DARKNET_WORKER,
         1,
         "--depth", -1,
-        "--max-depth", MAX_DEPTH,
+        "--max-depth", maxDepth,
         "--lineage", JSON.stringify(["home"]),
     );
     return pid || 0;
@@ -62,6 +72,20 @@ async function seed(ns) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    const args = Array.from(ns.args ?? []).map(value => String(value));
+    const maxDepth = Math.floor(boundedNumber(
+        option(args, "--max-depth", DEFAULT_MAX_DEPTH),
+        DEFAULT_MAX_DEPTH,
+        0,
+        12,
+    ));
+    const seedIntervalMs = Math.floor(boundedNumber(
+        option(args, "--seed-ms", DEFAULT_SEED_INTERVAL_MS),
+        DEFAULT_SEED_INTERVAL_MS,
+        30_000,
+        3_600_000,
+    ));
+
     let knowledge = readJson(ns, DARKNET_KNOWLEDGE_STATE, {
         nodes: {},
         events: [],
@@ -90,6 +114,8 @@ export async function main(ns) {
                 discovered: Object.keys(knowledge?.nodes ?? {}).length,
                 activeSeedPid: 0,
                 lastSeedAt,
+                maxDepth,
+                seedIntervalMs,
                 error: null,
             });
             await ns.sleep(15_000);
@@ -103,6 +129,8 @@ export async function main(ns) {
                 discovered: Object.keys(knowledge?.nodes ?? {}).length,
                 activeSeedPid: 0,
                 lastSeedAt,
+                maxDepth,
+                seedIntervalMs,
                 error: "worker-missing",
             });
             await ns.sleep(15_000);
@@ -110,9 +138,9 @@ export async function main(ns) {
         }
 
         const running = homeWorkerRunning(ns);
-        if (!running && now - lastSeedAt >= SEED_INTERVAL_MS) {
+        if (!running && now - lastSeedAt >= seedIntervalMs) {
             try {
-                lastSeedPid = await seed(ns);
+                lastSeedPid = await seed(ns, maxDepth);
                 lastSeedAt = now;
                 lastError = lastSeedPid ? null : "seed-launch-failed";
             } catch (error) {
@@ -127,7 +155,8 @@ export async function main(ns) {
             status: "online",
             navigator: DARKNET_NAVIGATOR,
             port: DARKNET_PORT,
-            maxDepth: MAX_DEPTH,
+            maxDepth,
+            seedIntervalMs,
             ...stats,
             cacheOpened: Number(knowledge?.cacheOpened ?? 0),
             activeSeedPid: homeWorkerRunning(ns) ? lastSeedPid : 0,
