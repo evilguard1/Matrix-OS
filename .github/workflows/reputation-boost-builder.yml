@@ -46,6 +46,14 @@ jobs:
               "const pool = schedulablePool(ns, hosts, cfg, boost).map(item => ({",
           ):
               script = script.replace("\n            " + fragment, "\n                " + fragment)
+          script = script.replace(
+              "                    schedulerReserveRam,\n                schedulerUsableIdleRam,\n            });",
+              "                    schedulerReserveRam,\n                    schedulerUsableIdleRam,\n                });",
+          )
+          script = script.replace(
+              "                    schedulerReserveRam,\n                schedulerUsableIdleRam,\n                cfg,\n                boost,\n            });",
+              "                    schedulerReserveRam,\n                    schedulerUsableIdleRam,\n                    cfg,\n                    boost,\n                });",
+          )
           Path("/tmp/apply-reputation-boost.py").write_text(script + "\n")
           PY
           python /tmp/apply-reputation-boost.py
