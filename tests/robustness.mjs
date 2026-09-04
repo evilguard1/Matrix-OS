@@ -35,6 +35,7 @@ const NEEDS_NS = new Set([
     "singleton.js",
     "solvers.js",
     "hacking-planner.js",
+    "core-aware.js",
 ]);
 
 const HOSTILE = [
