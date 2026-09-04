@@ -29,6 +29,7 @@ import {
     shareArgs,
     shareCapacityThreads,
     shareProcessMeta,
+    sameScriptPath,
 } from "/matrix/lib/reputation-boost.js";
 
 const H = "/matrix/workers/hack.js";
@@ -526,7 +527,11 @@ function legacyWorkers(ns, hosts, trackedPids) {
         try { processes = ns.ps(host); } catch { continue; }
 
         for (const proc of processes) {
-            if (![H, G, W].includes(proc.filename)) continue;
+            // Bitburner's ns.ps() normalizes filenames (notably dropping the
+            // leading slash). After a hacking-service restart, surviving H/G/W
+            // children therefore have to be reconstructed with normalized path
+            // matching before MAX can consider the drain complete.
+            if (![H, G, W].some(script => sameScriptPath(proc.filename, script))) continue;
             if (trackedPids.has(proc.pid)) continue;
             const target = String(proc.args?.[0] ?? "");
             const entry = {

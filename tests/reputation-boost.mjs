@@ -18,6 +18,7 @@ import {
     shareArgs,
     shareCapacityThreads,
     shareProcessMeta,
+    sameScriptPath,
 } from "../matrix/lib/reputation-boost.js";
 import {
     DIRECTIVES,
@@ -122,6 +123,12 @@ assert.equal(isOwnedShareProcess({ ...owned, filename: "matrix/workers/share.js"
     "ownership matching must tolerate ns.ps path normalization");
 assert.equal(isOwnedShareProcess({ ...owned, filename: "/matrix/workers/other.js" }, "boost-a"), false,
     "ownership matching must remain script-specific");
+assert.equal(sameScriptPath("matrix/workers/hack.js", "/matrix/workers/hack.js"), true,
+    "legacy H/G/W reconstruction must tolerate ns.ps dropping the leading slash");
+assert.equal(sameScriptPath("\\matrix\\workers\\grow.js", "/matrix/workers/grow.js"), true,
+    "legacy H/G/W reconstruction must tolerate normalized separators");
+assert.equal(sameScriptPath("matrix/workers/share.js", "/matrix/workers/weaken.js"), false,
+    "legacy reconstruction must remain worker-script-specific");
 
 assert.equal(shareCapacityThreads({ maxRam: 64, usedRam: 20, reserveRam: 8, ownedRam: 0, scriptRam: 4 }), 9);
 assert.equal(shareCapacityThreads({ maxRam: 64, usedRam: 52, reserveRam: 8, ownedRam: 16, scriptRam: 4 }), 5,
@@ -150,6 +157,10 @@ assert.doesNotMatch(hacking, /scriptKill\s*\(\s*SHARE/);
 assert.doesNotMatch(hacking, /killall/i);
 assert.match(hacking, /reclaimBoostShareForRam/);
 assert.match(hacking, /maxBoostReady/);
+assert.match(hacking, /sameScriptPath\(proc\.filename, script\)/,
+    "legacy drain reconstruction must normalize ns.ps H/G/W filenames");
+assert.doesNotMatch(hacking, /\[H, G, W\]\.includes\(proc\.filename\)/,
+    "MAX drain must not use leading-slash-sensitive legacy matching");
 assert.match(hacking, /admissionPaused/);
 assert.match(hacking, /activateMaxBoostRequest/);
 assert.match(hacking, /isOwnedShareProcess/);
