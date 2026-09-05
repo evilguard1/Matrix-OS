@@ -53,7 +53,14 @@ function makeNs({ formulas = true, hacking = 500 } = {}) {
                 growThreads: (server, _player, targetMoney, cores) => {
                     growCalls.push({ server: { ...server }, targetMoney, cores });
                     const missing = Math.max(0, targetMoney - server.moneyAvailable);
-                    return Math.max(1, Math.ceil(missing / 10_000_000));
+                    const missingFraction = targetMoney > 0 ? missing / targetMoney : 0;
+                    // Deliberately convex so the mock has the same economic shape
+                    // as real growth: larger hacks earn more per slot but become
+                    // progressively less RAM-efficient.
+                    return Math.max(
+                        1,
+                        Math.ceil((missing / 10_000_000) * (1 + 5 * missingFraction)),
+                    );
                 },
             },
         },
@@ -158,11 +165,13 @@ function makeNs({ formulas = true, hacking = 500 } = {}) {
     );
     const efficient = formulaBatchShape(ns, "alpha", cfg, context);
     assert.equal(efficient.metric, Math.max(...frontier.map(shape => shape.metric)));
+    assert.ok(efficient.requestedFraction < 0.20,
+        "the convex mock must leave larger slot-value shapes for the RAM-aware overlay to buy");
 }
 
 // RAM-aware planning is an abundance overlay, never a replacement for the
 // validated efficiency baseline. If every baseline target cannot fit, nothing is
-// enlarged. With abundant RAM the greedy frontier may buy larger per-slot shapes.
+// enlarged. With abundant RAM the greedy frontier buys larger per-slot shapes.
 {
     const ns = makeNs();
     const context = selectPlanningContext(ns);
@@ -268,5 +277,11 @@ assert.match(hackingSource,
 assert.doesNotMatch(hackingSource,
     /\?\s*h\s*=>\s*formulaTargetScore\(ns,\s*h,\s*cfg,\s*planner\)/,
     "one-argument Formula scorer drops the real host when rankTargets calls scorer(ns, host)");
+assert.match(hackingSource, /staleSnapshots\.size\s*===\s*0/,
+    "shape-policy replans must yield to every existing correctness stale-drain");
+assert.match(hackingSource, /reason:\s*"ram-aware-shape-change"/,
+    "shape-policy generation changes must use the normal immutable-snapshot drain path");
+assert.match(hackingSource, /legacyHwgwRam\(ns,\s*legacy\.workers\)/,
+    "restart-legacy H/G/W RAM must be treated as recoverable steady-state hacking capacity");
 
 console.log("MATRIX-OS planner passed: native fallback, Formula frontiers, RAM-aware allocation, ranking, and stale probes.");
