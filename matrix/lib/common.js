@@ -10,7 +10,7 @@ const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.10.1",
+    version: "1.10.2",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -37,7 +37,9 @@ const DEFAULT_CONFIG = {
         // lets ranked targets and RAM be the constraint instead of an arbitrary
         // small number. L00 proved the old cap of 32 pinned a 28 PB network to
         // exactly 14,813 batches and ~6.27% utilisation with zero deferrals.
-        maxTargets: 1024, waveReserveFraction: 0.05, maxPrepTargets: 20,
+        // RAM-aware shapes are an abundance overlay: they stay on the validated
+        // RAM-efficiency baseline until every admitted target's baseline fits.
+        maxTargets: 1024, ramAwareBatchShapes: true, waveReserveFraction: 0.05, maxPrepTargets: 20,
     },
     progression: {
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,

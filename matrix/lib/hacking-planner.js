@@ -5,9 +5,15 @@ const W = "/matrix/workers/weaken.js";
 export const PLANNER_NATIVE = "native";
 export const PLANNER_FORMULAS = "formulas";
 export const SNAPSHOT_PROBE_SECURITY_EPSILON = 0.01;
+export const SHAPE_POLICY_EFFICIENCY = "efficiency";
+export const SHAPE_POLICY_RAM_AWARE = "ram-aware";
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, Number(value) || 0));
+}
+
+function requestedFraction(value) {
+    return Math.max(0, Number(Number(value).toFixed(6)) || 0);
 }
 
 function formulaFacts(ns, target) {
@@ -72,16 +78,8 @@ export function selectPlanningContext(ns) {
     }
 }
 
-/**
- * Predict the best clean-state HWGW shape with Formulas.exe.
- *
- * Security accounting intentionally stays on the native analysis calls. In
- * particular growthAnalyzeSecurity(gt) must remain uncapped: passing a target
- * argument reintroduced the old W2 under-weaken bug.
- */
-export function formulaBatchShape(ns, target, cfg, context) {
+function formulaEnvironment(ns, target, context) {
     if (context?.kind !== PLANNER_FORMULAS || !context.player) return null;
-
     const facts = formulaFacts(ns, target);
     if (facts.moneyMax <= 0) return null;
 
@@ -92,66 +90,291 @@ export function formulaBatchShape(ns, target, cfg, context) {
     const hackPerThread = clamp(hacking.hackPercent(clean, player), 0, 0.90);
     if (!(hackPerThread > 0)) return null;
 
-    const hTime = Math.max(1, Number(hacking.hackTime(clean, player)) || 1);
-    const gTime = Math.max(1, Number(hacking.growTime(clean, player)) || 1);
-    const wTime = Math.max(1, Number(hacking.weakenTime(clean, player)) || 1);
-    const hRam = ns.getScriptRam(H, "home");
-    const gRam = ns.getScriptRam(G, "home");
-    const wRam = ns.getScriptRam(W, "home");
-    const weakenPerThread = Math.max(0.0001, ns.weakenAnalyze(1));
-    const minF = cfg.hacking?.minHackFraction ?? 0.05;
-    const maxF = cfg.hacking?.maxHackFraction ?? 0.40;
+    return {
+        facts,
+        hacking,
+        clean,
+        player,
+        chance,
+        hackPerThread,
+        hTime: Math.max(1, Number(hacking.hackTime(clean, player)) || 1),
+        gTime: Math.max(1, Number(hacking.growTime(clean, player)) || 1),
+        wTime: Math.max(1, Number(hacking.weakenTime(clean, player)) || 1),
+        hRam: ns.getScriptRam(H, "home"),
+        gRam: ns.getScriptRam(G, "home"),
+        wRam: ns.getScriptRam(W, "home"),
+        weakenPerThread: Math.max(0.0001, ns.weakenAnalyze(1)),
+    };
+}
 
-    let best = null;
+function formulaShapeFromEnvironment(ns, target, env, fraction) {
+    if (!env) return null;
+    const requested = requestedFraction(fraction);
+    if (!(requested > 0)) return null;
+
+    const {
+        facts,
+        hacking,
+        player,
+        chance,
+        hackPerThread,
+        hTime,
+        gTime,
+        wTime,
+        hRam,
+        gRam,
+        wRam,
+        weakenPerThread,
+    } = env;
+
+    const ht = Math.max(1, Math.ceil(requested / hackPerThread));
+    const actualFraction = clamp(hackPerThread * ht, 0.001, 0.90);
+
+    // W1 lands before G, so growth is planned from post-hack money at the
+    // server's minimum security rather than from a live transient state.
+    const postHack = formulaServer(ns, facts, {
+        moneyAvailable: facts.moneyMax * (1 - actualFraction),
+        hackDifficulty: facts.minDifficulty,
+    });
+    let gt = Math.ceil(hacking.growThreads(postHack, player, facts.moneyMax, 1));
+    if (!Number.isFinite(gt) || gt < 1) return null;
+
+    const hSec = ns.hackAnalyzeSecurity(ht, target);
+    const gSec = ns.growthAnalyzeSecurity(gt);
+    const wt1 = Math.max(1, Math.ceil(hSec / weakenPerThread));
+    const wt2 = Math.max(1, Math.ceil(gSec / weakenPerThread));
+    const ram = ht * hRam + gt * gRam + (wt1 + wt2) * wRam;
+    const ramSeconds =
+        ht * hRam * hTime / 1000 +
+        gt * gRam * gTime / 1000 +
+        (wt1 + wt2) * wRam * wTime / 1000;
+    const expected = facts.moneyMax * actualFraction * chance;
+    const metric = expected / Math.max(1, ramSeconds);
+
+    return {
+        planner: PLANNER_FORMULAS,
+        requestedFraction: requested,
+        f: actualFraction,
+        ht,
+        gt,
+        wt1,
+        wt2,
+        ram,
+        expected,
+        metric,
+        chance,
+        hackPerThread,
+        hTime,
+        gTime,
+        wTime,
+        growSecurity: gSec,
+        hackSecurity: hSec,
+        hRam,
+        gRam,
+        wRam,
+    };
+}
+
+/**
+ * Return every clean Formula shape in the configured fraction range.
+ *
+ * The frontier is intentionally explicit because the globally optimal shape is
+ * not always the locally most RAM-efficient shape. Once every target is
+ * slot-saturated, spare RAM can buy larger per-slot money extraction without
+ * reducing the already-validated batch gap.
+ */
+export function formulaBatchFrontier(ns, target, cfg, context) {
+    const env = formulaEnvironment(ns, target, context);
+    if (!env) return [];
+
+    const minF = Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05);
+    const maxF = Math.max(minF, Number(cfg.hacking?.maxHackFraction ?? 0.40) || 0.40);
+    const out = [];
     for (let f = minF; f <= maxF + 1e-9; f += 0.025) {
-        const ht = Math.max(1, Math.ceil(f / hackPerThread));
-        const actualFraction = clamp(hackPerThread * ht, 0.001, 0.90);
+        const shape = formulaShapeFromEnvironment(ns, target, env, f);
+        if (shape) out.push(shape);
+    }
+    return out;
+}
 
-        // W1 lands before G, so growth is planned from post-hack money at the
-        // server's minimum security rather than from a live transient state.
-        const postHack = formulaServer(ns, facts, {
-            moneyAvailable: facts.moneyMax * (1 - actualFraction),
-            hackDifficulty: facts.minDifficulty,
-        });
-        let gt = Math.ceil(hacking.growThreads(postHack, player, facts.moneyMax, 1));
-        if (!Number.isFinite(gt) || gt < 1) continue;
+/** Build one exact requested-fraction Formula shape using a fresh player context. */
+export function formulaBatchShapeAtFraction(ns, target, cfg, context, fraction) {
+    const minF = Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05);
+    const maxF = Math.max(minF, Number(cfg.hacking?.maxHackFraction ?? 0.40) || 0.40);
+    const requested = clamp(Number(fraction), minF, maxF);
+    return formulaShapeFromEnvironment(ns, target, formulaEnvironment(ns, target, context), requested);
+}
 
-        const hSec = ns.hackAnalyzeSecurity(ht, target);
-        const gSec = ns.growthAnalyzeSecurity(gt);
-        const wt1 = Math.max(1, Math.ceil(hSec / weakenPerThread));
-        const wt2 = Math.max(1, Math.ceil(gSec / weakenPerThread));
-        const ram = ht * hRam + gt * gRam + (wt1 + wt2) * wRam;
-        const ramSeconds =
-            ht * hRam * hTime / 1000 +
-            gt * gRam * gTime / 1000 +
-            (wt1 + wt2) * wRam * wTime / 1000;
-        const expected = facts.moneyMax * actualFraction * chance;
-        const metric = expected / Math.max(1, ramSeconds);
-
-        const shape = {
-            planner: PLANNER_FORMULAS,
-            f: actualFraction,
-            ht,
-            gt,
-            wt1,
-            wt2,
-            ram,
-            expected,
-            metric,
-            chance,
-            hackPerThread,
-            hTime,
-            gTime,
-            wTime,
-            growSecurity: gSec,
-            hackSecurity: hSec,
-            hRam,
-            gRam,
-            wRam,
-        };
+/** Predict the locally most RAM-efficient clean-state HWGW shape. */
+export function formulaBatchShape(ns, target, cfg, context) {
+    let best = null;
+    for (const shape of formulaBatchFrontier(ns, target, cfg, context)) {
         if (!best || shape.metric > best.metric) best = shape;
     }
     return best;
+}
+
+function nextUsefulUpgrade(frontier, currentIndex, depth, slotRate) {
+    const current = frontier[currentIndex];
+    if (!current) return null;
+    for (let index = currentIndex + 1; index < frontier.length; index += 1) {
+        const shape = frontier[index];
+        const incrementalRam = (shape.ram - current.ram) * depth;
+        const incrementalMoneyPerSec = (shape.expected - current.expected) * slotRate;
+        if (incrementalRam > 1e-9 && incrementalMoneyPerSec > 1e-9) {
+            return {
+                index,
+                shape,
+                incrementalRam,
+                incrementalMoneyPerSec,
+                marginal: incrementalMoneyPerSec / incrementalRam,
+            };
+        }
+    }
+    return null;
+}
+
+/**
+ * Allocate spare steady-state HWGW RAM across larger Formula shapes.
+ *
+ * Safety rule: the existing efficiency planner is the baseline. Adaptive
+ * upgrades only activate when EVERY baseline target fits inside the supplied
+ * steady-state RAM budget. This preserves the validated small/medium-network
+ * behavior and turns on slot-value optimization only when RAM is genuinely
+ * abundant.
+ *
+ * `depthForShape` is supplied by the scheduler so this allocator cannot drift
+ * from matrix/lib/batch.js pipelineDepth() semantics.
+ */
+export function formulaRamAwareShapePlan(ns, targets, cfg, context, options = {}) {
+    const hosts = Array.isArray(targets) ? targets : [];
+    const depthForShape = typeof options.depthForShape === "function"
+        ? options.depthForShape
+        : (() => 1);
+    const gapMs = Math.max(1, Number(options.gapMs) || 120);
+    const slotRate = 1000 / (gapMs * 4);
+    const budgetRam = Math.max(0, Number(options.budgetRam) || 0);
+
+    const entries = [];
+    for (const target of hosts) {
+        const frontier = formulaBatchFrontier(ns, target, cfg, context);
+        if (!frontier.length) continue;
+
+        let baselineIndex = 0;
+        for (let i = 1; i < frontier.length; i += 1) {
+            if (frontier[i].metric > frontier[baselineIndex].metric) baselineIndex = i;
+        }
+        const baselineShape = frontier[baselineIndex];
+        const depth = Math.max(1, Math.floor(Number(depthForShape(baselineShape, target)) || 1));
+        entries.push({
+            target,
+            frontier,
+            baselineIndex,
+            currentIndex: baselineIndex,
+            depth,
+            baselineShape,
+            shape: baselineShape,
+        });
+    }
+
+    const baselineRam = entries.reduce((sum, entry) => sum + entry.baselineShape.ram * entry.depth, 0);
+    const baselineExpectedMoneyPerSec = entries.reduce(
+        (sum, entry) => sum + entry.baselineShape.expected * slotRate,
+        0,
+    );
+
+    const adaptive = context?.kind === PLANNER_FORMULAS &&
+        cfg.hacking?.ramAwareBatchShapes !== false &&
+        entries.length > 0 &&
+        baselineRam <= budgetRam + 1e-9;
+
+    let plannedRam = baselineRam;
+    let plannedExpectedMoneyPerSec = baselineExpectedMoneyPerSec;
+    let upgradeSteps = 0;
+
+    if (adaptive) {
+        while (true) {
+            let best = null;
+            for (let rank = 0; rank < entries.length; rank += 1) {
+                const entry = entries[rank];
+                const upgrade = nextUsefulUpgrade(
+                    entry.frontier,
+                    entry.currentIndex,
+                    entry.depth,
+                    slotRate,
+                );
+                if (!upgrade) continue;
+                if (plannedRam + upgrade.incrementalRam > budgetRam + 1e-9) continue;
+
+                const candidate = { entry, rank, ...upgrade };
+                if (!best ||
+                    candidate.marginal > best.marginal + 1e-18 ||
+                    (Math.abs(candidate.marginal - best.marginal) <= 1e-18 &&
+                        candidate.incrementalMoneyPerSec > best.incrementalMoneyPerSec + 1e-9) ||
+                    (Math.abs(candidate.marginal - best.marginal) <= 1e-18 &&
+                        Math.abs(candidate.incrementalMoneyPerSec - best.incrementalMoneyPerSec) <= 1e-9 &&
+                        candidate.rank < best.rank)) {
+                    best = candidate;
+                }
+            }
+
+            if (!best) break;
+            best.entry.currentIndex = best.index;
+            best.entry.shape = best.shape;
+            plannedRam += best.incrementalRam;
+            plannedExpectedMoneyPerSec += best.incrementalMoneyPerSec;
+            upgradeSteps += 1;
+        }
+    }
+
+    const byTarget = new Map();
+    const serialEntries = entries.map(entry => {
+        const baselineFullDepthRam = entry.baselineShape.ram * entry.depth;
+        const fullDepthRam = entry.shape.ram * entry.depth;
+        const baselineExpectedPerSec = entry.baselineShape.expected * slotRate;
+        const expectedPerSec = entry.shape.expected * slotRate;
+        const result = {
+            target: entry.target,
+            depth: entry.depth,
+            baselineRequestedFraction: entry.baselineShape.requestedFraction,
+            requestedFraction: entry.shape.requestedFraction,
+            baselineActualFraction: entry.baselineShape.f,
+            actualFraction: entry.shape.f,
+            baselineFullDepthRam,
+            fullDepthRam,
+            baselineExpectedPerSec,
+            expectedPerSec,
+            gainPerSec: expectedPerSec - baselineExpectedPerSec,
+            addedRam: fullDepthRam - baselineFullDepthRam,
+        };
+        byTarget.set(entry.target, result);
+        return result;
+    });
+
+    return {
+        policy: adaptive ? SHAPE_POLICY_RAM_AWARE : SHAPE_POLICY_EFFICIENCY,
+        reason: adaptive ? "baseline-fits-budget" :
+            entries.length === 0 ? "no-formula-shapes" :
+            cfg.hacking?.ramAwareBatchShapes === false ? "disabled" :
+            baselineRam > budgetRam ? "baseline-exceeds-budget" : "planner-unavailable",
+        budgetRam,
+        gapMs,
+        slotRate,
+        baselineRam,
+        plannedRam,
+        remainingRam: Math.max(0, budgetRam - plannedRam),
+        baselineExpectedMoneyPerSec,
+        plannedExpectedMoneyPerSec,
+        improvementFraction: baselineExpectedMoneyPerSec > 0
+            ? plannedExpectedMoneyPerSec / baselineExpectedMoneyPerSec - 1
+            : 0,
+        upgradeSteps,
+        upgradedTargets: serialEntries.filter(entry =>
+            entry.requestedFraction > entry.baselineRequestedFraction + 1e-9
+        ).length,
+        entries: serialEntries,
+        byTarget,
+    };
 }
 
 /** Money-mode target score for the predictive planner. */
