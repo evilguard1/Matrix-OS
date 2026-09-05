@@ -1,16 +1,16 @@
+import { resetEpoch, freshState } from "./state.js";
+
 export const ROOT = "/matrix";
 export const CONFIG = `${ROOT}/config.json`;
 export const STATE_DIR = `${ROOT}/state`;
 export const EVENTS = `${STATE_DIR}/events.txt`;
 export const DIRECTIVES = `${STATE_DIR}/directives.txt`;
 
-const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
-const RELEASE_META = `${STATE_DIR}/release-metadata.txt`;
 const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.10.2",
+    version: "1.11.0-rp.1",
     masterEnabled: true,
     mode: "balanced",
     ui: { refreshMs: 750, autoOpen: true, matrixRain: true },
@@ -149,22 +149,40 @@ export function config(ns) {
     return merge(DEFAULT_CONFIG, migrateConfig(saved).config);
 }
 
-export async function fetchLatestInstaller(ns, destination = `${ROOT}/remote-install.js`) {
-    const stamp = Date.now();
-    let sha = "main";
-    if (await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) {
-        try {
-            const parsed = String(JSON.parse(ns.read(RELEASE_META)).sha ?? "");
-            if (/^[a-f0-9]{40}$/i.test(parsed)) sha = parsed;
-        } catch {}
+const RELEASE_PROFILE = "/matrix/release.json";
+const DEFAULT_CHANNEL = "rp/ghost-node-war";
+const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/";
+const RELEASE_META = "/matrix/state/release-metadata.txt";
+
+export function releaseProfile(ns) {
+    const raw = ns.read(RELEASE_PROFILE);
+    if (!raw) return { schemaVersion: 1, channel: DEFAULT_CHANNEL, installedSha: null };
+    try {
+        const value = JSON.parse(raw);
+        if (value.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL].includes(value.channel) ||
+            !/^[a-f0-9]{40}$/.test(value.installedSha)) return null;
+        return value;
+    } catch { return null; }
+}
+
+export async function fetchLatestInstaller(ns, destination = "/matrix/remote-install.js", stageOnly = false) {
+    const profile = releaseProfile(ns);
+    if (!profile) return null;
+    let sha = stageOnly ? profile.installedSha : null;
+    if (!sha) {
+        if (!await ns.wget(`${COMMIT_API}${encodeURIComponent(profile.channel)}?t=${Date.now()}`, RELEASE_META, "home")) return null;
+        try { sha = JSON.parse(ns.read(RELEASE_META)).sha; } catch { return null; }
     }
+    if (typeof sha !== "string" || !/^[a-f0-9]{40}$/.test(sha)) return null;
     const url = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
-    return await ns.wget(url, destination, "home") ? sha : null;
+    return await ns.wget(url, destination, "home") && ns.read(destination).length > 0 ? sha : null;
 }
 
 export function getCoordinatorState(ns) {
     const raw = readJson(ns, `${STATE_DIR}/coordinator.txt`, null);
-    if (!raw || Date.now() - Number(raw.updated ?? 0) > 30_000) return null;
+    let epoch = null;
+    if (raw?.schemaVersion === 1) { try { epoch = resetEpoch(ns.getResetInfo()); } catch {} }
+    if (!freshState(raw, { epoch })) return null;
     return raw;
 }
 
@@ -214,6 +232,8 @@ export function reserveMoney(ns, cfg = config(ns)) {
     const baseline = reserveFloor(cash, cfg);
 
     const coord = getCoordinatorState(ns);
+    // A present but invalid/stale strategic policy is not permission to spend.
+    if (ns.read(`${STATE_DIR}/coordinator.txt`) && !coord) return Math.max(baseline, cash);
     if (coord && coord.budgets) {
         const coordTarget = Math.max(
             Number(coord.budgets.augmentationReserve ?? 0),
@@ -228,8 +248,13 @@ export function reserveMoney(ns, cfg = config(ns)) {
     // honour it, while the singularity service itself uses the baseline reserve.
     const progression = readJson(ns, `${STATE_DIR}/spending-reserve.txt`, {});
     const target = Number(progression.amount ?? 0);
-    const fresh = Date.now() - Number(progression.updated ?? 0) < 30_000;
-    return fresh && Number.isFinite(target) ? Math.max(baseline, target) : baseline;
+    let epoch = null;
+    if (progression.schemaVersion === 1) { try { epoch = resetEpoch(ns.getResetInfo()); } catch {} }
+    const fresh = freshState(progression, { epoch });
+    // N-1 legacy reserves retain their old expiry behavior; canonical reserves
+    // fail closed until their owner republishes after reconnect/reset.
+    if (progression.schemaVersion === 1 && !fresh) return Math.max(baseline, cash);
+    return fresh && Number.isFinite(target) && target >= 0 ? Math.max(baseline, target) : baseline;
 }
 
 export function baselineReserveMoney(ns, cfg = config(ns)) {
@@ -293,7 +318,11 @@ export function durableReputationBoost(raw, now = Date.now()) {
 export function getDirectives(ns) {
     const now = Date.now();
     const coordinator = readJson(ns, DIRECTIVES, null);
-    const coordinatorFresh = Boolean(coordinator && now - Number(coordinator.updated ?? 0) <= 30_000);
+    let epoch = null;
+    if (coordinator?.schemaVersion === 1) { try { epoch = resetEpoch(ns.getResetInfo()); } catch {} }
+    const canonical = coordinator?.schemaVersion === 1 ? getCoordinatorState(ns) : null;
+    const coordinatorFresh = freshState(coordinator, { now, epoch }) &&
+        (coordinator.schemaVersion !== 1 || canonical?.revision === coordinator.revision);
 
     const unreadable = {};
     const requestRecord = readJson(ns, BOOST_REQUEST_STATE, unreadable);
@@ -326,10 +355,11 @@ export function managerBudget(ns, name, cfg = config(ns)) {
         hacknet: "hacknetBudgetFraction",
         cloud: "cloudBudgetFraction",
         stock: "stockBudgetFraction",
+        sleeveAugs: "sleeveAugBudgetFraction",
     }[name];
     const dir = getDirectives(ns);
     const fraction = managerFraction(name, {
-        configured: econKey ? cfg.economy?.[econKey] : 0,
+        configured: econKey ? cfg.economy?.[econKey] ?? (name === "sleeveAugs" ? 0.005 : 0) : 0,
         homeRam: ns.getServerMaxRam("home"),
         directive: dir?.budgets?.[name],
         aggressiveBelowRam: cfg.economy?.aggressiveCloudBelowRam ?? 128,

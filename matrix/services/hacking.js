@@ -168,8 +168,8 @@ function operationTimes(ns, target) {
 function batchShape(ns, target, cfg) {
     const max = ns.getServerMaxMoney(target);
     const chance = clamp(ns.hackAnalyzeChance(target), 0.0001, 1);
-    const minF = cfg.hacking?.minHackFraction ?? 0.05;
-    const maxF = cfg.hacking?.maxHackFraction ?? 0.40;
+    const maxF = Math.min(0.90, Math.max(0, Number(cfg.hacking?.maxHackFraction ?? 0.40)));
+    const minF = Math.min(maxF, Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05));
     const hRam = ns.getScriptRam(H, "home");
     const gRam = ns.getScriptRam(G, "home");
     const wRam = ns.getScriptRam(W, "home");
@@ -182,7 +182,11 @@ function batchShape(ns, target, cfg) {
         let ht = Math.ceil(ns.hackAnalyzeThreads(target, hackAmount));
         if (!Number.isFinite(ht) || ht < 1) continue;
 
-        const actualFraction = clamp(ns.hackAnalyze(target) * ht, 0.001, 0.90);
+        const perThread = ns.hackAnalyze(target);
+        if (!(perThread > 0)) continue;
+        ht = Math.min(ht, Math.floor((maxF + 1e-12) / perThread));
+        if (ht < 1) continue;
+        const actualFraction = clamp(perThread * ht, 0.001, 0.90);
         let gt = Math.ceil(ns.growthAnalyze(target, 1 / (1 - actualFraction)));
         if (!Number.isFinite(gt) || gt < 1) gt = 1;
 
@@ -1448,7 +1452,7 @@ export async function main(ns) {
                 const schedulerReserveRam = ramNow.schedulableFree * reserveFraction;
                 const schedulerUsableIdleRam = Math.max(0, ramNow.schedulableFree - schedulerReserveRam);
 
-                if (schedulerUsableIdleRam < snapshot.shape.ram) break fill;
+                if (schedulerUsableIdleRam < snapshot.shape.ram) continue fill;
 
                 const pool = schedulablePool(ns, hosts, cfg, boost).map(item => ({
                     host: item.host,
@@ -1486,7 +1490,7 @@ export async function main(ns) {
                         componentFragmentationRam: plan.failed?.fragmentationRam ?? 0,
                     }, DEFERRAL_RING);
 
-                    break fill;
+                    continue fill;
                 }
 
                 let baseFinish = nextFinishByTarget.get(host);

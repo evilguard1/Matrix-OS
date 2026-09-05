@@ -1,5 +1,7 @@
 import { config, writeState, event } from "/matrix/lib/common.js";
 
+import { spendMoney } from "/matrix/lib/budget-ledger.js";
+
 const CITIES = ["Aevum","Chongqing","Sector-12","New Tokyo","Ishima","Volhaven"];
 const AGRI = "Agriculture";
 const DIV = "Matrix Agriculture";
@@ -103,7 +105,12 @@ export async function main(ns) {
             if (!ns.corporation.hasCorporation()) {
                 const selfFund = ns.getResetInfo().currentNode !== 3;
                 if (ns.corporation.canCreateCorporation(selfFund)==="Success") {
-                    if (ns.corporation.createCorporation("MATRIX INDUSTRIES",selfFund)) {
+                    // 3.0.1 Corporation/helpers.ts costOfCreatingCorporation
+                    // returns a fixed 150e9; there is no price getter in this API.
+                    const created = selfFund ? spendMoney(ns, { owner: "corporation", quote: () => 150e9,
+                        execute: () => ns.corporation.createCorporation("MATRIX INDUSTRIES", true) }).status === "spent"
+                        : ns.corporation.createCorporation("MATRIX INDUSTRIES", false);
+                    if (created) {
                         await event(ns,"corporation","Corporation created","success");
                     }
                 }

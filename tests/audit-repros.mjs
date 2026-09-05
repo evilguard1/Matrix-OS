@@ -9,6 +9,7 @@ async function load(file) {
     (_,p)=>`from "${pathToFileURL(path.join(root,p.slice(1))).href}"`);
   return import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 }
+if (fs.existsSync(path.join(root, 'matrix/lib/budget-ledger.js'))) throw new Error('Historical 1.10.2 fixture only. On the RP candidate run npm run test:rp-runtime.');
 const results=[];
 const c=await load('matrix/services/coordinator.js');
 const common=await load('matrix/lib/common.js');

@@ -4,7 +4,7 @@
     {
       "id": "A01",
       "title": "Réserves écrasées",
-      "status": "open-reproduced",
+      "status": "fixed-candidate",
       "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
       "evidence": [
         {
@@ -13,7 +13,8 @@
           "previousLine": 330,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/coordinator.js#L330"
         }
-      ]
+      ],
+      "candidateNote": "Reserve canonique conservee; tests/rp-state-budget.mjs."
     },
     {
       "id": "A02",
@@ -32,7 +33,7 @@
     {
       "id": "A03",
       "title": "Mise à jour partielle",
-      "status": "open-static",
+      "status": "partially-fixed",
       "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
       "evidence": [
         {
@@ -41,12 +42,13 @@
           "previousLine": 209,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/install.js#L209"
         }
-      ]
+      ],
+      "candidateNote": "Hashes, journal et restauration des fichiers; sante apres lancement encore ouverte. tests/rp-release.mjs et evidence/rp02/native.json."
     },
     {
       "id": "A04",
       "title": "Dépenses non arbitrées",
-      "status": "open-static",
+      "status": "partially-fixed",
       "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
       "evidence": [
         {
@@ -55,12 +57,13 @@
           "previousLine": 47,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/singularity.js#L47"
         }
-      ]
+      ],
+      "candidateNote": "Achats cash adaptes au ledger synchrone; issue inconnue bloque en attente de reconciliation RP04. evidence/rp01/native.json."
     },
     {
       "id": "A05",
       "title": "Liquidation sans 4S ignorée",
-      "status": "open-reproduced",
+      "status": "fixed-candidate",
       "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
       "evidence": [
         {
@@ -69,12 +72,13 @@
           "previousLine": 42,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/stock.js#L42"
         }
-      ]
+      ],
+      "candidateNote": "Liquidation long/short avant le gate 4S et relecture des positions; tests/rp-state-budget.mjs."
     },
     {
       "id": "A06",
       "title": "Mauvaise échelle de karma",
-      "status": "open-reproduced",
+      "status": "fixed-candidate",
       "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
       "evidence": [
         {
@@ -83,12 +87,13 @@
           "previousLine": 145,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/coordinator.js#L145"
         }
-      ]
+      ],
+      "candidateNote": "Seuil -54000, exception BN2 et disableGang; tests/rp-state-budget.mjs."
     },
     {
       "id": "A07",
       "title": "Plafond de fraction de hack violé",
-      "status": "open-reproduced",
+      "status": "fixed-candidate",
       "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
       "evidence": [
         {
@@ -97,12 +102,13 @@
           "previousLine": 107,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/hacking-planner.js"
         }
-      ]
+      ],
+      "candidateNote": "Plafond reel par thread et arrondi; tests/rp-admission.mjs."
     },
     {
       "id": "A08",
       "title": "Blocage des cibles suivantes",
-      "status": "open-static",
+      "status": "fixed-candidate",
       "note": "Relu dans 1.10.2 : break fill demeure aux refus de RAM et de placement. Les formes adaptatives ne suppriment pas ce chemin.",
       "evidence": [
         {
@@ -111,7 +117,8 @@
           "previousLine": 1279,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/hacking.js"
         }
-      ]
+      ],
+      "candidateNote": "Admission suivante apres manque RAM ou fragmentation; tests/rp-admission.mjs."
     },
     {
       "id": "A09",

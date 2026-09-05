@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "releaseTarget": "rp-bn4-v1.0.0",
-  "currentStage": "audited-integration-foundation",
+  "currentStage": "runtime-foundation-candidate",
   "rpReady": false,
   "gameDeploymentPerformed": false,
   "allControlAdaptersImplemented": false,
@@ -55,5 +55,7 @@
       "status": "not-run",
       "evidence": []
     }
-  ]
+  ],
+  "candidateVersion": "1.11.0-rp.1",
+  "implementationNotes": "Budgets et installation transactionnelle implementes et testes en moteur isole. RP02 sante apres lancement, RP03-RP12 et gates de campagne restent ouverts."
 }

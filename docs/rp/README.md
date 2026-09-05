@@ -6,6 +6,8 @@ La cible est une partie où le joueur donne des intentions et choisit des option
 
 ## Lire dans cet ordre
 
+**Développement en cours : [candidat 1.11.0-rp.1, corrections et limites](DEVELOPMENT-STATUS.md).** Les constats de l'audit initial ci-dessous sont conservés comme historique; consulter aussi les statuts actualisés de `findings.json`.
+
 1. [Audit actuel](AUDIT.md) : code, branches, défauts et comparaison des propositions.
 2. [Contrat de jeu](PLAY-CONTRACT.md) : ce que signifie « suffisamment complet » et comment produire le briefing.
 3. [Implantation](IMPLEMENTATION.md) et [backlog JSON](backlog.json) : ordre, fichiers, dépendances, tests et retour arrière.
@@ -15,7 +17,7 @@ La cible est une partie où le joueur donne des intentions et choisit des option
 
 ## Ce que contient cette branche
 
-Le moteur 1.10.2, le vrai dashboard Ghost à neuf vues, ses outils d'aperçu/installation et ses tests, ainsi que le programme de sortie du développement. Les fichiers du moteur économique et du scheduler n'ont pas été modifiés par cet audit. Les deux PR expérimentales sont évaluées, pas fusionnées ici.
+Le moteur issu de 1.10.2, le dashboard Ghost à neuf vues et le programme de sortie du développement. Le candidat 1.11.0-rp.1 ajoute le registre de dépenses, la publication canonique des réserves, des corrections boursières et de hacking, ainsi que le canal RP et l'installation avec hashes et restauration. Les deux PR expérimentales restent évaluées séparément.
 
 Le dashboard a été exécuté dans le moteur officiel 3.0.1 isolé : 1,7 Go, une fenêtre, installation et restauration testées. Ce contrôle utilise une télémétrie synthétique. Il ne prouve pas la campagne, le pont GPT ou le fonctionnement sur la sauvegarde Steam du joueur.
 

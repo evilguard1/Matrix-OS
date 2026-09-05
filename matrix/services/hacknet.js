@@ -1,4 +1,5 @@
 import { config, managerBudget, writeState, event, readJson, STATE_DIR, hasSF } from "/matrix/lib/common.js";
+import { spendMoney } from "/matrix/lib/budget-ledger.js";
 import { hashPlan } from "/matrix/lib/hashes.js";
 
 function cheapestUpgrade(ns) {
@@ -45,8 +46,13 @@ export async function main(ns) {
             for (let n=0;n<8;n++) {
                 const x = cheapestUpgrade(ns);
                 if (!x || x.cost > remaining) break;
-                if (!execute(ns,x)) break;
-                remaining -= x.cost;
+                const receipt = spendMoney(ns, { owner: "hacknet", limit: remaining,
+                    quote: () => x.kind === "node" ? ns.hacknet.getPurchaseNodeCost()
+                        : x.kind === "level" ? ns.hacknet.getLevelUpgradeCost(x.i, 1)
+                        : x.kind === "ram" ? ns.hacknet.getRamUpgradeCost(x.i, 1)
+                        : ns.hacknet.getCoreUpgradeCost(x.i, 1), execute: () => execute(ns, x) });
+                if (receipt.status !== "spent") break;
+                remaining -= receipt.cost;
                 bought++;
             }
 

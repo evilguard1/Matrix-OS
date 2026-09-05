@@ -1,10 +1,37 @@
+const RELEASE_PROFILE = "/matrix/release.json";
+const DEFAULT_CHANNEL = "rp/ghost-node-war";
+const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/";
+const RELEASE_META = "/matrix/state/release-metadata.txt";
+
+export function releaseProfile(ns) {
+    const raw = ns.read(RELEASE_PROFILE);
+    if (!raw) return { schemaVersion: 1, channel: DEFAULT_CHANNEL, installedSha: null };
+    try {
+        const value = JSON.parse(raw);
+        if (value.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL].includes(value.channel) ||
+            !/^[a-f0-9]{40}$/.test(value.installedSha)) return null;
+        return value;
+    } catch { return null; }
+}
+
+export async function fetchLatestInstaller(ns, destination = "/matrix/remote-install.js", stageOnly = false) {
+    const profile = releaseProfile(ns);
+    if (!profile) return null;
+    let sha = stageOnly ? profile.installedSha : null;
+    if (!sha) {
+        if (!await ns.wget(`${COMMIT_API}${encodeURIComponent(profile.channel)}?t=${Date.now()}`, RELEASE_META, "home")) return null;
+        try { sha = JSON.parse(ns.read(RELEASE_META)).sha; } catch { return null; }
+    }
+    if (typeof sha !== "string" || !/^[a-f0-9]{40}$/.test(sha)) return null;
+    const url = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
+    return await ns.wget(url, destination, "home") && ns.read(destination).length > 0 ? sha : null;
+}
+
 const LOCK = "/matrix/state/bootstrap-lock.txt";
 const STATE = "/matrix/state/bootstrap.txt";
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
-const COMMIT_API = "https://api.github.com/repos/evilguard1/Matrix-OS/commits/main";
-const RELEASE_META = "/matrix/state/release-metadata.txt";
 // Netscript port the worm publishes botnet status on (see matrix/worm/spread.js).
 const WORM_PORT = 1;
 
@@ -231,19 +258,11 @@ function draw(ns, state) {
 
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
-    const stamp = Date.now();
-    let sha = "main";
-    if (await ns.wget(`${COMMIT_API}?t=${stamp}`, RELEASE_META, "home")) {
-        try {
-            const parsed = String(JSON.parse(ns.read(RELEASE_META)).sha ?? "");
-            if (/^[a-f0-9]{40}$/i.test(parsed)) sha = parsed;
-        } catch {}
-    }
-    const installerUrl = `https://raw.githubusercontent.com/evilguard1/Matrix-OS/${sha}/install.js`;
-    if (!await ns.wget(installerUrl, INSTALLER, "home")) return false;
+    const sha = await fetchLatestInstaller(ns, INSTALLER, !ns.fileExists(UPDATE_REQUEST, "home"));
+    if (!sha) return false;
     ns.rm(UPDATE_REQUEST, "home");
     ns.ui.closeTail();
-    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
+    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage", "--release", sha);
     return true;
 }
 

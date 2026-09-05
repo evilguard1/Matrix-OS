@@ -3,6 +3,8 @@ import { homeRamUpgradeCost as homeRamCost, PORT_PROGRAMS } from "/matrix/lib/ca
 import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
 import { BOOST_REQUEST_STATE, normalizeBoostRequest } from "/matrix/lib/reputation-boost.js";
 
+import { stateEnvelope, resetEpoch, freshState, spendOwner } from "/matrix/lib/state.js";
+
 const COORDINATOR_STATE = `${STATE_DIR}/coordinator.txt`;
 const DIRECTIVES_STATE = `${STATE_DIR}/directives.txt`;
 const WORLD_DAEMON = "w0r1d_d43m0n";
@@ -142,15 +144,15 @@ export function evaluateObjective(data) {
     }
 
     // 6. Gang Karma rush (SF2 unlocked but no gang yet)
-    if (sf2 && !hasGang && karma > -54) {
+    if (sf2 && reset.currentNode !== 2 && !reset.bitNodeOptions?.disableGang && !hasGang && karma > -54_000) {
         return {
             id: "GANG_KARMA",
             title: "Karma Rush for Gang",
-            reason: `Karma is ${karma.toFixed(1)} / -54.0 required to unlock Gang`,
+            reason: `Karma is ${karma.toFixed(1)} / -54000 required to unlock Gang`,
             liquidateStocks: false,
             budgets: { augmentationReserve: 0, milestoneReserve: 0, discretionaryFraction: 0.20 },
-            milestone: { name: "Gang Karma", current: Math.abs(karma), required: 54, pct: Math.min(100, (Math.abs(karma) / 54) * 100) },
-            nextStep: `Accumulating Karma (${karma.toFixed(1)} / -54.0 for Gang)`,
+            milestone: { name: "Gang Karma", current: Math.abs(karma), required: 54000, pct: Math.min(100, (Math.abs(karma) / 54000) * 100) },
+            nextStep: `Accumulating Karma (${karma.toFixed(1)} / -54000 for Gang)`,
             etaStr: "IN PROGRESS",
         };
     }
@@ -270,7 +272,7 @@ export function planDirectives(data) {
     else if (id === "RESERVE_MILESTONE") phase = "MILESTONE";
     else if (id === "GANG_KARMA") phase = "KARMA_GANG";
     else if (id === "FACTION_REP" || id === "LIQUIDATE_STOCKS") phase = "FACTION_REP";
-    else if (id === "BUY_PROGRAMS" || (id === "BOOTSTRAP_INCOME" && homeRam < FULL_ENGINE_HOME_RAM)) phase = "BOOTSTRAP";
+    else if (id === "BUY_TOR" || id === "BUY_PROGRAMS" || (id === "BOOTSTRAP_INCOME" && homeRam < FULL_ENGINE_HOME_RAM)) phase = "BOOTSTRAP";
     else phase = "HACK_ECON";
 
     // Reserve-heavy phases: stop feeding the infrastructure spenders so cash
@@ -323,6 +325,8 @@ export async function main(ns) {
     let lastCash = 0;
     let lastTime = 0;
     let cashRate = 0;
+    let revision = 0;
+    let lastEpoch = null;
 
     while (true) {
         const cfg = config(ns);
@@ -342,6 +346,8 @@ export async function main(ns) {
             const homeRam = ns.getServerMaxRam("home");
 
             const now = Date.now();
+            const epoch = resetEpoch(resetInfo);
+            if (epoch !== lastEpoch) { lastCash = 0; lastTime = 0; cashRate = 0; lastEpoch = epoch; }
             if (lastTime > 0 && now > lastTime) {
                 const dt = (now - lastTime) / 1000;
                 const diff = cash - lastCash;
@@ -359,10 +365,14 @@ export async function main(ns) {
             // Singularity costs by 16 without SF4 level 3 - so a coordinator that
             // runs on every save was paying hundreds of GB for calls that always
             // threw. Those services publish their own state; ns.read is free.
-            const singState = readJson(ns, `${STATE_DIR}/singularity.txt`, {});
-            const gangState = readJson(ns, `${STATE_DIR}/gang.txt`, {});
-            const corpState = readJson(ns, `${STATE_DIR}/corporation.txt`, {});
-            const stockState = readJson(ns, `${STATE_DIR}/stock.txt`, {});
+            const observed = name => {
+                const value = readJson(ns, `${STATE_DIR}/${name}.txt`, {});
+                return freshState(value, { now, epoch }) ? value : {};
+            };
+            const singState = observed("singularity");
+            const gangState = observed("gang");
+            const corpState = observed("corporation");
+            const stockState = observed("stock");
 
             // Home RAM price comes from Bitburner's own formula, not an API.
             const homeRamUpgradeCost = homeRamCost(homeRam);
@@ -425,15 +435,19 @@ export async function main(ns) {
             );
             if (reputationBoost) plan.directives.reputationBoost = reputationBoost;
 
-            await writeJson(ns, COORDINATOR_STATE, {
-                service: "coordinator",
-                updated: Date.now(),
-                ...result,
+            revision = Math.max(revision, Number(readJson(ns, COORDINATOR_STATE, {}).revision) || 0) + 1;
+            const envelope = stateEnvelope(resetInfo, revision);
+            // One canonical write: budgets must survive alongside UI fields.
+            await writeState(ns, "coordinator", {
+                ...envelope, ...result, status: "online", objective: result.id,
+                phase: plan.phase, directives: plan.directives,
+                spendOwner: spendOwner(result),
+                spendTarget: spendOwner(result) === "augmentations" ? (result.id === "THE_RED_PILL" ? RED_PILL : targetAugName || null) : null,
             });
 
             await writeJson(ns, DIRECTIVES_STATE, {
                 service: "coordinator",
-                updated: Date.now(),
+                ...envelope,
                 phase: plan.phase,
                 objectiveId: plan.objectiveId,
                 directives: plan.directives,
@@ -441,18 +455,7 @@ export async function main(ns) {
                 liquidateStocks: result.liquidateStocks,
             });
 
-            await writeState(ns, "coordinator", {
-                status: "online",
-                objective: result.id,
-                title: result.title,
-                reason: result.reason,
-                liquidateStocks: result.liquidateStocks,
-                milestone: result.milestone,
-                nextStep: result.nextStep,
-                etaStr: result.etaStr,
-                phase: plan.phase,
-                directives: plan.directives,
-            });
+
         } catch (e) {
             await writeState(ns, "coordinator", { status: "error", error: String(e) });
         }

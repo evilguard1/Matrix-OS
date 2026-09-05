@@ -144,12 +144,13 @@ export function stageInstalled(ns, stage) {
 
 async function handoffUpdate(ns) {
     if (!ns.fileExists(UPDATE_REQUEST, "home")) return false;
-    if (!await fetchLatestInstaller(ns, INSTALLER)) {
+    const sha = await fetchLatestInstaller(ns, INSTALLER);
+    if (!sha) {
         await event(ns, "system", "Update failed: installer download failed", "error");
         return false;
     }
     ns.rm(UPDATE_REQUEST, "home");
-    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 });
+    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--release", sha);
     return true;
 }
 
@@ -288,8 +289,9 @@ export async function main(ns) {
             if (Date.now() - lastAttempt > STAGE_RETRY_MS) {
                 await ns.write(STAGE_ATTEMPT, String(Date.now()), "w");
                 ns.tprint(`MATRIX-OS // FETCHING STAGE "${wantStage}" (marker says "${haveStage || "none"}")`);
-                if (await fetchLatestInstaller(ns, INSTALLER)) {
-                    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
+                const sha = await fetchLatestInstaller(ns, INSTALLER, true);
+                if (sha) {
+                    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage", "--release", sha);
                     return;
                 }
                 await event(ns, "system", "Stage download failed: installer unavailable", "error");

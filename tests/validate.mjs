@@ -54,8 +54,8 @@ for (const entry of manifest.files) {
     assert.ok(fs.existsSync(absolute), `${entry.path} does not exist`);
     assert.ok(stageIndex.has(entry.stage), `${entry.path} references unknown stage ${entry.stage}`);
     const source = fs.readFileSync(absolute, "utf8");
-    for (const match of source.matchAll(/from\s+["']\/matrix\/([^"']+)["']/g)) {
-        const imported = `matrix/${match[1]}`;
+    for (const match of source.matchAll(/from\s+["']((?:\/matrix\/|\.\.?\/)[^"']+)["']/g)) {
+        const imported = match[1].startsWith("/") ? match[1].slice(1) : path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
         assert.ok(fileStage.has(imported), `${entry.path} imports unmanifested ${imported}`);
         assert.ok(
             stageIndex.get(fileStage.get(imported)) <= stageIndex.get(entry.stage),
@@ -83,7 +83,7 @@ for (const absolute of runtimeFiles) {
 const updateSource = read("matrix/update.js");
 assert.doesNotMatch(updateSource, /\bns\.(?:spawn|run|exec|wget|ps)\b/, "the 8 GB updater must remain request-only");
 assert.doesNotMatch(read("matrix/bootstrap.js"), /from\s+["']\/matrix\//, "bootstrap must remain standalone");
-assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\/main/);
+assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\//);
 assert.match(read("install.js"), /\$\{release\}\//, "installer downloads must be pinned to the resolved commit");
 const singularitySource = read("matrix/services/singularity.js");
 assert.match(singularitySource, /spending-reserve\.txt/, "Singularity must publish its augmentation funding reserve");
@@ -166,8 +166,9 @@ const reset = { currentNode: 4, ownedSF: new Map([[4, 1], [5, 0]]) };
 assert.equal(plannedNextBitNode(reset, [4, 4, 4, 5]), 4);
 assert.equal(plannedNextBitNode({ currentNode: 1, ownedSF: new Map([[4, 3]]) }, [4, 4, 4, 5]), 5);
 
-const objGang = evaluateObjective({ karma: -10, resetInfo: { currentNode: 2 } });
+const objGang = evaluateObjective({ karma: -100, resetInfo: { currentNode: 4, ownedSF: new Map([[2, 1]]) } });
 assert.equal(objGang.id, "GANG_KARMA");
+assert.notEqual(evaluateObjective({ karma: -10, resetInfo: { currentNode: 2 } }).id, "GANG_KARMA", "BN2 does not require karma grinding");
 assert.equal(objGang.liquidateStocks, false);
 const objDaedalus = evaluateObjective({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
 assert.equal(objDaedalus.id, "RESERVE_MILESTONE");
@@ -194,7 +195,7 @@ const dirEarly32 = planDirectives({ cash: 5_000, hasTor: true, homeRam: 32 });
 assert.equal(dirEarly32.phase, "BOOTSTRAP", "32-63 GB remains the early/worm-owned economy");
 const dirEarly63 = planDirectives({ cash: 5_000, hasTor: true, homeRam: 63 });
 assert.equal(dirEarly63.phase, "BOOTSTRAP", "63 GB must still use early-stage directives");
-const dirKarma = planDirectives({ karma: -10, resetInfo: { currentNode: 2 } });
+const dirKarma = planDirectives({ karma: -100, resetInfo: { currentNode: 4, ownedSF: new Map([[2, 1]]) } });
 assert.equal(dirKarma.phase, "KARMA_GANG");
 assert.equal(dirKarma.directives.sleeves, "karma", "karma rush points every sleeve at homicide");
 assert.equal(dirKarma.directives.gang, "idle");

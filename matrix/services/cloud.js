@@ -1,5 +1,5 @@
 import { config, managerBudget, writeState, event } from "/matrix/lib/common.js";
-import { bestServerBuy } from "/matrix/lib/capabilities.js";
+import { spendMoney } from "/matrix/lib/budget-ledger.js";
 
 // Largest MATRIX worker (matrix/workers/early.js and matrix/worm/drone.js).
 const WORKER_RAM = 2.4;
@@ -26,11 +26,18 @@ export async function main(ns) {
                 // 2.4 GB, so anything under 8 GB is dead weight bought at full price.
                 // Pace the spend across the remaining server slots.
                 const slots = Math.max(1, Math.min(4, limit - names.length));
-                const chosen = bestServerBuy(spendable / slots, WORKER_RAM, ramLimit);
+                let chosen = 0;
+                for (let ram = 8; ram <= ramLimit; ram *= 2) {
+                    const price = ns.cloud.getServerCost(ram);
+                    if (Number.isFinite(price) && price > 0 && price <= spendable / slots) chosen = ram;
+                    else break;
+                }
                 if (chosen > 0) {
                     const cost = ns.cloud.getServerCost(chosen);
-                    const host = ns.cloud.purchaseServer("mx-node", chosen);
-                    if (host) {
+                    let host = "";
+                    const receipt = spendMoney(ns, { owner: "cloud", limit: spendable / slots,
+                        quote: () => ns.cloud.getServerCost(chosen), execute: () => host = ns.cloud.purchaseServer("mx-node", chosen) });
+                    if (receipt.status === "spent") {
                         spendable = Math.max(0, spendable - cost);
                         action = `purchased ${host} ${chosen}GB`;
                         await event(ns, "cloud", action, "success");
@@ -45,7 +52,10 @@ export async function main(ns) {
                     const next = Math.min(ramLimit, weakest.r*2);
                     const cost = ns.cloud.getServerUpgradeCost(weakest.h, next);
                     if (cost > 0 && cost <= spendable) {
-                        if (ns.cloud.upgradeServer(weakest.h, next)) {
+                        const receipt = spendMoney(ns, { owner: "cloud", limit: spendable,
+                            quote: () => ns.cloud.getServerUpgradeCost(weakest.h, next),
+                            execute: () => ns.cloud.upgradeServer(weakest.h, next) });
+                        if (receipt.status === "spent") {
                             action = `upgraded ${weakest.h} ${weakest.r}→${next}GB`;
                             await event(ns, "cloud", action, "success");
                         }

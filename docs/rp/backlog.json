@@ -35,7 +35,7 @@
         "L01",
         "L03"
       ],
-      "status": "planned",
+      "status": "implemented-candidate",
       "files": [
         "matrix/services/coordinator.js",
         "matrix/lib/common.js",
@@ -44,7 +44,12 @@
       ],
       "implementation": "Une écriture canonique conserve budgets, id, phase et révision. Ajouter epoch/TTL, prix API avant achat, grants atomiques réservés par propriétaire et journal. Corriger karma hors BN2 et maintenir chemins de dépense propriétaire.",
       "acceptance": "A01 devient test de résultat 100 G$; zéro budget discrétionnaire à 60 G$ sur cet objectif. Deux dépenses simultanées ne dépassent pas le cash engagé. État corrompu/périmé ne devient pas permission de dépenser.",
-      "rollback": "Lecteur N-1 et reconstruction du ledger depuis reçus; pas de répétition automatique des achats au rollback."
+      "rollback": "Lecteur N-1 et reconstruction du ledger depuis reçus; pas de répétition automatique des achats au rollback.",
+      "candidateEvidence": [
+        "tests/rp-state-budget.mjs",
+        "docs/rp/evidence/rp01/native.json"
+      ],
+      "remaining": "Reconciliation explicite des achats dont le resultat est inconnu avec RP04; certification de campagne encore absente."
     },
     {
       "id": "RP02",
@@ -55,7 +60,7 @@
       "legacyLots": [
         "L04"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "files": [
         "install.js",
         "matrix/update.js",
@@ -65,7 +70,12 @@
       ],
       "implementation": "Introduire profil de release séparé de config : canal autorisé, SHA immuable, version de schéma, hashes du payload et précédent connu bon. Pas de fallback silencieux main. Préparer dans staging, valider, journaliser, arrêter propriétaires, promouvoir, lancer, constater santé; rollback si lancement invalide. Config protégée reste conservée.",
       "acceptance": "Installations aux paliers 8/16/64/128/256 et passage automatique conservent le même canal. Coupures simulées à chaque phase, fichier manquant, hash faux et rate limit GitHub : aucun mélange de versions accepté. Mesurer RAM native de l'installateur.",
-      "rollback": "Pointeur sur release précédente avec journal de migration; restauration contrôlée des seuls fichiers possédés."
+      "rollback": "Pointeur sur release précédente avec journal de migration; restauration contrôlée des seuls fichiers possédés.",
+      "candidateEvidence": [
+        "tests/rp-release.mjs",
+        "docs/rp/evidence/rp02/native.json"
+      ],
+      "remaining": "Surveillance de sante apres lancement et retour automatique a une release prouvee saine; tests de reprise de cette surveillance."
     },
     {
       "id": "RP03",

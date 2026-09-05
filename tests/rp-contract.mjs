@@ -62,4 +62,15 @@ assert.equal(read('reference/compendium-registry.json').length, 106);
 assert.equal(read('reference/implementation-backlog.json').tasks.length, 21);
 assert.equal(read('reference/ui-backlog.json').tasks.length, 4);
 assert.equal(fs.existsSync('docs/rp/reference/Ghost-Node-War-COFFRE-GM.md'), false);
+const purchaseProof = read('evidence/rp01/native.json');
+const installProof = read('evidence/rp02/native.json');
+assert.equal(purchaseProof.status, 'passed');
+for (const [file, hash] of Object.entries(purchaseProof.hashes)) {
+  if (file === 'matrix/config.json') continue; // Explicit synthetic purchase policy.
+  assert.equal(createHash('sha256').update(fs.readFileSync(file, 'utf8').replace(/\r\n/g,'\n')).digest('hex'), hash,
+    `Native purchase/RAM proof no longer matches ${file}; refresh or explicitly archive this proof.`);
+}
+assert.equal(createHash('sha256').update(fs.readFileSync('install.js', 'utf8').replace(/\r\n/g,'\n')).digest('hex'), installProof.installerSha256);
+assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
+assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
 console.log(`RP delivery contract passed: ${tasks.length} tasks, ${capabilities.length} capabilities, ${scenarios.length} scenarios; rpReady=${release.rpReady}. This is not a runtime certification.`);

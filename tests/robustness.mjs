@@ -29,6 +29,7 @@ const libDir = path.join(root, "matrix/lib");
 // Libraries that take an `ns` and therefore cannot be called without a game.
 const NEEDS_NS = new Set([
     "common.js",
+    "budget-ledger.js",
     "network.js",
     "dispatch.js",
     "hud.js",

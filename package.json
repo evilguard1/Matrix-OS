@@ -1,14 +1,16 @@
 {
   "name": "matrix-os",
-  "version": "1.10.2",
+  "version": "1.11.0-rp.1",
   "private": true,
   "type": "module",
   "scripts": {
     "rfa": "node tools/rfa.mjs",
     "preview:ghost": "node tools/preview-ghost.mjs",
     "test:ghost": "node tests/ghost-deck.mjs && node tests/ghost-installer.mjs",
-    "test": "node tests/validate.mjs && node tests/planner.mjs && node tests/reputation-boost.mjs && node tests/factions.mjs && node tests/augmentations.mjs && node tests/coordinator.mjs && node tests/earlyloop.mjs && node tests/economy.mjs && node tests/migrate.mjs && node tests/robustness.mjs && node tests/batch.mjs && node tests/propagate.mjs && node tests/company.mjs && node tests/goban.mjs && node tests/voice.mjs && node tests/hashes.mjs && node tests/gift.mjs && node tests/analyzer.mjs && node tests/websocket.mjs && node tests/integration.mjs && node tests/render-deck.mjs && node tests/concurrency.mjs",
-    "test:rp-contract": "node tests/rp-contract.mjs"
+    "test": "node tests/validate.mjs && node tests/planner.mjs && node tests/reputation-boost.mjs && node tests/factions.mjs && node tests/augmentations.mjs && node tests/coordinator.mjs && node tests/earlyloop.mjs && node tests/economy.mjs && node tests/migrate.mjs && node tests/robustness.mjs && node tests/batch.mjs && node tests/propagate.mjs && node tests/company.mjs && node tests/goban.mjs && node tests/voice.mjs && node tests/hashes.mjs && node tests/gift.mjs && node tests/analyzer.mjs && node tests/websocket.mjs && node tests/integration.mjs && node tests/render-deck.mjs && node tests/concurrency.mjs && npm run test:rp-runtime",
+    "test:rp-contract": "node tests/rp-contract.mjs",
+    "test:rp-runtime": "node tools/release-manifest.mjs --check && node tests/rp-state-budget.mjs && node tests/rp-admission.mjs && node tests/rp-release.mjs",
+    "release:manifest": "node tools/release-manifest.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.9",

@@ -1,9 +1,11 @@
 import { config, event, fetchLatestInstaller, writeState, getDirectives, managerBudget } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
-import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS, serverPurchasePlan } from "/matrix/lib/capabilities.js";
+import { manualActions, singularityReady, nextPortProgram, formatCost, PORT_PROGRAMS } from "/matrix/lib/capabilities.js";
 import { dispatchContracts } from "/matrix/lib/dispatch.js";
 import { FULL_ENGINE_HOME_RAM } from "/matrix/lib/stages.js";
+
+import { spendMoney } from "/matrix/lib/budget-ledger.js";
 
 const EARLY = "/matrix/workers/early.js";
 const FLEET_PREFIX = "mx-early";
@@ -133,10 +135,11 @@ function draw(ns, state) {
 
 async function handoffInstaller(ns, requested) {
     if (!requested) return false;
-    if (!await fetchLatestInstaller(ns, INSTALLER)) return false;
+    const sha = await fetchLatestInstaller(ns, INSTALLER, !ns.fileExists(UPDATE_REQUEST, "home"));
+    if (!sha) return false;
     ns.rm(UPDATE_REQUEST, "home");
     ns.ui.closeTail();
-    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage");
+    ns.spawn(INSTALLER, { threads: 1, spawnDelay: 0 }, "--stage", "--release", sha);
     return true;
 }
 
@@ -148,7 +151,7 @@ async function handoffInstaller(ns, requested) {
  * first root and the full engine nothing bought a single server. One 8 GB box
  * costs $440k and is pure additional throughput from the moment it boots.
  */
-async function expandFleet(ns, cfg) {
+export async function expandFleet(ns, cfg) {
     if (cfg.automation?.cloud === false) return null;
     let owned = [];
     try {
@@ -159,15 +162,21 @@ async function expandFleet(ns, cfg) {
     try { limit = ns.cloud.getServerLimit(); } catch {}
     try { ramLimit = ns.cloud.getRamLimit(); } catch {}
 
-    const plan = serverPurchasePlan({
-        budget: managerBudget(ns, "cloud", cfg),
-        owned, limit, ramLimit,
-        workerRam: ns.getScriptRam(EARLY, "home"),
-    });
-    if (plan.action !== "buy") return plan;
+    if (owned.length >= limit) return { action: "wait", reason: "fleet full" };
+    const budget = managerBudget(ns, "cloud", cfg), workerRam = ns.getScriptRam(EARLY, "home");
+    let ram = 0, cost = 0;
+    for (let size = 8; size <= ramLimit; size *= 2) {
+        const price = ns.cloud.getServerCost(size);
+        if (!Number.isFinite(price) || price > budget) break;
+        if (size >= workerRam) { ram = size; cost = price; }
+    }
+    if (!ram) return { action: "wait", reason: "budget below useful server" };
+    const plan = { action: "buy", ram, cost };
     try {
-        const host = ns.cloud.purchaseServer(FLEET_PREFIX, plan.ram);
-        if (!host) return { action: "wait", reason: "purchase refused" };
+        let host = "";
+        const receipt = spendMoney(ns, { owner: "cloud", limit: managerBudget(ns, "cloud", cfg),
+            quote: () => ns.cloud.getServerCost(plan.ram), execute: () => host = ns.cloud.purchaseServer(FLEET_PREFIX, plan.ram) });
+        if (receipt.status !== "spent") return { action: "wait", reason: receipt.reason ?? receipt.status };
         await event(ns, "early", `Bought ${ns.format.ram(plan.ram)} server ${host}`, "success");
         return { ...plan, host };
     } catch { return { action: "wait", reason: "purchase failed" }; }

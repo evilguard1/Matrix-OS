@@ -1,4 +1,5 @@
-import { config, writeState, getDirectives } from "/matrix/lib/common.js";
+import { spendMoney } from "/matrix/lib/budget-ledger.js";
+import { config, writeState, getDirectives, managerBudget } from "/matrix/lib/common.js";
 
 // Assign one sleeve according to the coordinator's directive. Shock and low
 // synchronization always take priority because every other task is far less
@@ -53,14 +54,18 @@ export async function main(ns) {
             const augFraction = Number(dir?.budgets?.sleeveAugs);
             const augBudgetFraction = Number.isFinite(augFraction) ? augFraction : 0.005;
 
+            let budget = Math.min(managerBudget(ns, "sleeveAugs", cfg), ns.getServerMoneyAvailable("home") * augBudgetFraction);
             for (let i=0;i<n;i++) {
                 const s = ns.sleeve.getSleeve(i);
                 const assignment = assignSleeve(ns, i, s, directive, player);
 
-                let budget = ns.getServerMoneyAvailable("home") * augBudgetFraction;
                 for (const aug of ns.sleeve.getSleevePurchasableAugs(i).sort((a,b)=>a.cost-b.cost)) {
                     if (aug.cost > budget) break;
-                    if (ns.sleeve.purchaseSleeveAug(i,aug.name)) budget -= aug.cost;
+                    const receipt = spendMoney(ns, { owner: "sleeveAugs", target: aug.name, limit: budget,
+                        quote: () => ns.sleeve.getSleevePurchasableAugs(i).find(x => x.name === aug.name)?.cost,
+                        execute: () => ns.sleeve.purchaseSleeveAug(i, aug.name) });
+                    if (receipt.status === "spent") budget -= receipt.cost;
+                    else break;
                 }
                 data.push({i,shock:s.shock,sync:s.sync,assignment});
             }

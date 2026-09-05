@@ -1,4 +1,4 @@
-> **Branche RP — audit du 2026-09-05.** Base 1.10.2 + Ghost. Pour l'état actuel, les limites et le plan de version jouable, lire [le dossier RP](docs/rp/README.md). Les sections historiques ci-dessous ne constituent pas une certification actuelle. Le programme RP complet n'est pas encore livré.
+> **Branche RP — candidat 1.11.0-rp.1.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
 
 # MATRIX-OS
 
@@ -9,7 +9,7 @@ MATRIX-OS is a staged autonomous control system for **Bitburner Steam v3.0.1**. 
 Run these two commands in the Bitburner terminal:
 
 ```text
-wget https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/install.js install.js
+wget https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/install.js install.js
 run install.js --fresh
 ```
 

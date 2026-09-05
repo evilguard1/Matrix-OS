@@ -1,68 +1,311 @@
 {
-  "version": "1.10.2",
-  "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/main/",
-  "protectedFiles": ["matrix/config.json"],
+  "version": "1.11.0-rp.1",
+  "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
+  "protectedFiles": [
+    "matrix/config.json"
+  ],
   "stages": [
-    { "id": "bootstrap", "minHomeRam": 8 },
-    { "id": "early", "minHomeRam": 16 },
-    { "id": "full", "minHomeRam": 64 },
-    { "id": "operations", "minHomeRam": 128 },
-    { "id": "advanced", "minHomeRam": 256 }
+    {
+      "id": "bootstrap",
+      "minHomeRam": 8
+    },
+    {
+      "id": "early",
+      "minHomeRam": 16
+    },
+    {
+      "id": "full",
+      "minHomeRam": 64
+    },
+    {
+      "id": "operations",
+      "minHomeRam": 128
+    },
+    {
+      "id": "advanced",
+      "minHomeRam": 256
+    }
   ],
   "files": [
-    { "path": "matrix/VERSION.txt", "stage": "bootstrap" },
-    { "path": "matrix/bootstrap.js", "stage": "bootstrap" },
-    { "path": "matrix/config.json", "stage": "bootstrap" },
-    { "path": "matrix/kernel.js", "stage": "bootstrap" },
-    { "path": "matrix/lib/stages.js", "stage": "bootstrap" },
-    { "path": "matrix/update.js", "stage": "bootstrap" },
-    { "path": "matrix/early.js", "stage": "early" },
-    { "path": "matrix/workers/early.js", "stage": "bootstrap" },
-    { "path": "matrix/lib/earlyloop.js", "stage": "bootstrap" },
-    { "path": "matrix/lib/batch.js", "stage": "full" },
-    { "path": "matrix/lib/propagate.js", "stage": "full" },
-    { "path": "matrix/worm/seed.js", "stage": "bootstrap" },
-    { "path": "matrix/worm/spread.js", "stage": "bootstrap" },
-    { "path": "matrix/worm/drone.js", "stage": "bootstrap" },
-    { "path": "matrix/start.js", "stage": "full" },
-    { "path": "matrix/dashboard.jsx", "stage": "full" },
-    { "path": "matrix/lib/common.js", "stage": "early" },
-    { "path": "matrix/lib/network.js", "stage": "early" },
-    { "path": "matrix/lib/capabilities.js", "stage": "early" },
-    { "path": "matrix/lib/hud.js", "stage": "early" },
-    { "path": "matrix/lib/singleton.js", "stage": "early" },
-    { "path": "matrix/lib/factions.js", "stage": "early" },
-    { "path": "matrix/lib/augmentations.js", "stage": "full" },
-    { "path": "matrix/lib/goban.js", "stage": "full" },
-    { "path": "matrix/lib/voice.js", "stage": "full" },
-    { "path": "matrix/lib/hashes.js", "stage": "full" },
-    { "path": "matrix/lib/gift.js", "stage": "advanced" },
-    { "path": "matrix/workers/stanek-charge.js", "stage": "advanced" },
-    { "path": "matrix/lib/solvers.js", "stage": "early" },
-    { "path": "matrix/lib/dispatch.js", "stage": "early" },
-    { "path": "matrix/workers/contract.js", "stage": "early" },
-    { "path": "matrix/lib/hacking-planner.js", "stage": "full" },
-    { "path": "matrix/lib/reputation-boost.js", "stage": "full" },
-    { "path": "matrix/boost.js", "stage": "full" },
-    { "path": "matrix/services/root.js", "stage": "full" },
-    { "path": "matrix/services/hacking.js", "stage": "full" },
-    { "path": "matrix/services/telemetry.js", "stage": "full" },
-    { "path": "matrix/workers/hack.js", "stage": "full" },
-    { "path": "matrix/workers/grow.js", "stage": "full" },
-    { "path": "matrix/workers/weaken.js", "stage": "full" },
-    { "path": "matrix/workers/share.js", "stage": "full" },
-    { "path": "matrix/services/cloud.js", "stage": "full" },
-    { "path": "matrix/services/hacknet.js", "stage": "full" },
-    { "path": "matrix/services/go.js", "stage": "full" },
-    { "path": "matrix/services/contracts.js", "stage": "full" },
-    { "path": "matrix/services/stock.js", "stage": "operations" },
-    { "path": "matrix/services/progression.js", "stage": "full" },
-    { "path": "matrix/services/coordinator.js", "stage": "full" },
-    { "path": "matrix/services/singularity.js", "stage": "full" },
-    { "path": "matrix/services/gang.js", "stage": "full" },
-    { "path": "matrix/services/sleeves.js", "stage": "full" },
-    { "path": "matrix/services/stanek.js", "stage": "advanced" },
-    { "path": "matrix/services/bladeburner.js", "stage": "advanced" },
-    { "path": "matrix/services/corporation.js", "stage": "advanced" }
+    {
+      "path": "matrix/VERSION.txt",
+      "stage": "bootstrap",
+      "sha256": "730d7ee00d380f4a0e40f760f91218a0bcbbe8438c20ff3d5e1da782d5caa758"
+    },
+    {
+      "path": "matrix/bootstrap.js",
+      "stage": "bootstrap",
+      "sha256": "9fec03060e70ebf9393a0c989f6fd2ef949ca52bbc40fa7c300f524e5b3d5ce7"
+    },
+    {
+      "path": "matrix/config.json",
+      "stage": "bootstrap",
+      "sha256": "6d36ea2578a64574d68eccbd8eb53aa8bb80ddb2454c3a140c5a36085bdc2b8c"
+    },
+    {
+      "path": "matrix/kernel.js",
+      "stage": "bootstrap",
+      "sha256": "4902f749d7d0804972e9b9f5f158a64b24159e242311e5f34729d42d40a6d3b8"
+    },
+    {
+      "path": "matrix/lib/stages.js",
+      "stage": "bootstrap",
+      "sha256": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6"
+    },
+    {
+      "path": "matrix/update.js",
+      "stage": "bootstrap",
+      "sha256": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94"
+    },
+    {
+      "path": "matrix/early.js",
+      "stage": "early",
+      "sha256": "90cf5c252ab44df4f992f18faf0f6189cde1841d1be33f4c49cf39ce099a5dc1"
+    },
+    {
+      "path": "matrix/workers/early.js",
+      "stage": "bootstrap",
+      "sha256": "91e03a775db620f0ff92c0c4b00b6f2cdbb4dec481367f4fc88eaf14a71068cd"
+    },
+    {
+      "path": "matrix/lib/earlyloop.js",
+      "stage": "bootstrap",
+      "sha256": "d486ad608bded9ac853674496c233d1e205224af811343abd33fc8958a715302"
+    },
+    {
+      "path": "matrix/lib/batch.js",
+      "stage": "full",
+      "sha256": "53c887aad901d3f0de91746774bafd0288b763aadf6f0806f96eacf242932eb9"
+    },
+    {
+      "path": "matrix/lib/propagate.js",
+      "stage": "full",
+      "sha256": "3cd73085806d8ab9cd517a367e032c388b986c0a20f0a6952f05004189688f9c"
+    },
+    {
+      "path": "matrix/worm/seed.js",
+      "stage": "bootstrap",
+      "sha256": "e2ced207e14d8c102410b95d656ccdd897c387a08920904fd87abc38b105a270"
+    },
+    {
+      "path": "matrix/worm/spread.js",
+      "stage": "bootstrap",
+      "sha256": "6d4c5aafa3b954995ff8869c24d9035c00cfbb9c5f7983bfff2aeafe13b3323f"
+    },
+    {
+      "path": "matrix/worm/drone.js",
+      "stage": "bootstrap",
+      "sha256": "d92b5e0f3a9b7d5a4b14d1db326de8e38edff436fead17bb7e7ba8621e42d0b9"
+    },
+    {
+      "path": "matrix/start.js",
+      "stage": "full",
+      "sha256": "95b32c2b8ee08668ec2117b50c54fa1640a021cb997cb3fae983d2b4853d8084"
+    },
+    {
+      "path": "matrix/dashboard.jsx",
+      "stage": "full",
+      "sha256": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216"
+    },
+    {
+      "path": "matrix/lib/common.js",
+      "stage": "early",
+      "sha256": "3abdf69078bff7f72e5aab851bc21081b7b39226e6f09f22bcd9599362ac6b32"
+    },
+    {
+      "path": "matrix/lib/network.js",
+      "stage": "early",
+      "sha256": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7"
+    },
+    {
+      "path": "matrix/lib/capabilities.js",
+      "stage": "early",
+      "sha256": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f"
+    },
+    {
+      "path": "matrix/lib/hud.js",
+      "stage": "early",
+      "sha256": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87"
+    },
+    {
+      "path": "matrix/lib/singleton.js",
+      "stage": "early",
+      "sha256": "862e27a4f6b6e28617010b0f51597189ee39604bafb750985058346b668759dc"
+    },
+    {
+      "path": "matrix/lib/factions.js",
+      "stage": "early",
+      "sha256": "f85d89801e74be7726af8e6338da9366bf8ac998285fcda7ef773630e56c8cb3"
+    },
+    {
+      "path": "matrix/lib/augmentations.js",
+      "stage": "full",
+      "sha256": "8cdc4262e4db6c4393b7e3ff35e263344eb065cac56cfcbef9fbaf068dd819a8"
+    },
+    {
+      "path": "matrix/lib/goban.js",
+      "stage": "full",
+      "sha256": "082ca50dd71a925609d720c70817f15ecbdc77f8f5fbdc30036e5baab5eda5ec"
+    },
+    {
+      "path": "matrix/lib/voice.js",
+      "stage": "full",
+      "sha256": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23"
+    },
+    {
+      "path": "matrix/lib/hashes.js",
+      "stage": "full",
+      "sha256": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf"
+    },
+    {
+      "path": "matrix/lib/gift.js",
+      "stage": "advanced",
+      "sha256": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd"
+    },
+    {
+      "path": "matrix/workers/stanek-charge.js",
+      "stage": "advanced",
+      "sha256": "594f17d3721623770a912168af479a6ccc75e0c23f6f49853a454c5aaa0d67dc"
+    },
+    {
+      "path": "matrix/lib/solvers.js",
+      "stage": "early",
+      "sha256": "ad41d60264def9ba5f5d21297b5143e44313a1607fb7dbf1c621b87036ee403b"
+    },
+    {
+      "path": "matrix/lib/dispatch.js",
+      "stage": "early",
+      "sha256": "74f83083af0547a626937ee53bc3b98a50f5cc88560b2a272257b35c930d12ac"
+    },
+    {
+      "path": "matrix/workers/contract.js",
+      "stage": "early",
+      "sha256": "f19e9317fd813209df63b2734835ec5476ca5e9a06180159dc6b11fb9f70c6b5"
+    },
+    {
+      "path": "matrix/lib/hacking-planner.js",
+      "stage": "full",
+      "sha256": "e454c3401d160ea16c206037c3a54c99266fb409d97349bbeb39be3cb1a2be8c"
+    },
+    {
+      "path": "matrix/lib/reputation-boost.js",
+      "stage": "full",
+      "sha256": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e"
+    },
+    {
+      "path": "matrix/boost.js",
+      "stage": "full",
+      "sha256": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df"
+    },
+    {
+      "path": "matrix/services/root.js",
+      "stage": "full",
+      "sha256": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8"
+    },
+    {
+      "path": "matrix/services/hacking.js",
+      "stage": "full",
+      "sha256": "5905e940e6b2ca00ba33ce8bbcad5d6425971f490e820d78cd4c5622fe1f2b3c"
+    },
+    {
+      "path": "matrix/services/telemetry.js",
+      "stage": "full",
+      "sha256": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b"
+    },
+    {
+      "path": "matrix/workers/hack.js",
+      "stage": "full",
+      "sha256": "75ca796dd3d41c4e780ad32bb1c91a3d4b24eadb42ecc4b59786569b01757a8f"
+    },
+    {
+      "path": "matrix/workers/grow.js",
+      "stage": "full",
+      "sha256": "c7b7cc731b653db81470e6f4f8886586306ab7a823187f27eaf22cecf12b93dd"
+    },
+    {
+      "path": "matrix/workers/weaken.js",
+      "stage": "full",
+      "sha256": "b45336bd61ebaabd016c6c20de918fc6d4384519a87e18b77fe2dbb01bf24ad7"
+    },
+    {
+      "path": "matrix/workers/share.js",
+      "stage": "full",
+      "sha256": "7d898ca5e21a514b84b326aa5a66dbea4315fce925136de53360e2805b0774d9"
+    },
+    {
+      "path": "matrix/services/cloud.js",
+      "stage": "full",
+      "sha256": "34a3175565002b62c1e77ea1a2b066c7167b54c41e171580347ff94627ac8382"
+    },
+    {
+      "path": "matrix/services/hacknet.js",
+      "stage": "full",
+      "sha256": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd"
+    },
+    {
+      "path": "matrix/services/go.js",
+      "stage": "full",
+      "sha256": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab"
+    },
+    {
+      "path": "matrix/services/contracts.js",
+      "stage": "full",
+      "sha256": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc"
+    },
+    {
+      "path": "matrix/services/stock.js",
+      "stage": "operations",
+      "sha256": "e47493b55b48750d0196632358272c1470f351252460dc44235333e9b05091df"
+    },
+    {
+      "path": "matrix/services/progression.js",
+      "stage": "full",
+      "sha256": "c69638d6b8ff2e8f52da8e01513e863a105c94e3cac7c613f8a9291b6a92f366"
+    },
+    {
+      "path": "matrix/services/coordinator.js",
+      "stage": "full",
+      "sha256": "27e072d8461e92f46dba8b2733124f60a5988fa8c0d10aec10420f4186e93cb8"
+    },
+    {
+      "path": "matrix/services/singularity.js",
+      "stage": "full",
+      "sha256": "064c48c3b776b0a3ad1f8ab829fd68135de3d57d91020392e4982e221996ec84"
+    },
+    {
+      "path": "matrix/services/gang.js",
+      "stage": "full",
+      "sha256": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf"
+    },
+    {
+      "path": "matrix/services/sleeves.js",
+      "stage": "full",
+      "sha256": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9"
+    },
+    {
+      "path": "matrix/services/stanek.js",
+      "stage": "advanced",
+      "sha256": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695"
+    },
+    {
+      "path": "matrix/services/bladeburner.js",
+      "stage": "advanced",
+      "sha256": "acf8b9bd1aebe0970f5b8b79ed8697bd2c684fb43e1c6e7939cffc103c241b4d"
+    },
+    {
+      "path": "matrix/services/corporation.js",
+      "stage": "advanced",
+      "sha256": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184"
+    },
+    {
+      "path": "matrix/lib/state.js",
+      "stage": "bootstrap",
+      "sha256": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6"
+    },
+    {
+      "path": "matrix/lib/budget-ledger.js",
+      "stage": "early",
+      "sha256": "c46a6a808211d65da1353b652b7fd9902ccac7575c253b7afc25fdc7a44c4341"
+    }
   ]
 }

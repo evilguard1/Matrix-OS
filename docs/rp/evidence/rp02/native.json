@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "scope": "Official 3.0.1 isolated BN4 engine. Synthetic RAM. Native wget/write/hash/promotion with intercepted immutable repository payload; no real GitHub availability test, no Steam save, no post-start health certification.",
+  "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "installerSha256": "62571dd9979827acd345241703d1e97ba8a63add1b8dacc8163601cc38f9e6c8",
+  "results": [
+    {
+      "homeRam": 8,
+      "installerRam": 5.3,
+      "installedScripts": 11,
+      "profile": {
+        "schemaVersion": 1,
+        "channel": "rp/ghost-node-war",
+        "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "previousSha": null,
+        "version": "1.11.0-rp.1",
+        "installedAt": 1788643226451,
+        "runtimeHealth": "unverified"
+      },
+      "phase": "installed",
+      "errors": []
+    },
+    {
+      "homeRam": 16,
+      "installerRam": 5.3,
+      "installedScripts": 22,
+      "profile": {
+        "schemaVersion": 1,
+        "channel": "rp/ghost-node-war",
+        "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "previousSha": null,
+        "version": "1.11.0-rp.1",
+        "installedAt": 1788643228774,
+        "runtimeHealth": "unverified"
+      },
+      "phase": "installed",
+      "errors": []
+    },
+    {
+      "homeRam": 64,
+      "installerRam": 5.3,
+      "installedScripts": 49,
+      "profile": {
+        "schemaVersion": 1,
+        "channel": "rp/ghost-node-war",
+        "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "previousSha": null,
+        "version": "1.11.0-rp.1",
+        "installedAt": 1788643231622,
+        "runtimeHealth": "unverified"
+      },
+      "phase": "installed",
+      "errors": []
+    },
+    {
+      "homeRam": 128,
+      "installerRam": 5.3,
+      "installedScripts": 50,
+      "profile": {
+        "schemaVersion": 1,
+        "channel": "rp/ghost-node-war",
+        "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "previousSha": null,
+        "version": "1.11.0-rp.1",
+        "installedAt": 1788643236349,
+        "runtimeHealth": "unverified"
+      },
+      "phase": "installed",
+      "errors": []
+    },
+    {
+      "homeRam": 256,
+      "installerRam": 5.3,
+      "installedScripts": 55,
+      "profile": {
+        "schemaVersion": 1,
+        "channel": "rp/ghost-node-war",
+        "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "previousSha": null,
+        "version": "1.11.0-rp.1",
+        "installedAt": 1788643240897,
+        "runtimeHealth": "unverified"
+      },
+      "phase": "installed",
+      "errors": []
+    }
+  ]
+}

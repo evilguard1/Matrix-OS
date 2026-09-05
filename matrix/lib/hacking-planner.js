@@ -107,7 +107,7 @@ function formulaEnvironment(ns, target, context) {
     };
 }
 
-function formulaShapeFromEnvironment(ns, target, env, fraction) {
+function formulaShapeFromEnvironment(ns, target, env, fraction, maxFraction) {
     if (!env) return null;
     const requested = requestedFraction(fraction);
     if (!(requested > 0)) return null;
@@ -127,7 +127,8 @@ function formulaShapeFromEnvironment(ns, target, env, fraction) {
         weakenPerThread,
     } = env;
 
-    const ht = Math.max(1, Math.ceil(requested / hackPerThread));
+    const ht = Math.min(Math.max(1, Math.ceil(requested / hackPerThread)), Math.floor((maxFraction + 1e-12) / hackPerThread));
+    if (ht < 1) return null; // Even one H thread would violate the configured cap.
     const actualFraction = clamp(hackPerThread * ht, 0.001, 0.90);
 
     // W1 lands before G, so growth is planned from post-hack money at the
@@ -187,11 +188,11 @@ export function formulaBatchFrontier(ns, target, cfg, context) {
     const env = formulaEnvironment(ns, target, context);
     if (!env) return [];
 
-    const minF = Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05);
-    const maxF = Math.max(minF, Number(cfg.hacking?.maxHackFraction ?? 0.40) || 0.40);
+    const maxF = Math.min(0.90, Math.max(0, Number(cfg.hacking?.maxHackFraction ?? 0.40)));
+    const minF = Math.min(maxF, Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05));
     const out = [];
     for (let f = minF; f <= maxF + 1e-9; f += 0.025) {
-        const shape = formulaShapeFromEnvironment(ns, target, env, f);
+        const shape = formulaShapeFromEnvironment(ns, target, env, f, maxF);
         if (shape) out.push(shape);
     }
     return out;
@@ -199,10 +200,10 @@ export function formulaBatchFrontier(ns, target, cfg, context) {
 
 /** Build one exact requested-fraction Formula shape using a fresh player context. */
 export function formulaBatchShapeAtFraction(ns, target, cfg, context, fraction) {
-    const minF = Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05);
-    const maxF = Math.max(minF, Number(cfg.hacking?.maxHackFraction ?? 0.40) || 0.40);
+    const maxF = Math.min(0.90, Math.max(0, Number(cfg.hacking?.maxHackFraction ?? 0.40)));
+    const minF = Math.min(maxF, Math.max(0.001, Number(cfg.hacking?.minHackFraction ?? 0.05) || 0.05));
     const requested = clamp(Number(fraction), minF, maxF);
-    return formulaShapeFromEnvironment(ns, target, formulaEnvironment(ns, target, context), requested);
+    return formulaShapeFromEnvironment(ns, target, formulaEnvironment(ns, target, context), requested, maxF);
 }
 
 /** Predict the locally most RAM-efficient clean-state HWGW shape. */

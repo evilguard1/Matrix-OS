@@ -1,5 +1,8 @@
 import { baselineReserveMoney, reserveMoney, config, writeJson, writeState, event, getDirectives, STATE_DIR } from "/matrix/lib/common.js";
 
+import { spendMoney, spendingAllowance } from "/matrix/lib/budget-ledger.js";
+import { stateEnvelope } from "/matrix/lib/state.js";
+
 const NFG="NeuroFlux Governor";
 const RED="The Red Pill";
 const CITY_FACTIONS = new Set(["Aevum", "Chongqing", "Sector-12", "New Tokyo", "Ishima", "Volhaven"]);
@@ -45,11 +48,11 @@ function queued(ns) {
 }
 
 function buyPrograms(ns,cfg){
-    try{ if(ns.getServerMoneyAvailable("home")>300000) ns.singularity.purchaseTor(); }catch{}
+    try { if (!ns.hasTorRouter()) spendMoney(ns, { owner: "programs", target: "TOR", quote: () => 200_000, execute: () => ns.singularity.purchaseTor() }); } catch {}
     let programs=[];try{programs=ns.singularity.getDarkwebPrograms();}catch{}
     for(const p of programs){
         const c=ns.singularity.getDarkwebProgramCost(p);
-        if(c>0&&ns.getServerMoneyAvailable("home")-c>baselineReserveMoney(ns,cfg))ns.singularity.purchaseProgram(p);
+        if (c > 0) spendMoney(ns, { owner: "programs", target: p, quote: () => ns.singularity.getDarkwebProgramCost(p), execute: () => ns.singularity.purchaseProgram(p) });
     }
 }
 
@@ -64,9 +67,13 @@ function choosePurchase(list, cash, reserve) {
 function buyAugs(ns,cfg){
     let count=0;
     for(let i=0;i<50;i++){
-        const next=choosePurchase(candidates(ns),ns.getServerMoneyAvailable("home"),baselineReserveMoney(ns,cfg));
+        const list = candidates(ns).filter(x => x.price <= spendingAllowance(ns, "augmentations", x.aug, cfg));
+        const next = choosePurchase(list, ns.getServerMoneyAvailable("home"), 0);
         if(!next)break;
-        if(!ns.singularity.purchaseAugmentation(next.faction,next.aug))break;
+        const receipt = spendMoney(ns, { owner: "augmentations", target: next.aug,
+            quote: () => ns.singularity.getAugmentationPrice(next.aug),
+            execute: () => ns.singularity.purchaseAugmentation(next.faction, next.aug) });
+        if(receipt.status !== "spent")break;
         count++;
     }
     return count;
@@ -109,11 +116,14 @@ function donateForGoal(ns,cfg,goal) {
     const threshold=cfg.progression?.donationFavorThreshold??150;
     if(goal.favor<threshold) return 0;
     const cash=ns.getServerMoneyAvailable("home");
-    const free=cash-baselineReserveMoney(ns,cfg);
+    const free=spendingAllowance(ns,"donations",goal.aug,cfg);
     const fraction=cfg.progression?.donationBudgetFraction??0.05;
     const amount=Math.floor(Math.max(0,free*Math.max(0,Math.min(0.25,fraction))));
     if(amount<=0) return 0;
-    try { return ns.singularity.donateToFaction(goal.faction,amount) ? amount : 0; } catch { return 0; }
+    try {
+        const receipt = spendMoney(ns, { owner: "donations", target: goal.aug, quote: () => amount, execute: () => ns.singularity.donateToFaction(goal.faction, amount) });
+        return receipt.status === "spent" ? amount : 0;
+    } catch { return 0; }
 }
 
 async function publishReserve(ns,cfg,goal) {
@@ -121,7 +131,7 @@ async function publishReserve(ns,cfg,goal) {
     // This does not spend money. It prevents the independent economy services
     // from taking funds already needed for the next deliberate augmentation.
     const amount=goal ? Math.max(base,goal.price+base) : base;
-    await writeJson(ns,SPENDING_RESERVE,{amount,goal:goal?goal.aug:null,updated:Date.now()});
+    await writeJson(ns,SPENDING_RESERVE,{...stateEnvelope(ns.getResetInfo(), Date.now()),amount,goal:goal?goal.aug:null});
 }
 
 function shouldReset(ns,cfg){
@@ -170,7 +180,7 @@ export async function main(ns){
                 // Cores are deliberately NOT bought: they only scale grow/weaken
                 // on home by 1+(cores-1)/16, so 1->2 is +6.25% on a subset of
                 // threads, and it costs more than doubling home RAM.
-                if(ramCost>0&&cash-ramCost>reserveMoney(ns,cfg))ns.singularity.upgradeHomeRam();
+                if (ramCost > 0) spendMoney(ns, { owner: "homeRam", quote: () => ns.singularity.getUpgradeHomeRamCost(), execute: () => ns.singularity.upgradeHomeRam() });
             }catch{}
 
             // Faction reputation is Singularity-only. Publishing it lets the
@@ -199,11 +209,12 @@ export async function main(ns){
             let ramUpgradeCost=Infinity;
             try{ramUpgradeCost=ns.singularity.getUpgradeHomeRamCost();}catch{}
             await writeState(ns,"singularity",{
-                status:"online",queuedAugs:q,
+                ...stateEnvelope(ns.getResetInfo(), Date.now()), status:"online",queuedAugs:q,
                 goal:goal?{faction:goal.faction,augmentation:goal.aug,rep:goal.factionRep,need:goal.rep,price:goal.price,favor:goal.favor}:null,
                 currentWork:ns.singularity.getCurrentWork(), invitations, purchased, donated,
                 hasTor, missingPrograms, programCosts, ramUpgradeCost,
-                hasRedPill:ns.singularity.getOwnedAugmentations(true).includes(RED),
+                hasRedPill:ns.singularity.getOwnedAugmentations(false).includes(RED),
+                redPillQueued:!ns.singularity.getOwnedAugmentations(false).includes(RED) && ns.singularity.getOwnedAugmentations(true).includes(RED),
             });
 
             if(cfg.progression?.autoInstallAugmentations!==false&&shouldReset(ns,cfg)){

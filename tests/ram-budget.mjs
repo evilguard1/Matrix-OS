@@ -23,7 +23,7 @@ export const DOM_IDENTIFIERS = /(?:^|[^\w$.])(?:window|document)\s*(?:[.[(),;?:=
 export const RAM_COSTS = {
     args: 0, pid: 0, enums: 0, sleep: 0, print: 0, tprint: 0, printf: 0,
     clearLog: 0, disableLog: 0, enableLog: 0, read: 0, write: 0, wget: 0,
-    getResetInfo: 1.0, atExit: 0, tprintf: 0,
+    getResetInfo: 1.0, getBitNodeMultipliers: 4.0, atExit: 0, tprintf: 0,
     writePort: 0, readPort: 0, clearPort: 0, peek: 0, getPortHandle: 0,
     nextPortWrite: 0, tail: 0, printRaw: 0, alert: 0, toast: 0,
     hasRootAccess: 0.05, getHostname: 0.05, getHackingLevel: 0.05, hasTorRouter: 0.05,

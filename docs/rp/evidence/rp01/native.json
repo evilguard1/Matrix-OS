@@ -1,0 +1,1551 @@
+{
+  "status": "passed",
+  "scope": "Official 3.0.1 isolated engine, synthetic starting cash/node/SF contexts; native purchased server and cash debit. Not user Steam save or complete BN4 playthrough.",
+  "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "result": {
+    "blocked": {
+      "status": "deferred",
+      "reason": "budget",
+      "cost": 440000,
+      "allowance": 300000
+    },
+    "first": {
+      "id": "1:1788643224737:1788643224737:1",
+      "key": "native-one",
+      "owner": "cloud",
+      "target": null,
+      "cost": 440000,
+      "before": 2000000,
+      "pid": 1,
+      "updated": 1788643238990,
+      "status": "spent",
+      "after": 1560000,
+      "debit": 440000,
+      "error": null
+    },
+    "replay": {
+      "id": "1:1788643224737:1788643224737:1",
+      "key": "native-one",
+      "owner": "cloud",
+      "target": null,
+      "cost": 440000,
+      "before": 2000000,
+      "pid": 1,
+      "updated": 1788643238990,
+      "status": "spent",
+      "after": 1560000,
+      "debit": 440000,
+      "error": null,
+      "replay": true
+    },
+    "executeCalls": 1,
+    "cash": 1560000,
+    "servers": [
+      "rp-native"
+    ],
+    "ledger": {
+      "schemaVersion": 1,
+      "resetEpoch": "1:1788643224737:1788643224737",
+      "revision": 1,
+      "active": null,
+      "receipts": [
+        {
+          "id": "1:1788643224737:1788643224737:1",
+          "key": "native-one",
+          "owner": "cloud",
+          "target": null,
+          "cost": 440000,
+          "before": 2000000,
+          "pid": 1,
+          "updated": 1788643238990,
+          "status": "spent",
+          "after": 1560000,
+          "debit": 440000,
+          "error": null
+        }
+      ],
+      "keyed": [
+        {
+          "id": "1:1788643224737:1788643224737:1",
+          "key": "native-one",
+          "owner": "cloud",
+          "target": null,
+          "cost": 440000,
+          "before": 2000000,
+          "pid": 1,
+          "updated": 1788643238990,
+          "status": "spent",
+          "after": 1560000,
+          "debit": 440000,
+          "error": null
+        }
+      ]
+    }
+  },
+  "costs": [
+    {
+      "node": 1,
+      "sf4": 0,
+      "scripts": [
+        {
+          "file": "matrix/bootstrap.js",
+          "ram": 6.15,
+          "error": null
+        },
+        {
+          "file": "matrix/kernel.js",
+          "ram": 5.05,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/stages.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/update.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/early.js",
+          "ram": 14.05,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/early.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/earlyloop.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/batch.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/propagate.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/seed.js",
+          "ram": 7.2,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/spread.js",
+          "ram": 5.55,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/drone.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/start.js",
+          "ram": 9.25,
+          "error": null
+        },
+        {
+          "file": "matrix/dashboard.jsx",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/common.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/network.js",
+          "ram": 2.45,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/capabilities.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hud.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singleton.js",
+          "ram": 1.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/factions.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/augmentations.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/goban.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/voice.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hashes.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/gift.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/stanek-charge.js",
+          "ram": 2,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/solvers.js",
+          "ram": 2.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/dispatch.js",
+          "ram": 4.95,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/contract.js",
+          "ram": 22.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hacking-planner.js",
+          "ram": 5.85,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/reputation-boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/services/root.js",
+          "ram": 3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacking.js",
+          "ram": 14.5,
+          "error": null
+        },
+        {
+          "file": "matrix/services/telemetry.js",
+          "ram": 4.9,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/hack.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/grow.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/weaken.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/share.js",
+          "ram": 4,
+          "error": null
+        },
+        {
+          "file": "matrix/services/cloud.js",
+          "ram": 6.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacknet.js",
+          "ram": 10.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/go.js",
+          "ram": 9.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/contracts.js",
+          "ram": 5.15,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stock.js",
+          "ram": 43.45,
+          "error": null
+        },
+        {
+          "file": "matrix/services/progression.js",
+          "ram": 514.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/coordinator.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/singularity.js",
+          "ram": 995.35,
+          "error": null
+        },
+        {
+          "file": "matrix/services/gang.js",
+          "ram": 29.2,
+          "error": null
+        },
+        {
+          "file": "matrix/services/sleeves.js",
+          "ram": 39.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stanek.js",
+          "ram": 10.05,
+          "error": null
+        },
+        {
+          "file": "matrix/services/bladeburner.js",
+          "ram": 56.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/corporation.js",
+          "ram": 342.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/state.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/budget-ledger.js",
+          "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "native-rp01.js",
+          "ram": 6.35,
+          "error": null
+        }
+      ]
+    },
+    {
+      "node": 4,
+      "sf4": 0,
+      "scripts": [
+        {
+          "file": "matrix/bootstrap.js",
+          "ram": 6.15,
+          "error": null
+        },
+        {
+          "file": "matrix/kernel.js",
+          "ram": 5.05,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/stages.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/update.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/early.js",
+          "ram": 14.05,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/early.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/earlyloop.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/batch.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/propagate.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/seed.js",
+          "ram": 7.2,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/spread.js",
+          "ram": 5.55,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/drone.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/start.js",
+          "ram": 9.25,
+          "error": null
+        },
+        {
+          "file": "matrix/dashboard.jsx",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/common.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/network.js",
+          "ram": 2.45,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/capabilities.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hud.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singleton.js",
+          "ram": 1.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/factions.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/augmentations.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/goban.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/voice.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hashes.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/gift.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/stanek-charge.js",
+          "ram": 2,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/solvers.js",
+          "ram": 2.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/dispatch.js",
+          "ram": 4.95,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/contract.js",
+          "ram": 22.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hacking-planner.js",
+          "ram": 5.85,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/reputation-boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/services/root.js",
+          "ram": 3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacking.js",
+          "ram": 14.5,
+          "error": null
+        },
+        {
+          "file": "matrix/services/telemetry.js",
+          "ram": 4.9,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/hack.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/grow.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/weaken.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/share.js",
+          "ram": 4,
+          "error": null
+        },
+        {
+          "file": "matrix/services/cloud.js",
+          "ram": 6.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacknet.js",
+          "ram": 10.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/go.js",
+          "ram": 9.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/contracts.js",
+          "ram": 5.15,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stock.js",
+          "ram": 43.45,
+          "error": null
+        },
+        {
+          "file": "matrix/services/progression.js",
+          "ram": 34.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/coordinator.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/singularity.js",
+          "ram": 65.35,
+          "error": null
+        },
+        {
+          "file": "matrix/services/gang.js",
+          "ram": 29.2,
+          "error": null
+        },
+        {
+          "file": "matrix/services/sleeves.js",
+          "ram": 39.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stanek.js",
+          "ram": 10.05,
+          "error": null
+        },
+        {
+          "file": "matrix/services/bladeburner.js",
+          "ram": 56.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/corporation.js",
+          "ram": 342.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/state.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/budget-ledger.js",
+          "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "native-rp01.js",
+          "ram": 6.35,
+          "error": null
+        }
+      ]
+    },
+    {
+      "node": 1,
+      "sf4": 1,
+      "scripts": [
+        {
+          "file": "matrix/bootstrap.js",
+          "ram": 6.15,
+          "error": null
+        },
+        {
+          "file": "matrix/kernel.js",
+          "ram": 5.05,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/stages.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/update.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/early.js",
+          "ram": 14.05,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/early.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/earlyloop.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/batch.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/propagate.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/seed.js",
+          "ram": 7.2,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/spread.js",
+          "ram": 5.55,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/drone.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/start.js",
+          "ram": 9.25,
+          "error": null
+        },
+        {
+          "file": "matrix/dashboard.jsx",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/common.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/network.js",
+          "ram": 2.45,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/capabilities.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hud.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singleton.js",
+          "ram": 1.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/factions.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/augmentations.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/goban.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/voice.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hashes.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/gift.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/stanek-charge.js",
+          "ram": 2,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/solvers.js",
+          "ram": 2.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/dispatch.js",
+          "ram": 4.95,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/contract.js",
+          "ram": 22.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hacking-planner.js",
+          "ram": 5.85,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/reputation-boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/services/root.js",
+          "ram": 3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacking.js",
+          "ram": 14.5,
+          "error": null
+        },
+        {
+          "file": "matrix/services/telemetry.js",
+          "ram": 4.9,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/hack.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/grow.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/weaken.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/share.js",
+          "ram": 4,
+          "error": null
+        },
+        {
+          "file": "matrix/services/cloud.js",
+          "ram": 6.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacknet.js",
+          "ram": 10.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/go.js",
+          "ram": 9.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/contracts.js",
+          "ram": 5.15,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stock.js",
+          "ram": 43.45,
+          "error": null
+        },
+        {
+          "file": "matrix/services/progression.js",
+          "ram": 514.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/coordinator.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/singularity.js",
+          "ram": 995.35,
+          "error": null
+        },
+        {
+          "file": "matrix/services/gang.js",
+          "ram": 29.2,
+          "error": null
+        },
+        {
+          "file": "matrix/services/sleeves.js",
+          "ram": 39.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stanek.js",
+          "ram": 10.05,
+          "error": null
+        },
+        {
+          "file": "matrix/services/bladeburner.js",
+          "ram": 56.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/corporation.js",
+          "ram": 342.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/state.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/budget-ledger.js",
+          "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "native-rp01.js",
+          "ram": 6.35,
+          "error": null
+        }
+      ]
+    },
+    {
+      "node": 1,
+      "sf4": 2,
+      "scripts": [
+        {
+          "file": "matrix/bootstrap.js",
+          "ram": 6.15,
+          "error": null
+        },
+        {
+          "file": "matrix/kernel.js",
+          "ram": 5.05,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/stages.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/update.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/early.js",
+          "ram": 14.05,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/early.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/earlyloop.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/batch.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/propagate.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/seed.js",
+          "ram": 7.2,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/spread.js",
+          "ram": 5.55,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/drone.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/start.js",
+          "ram": 9.25,
+          "error": null
+        },
+        {
+          "file": "matrix/dashboard.jsx",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/common.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/network.js",
+          "ram": 2.45,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/capabilities.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hud.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singleton.js",
+          "ram": 1.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/factions.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/augmentations.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/goban.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/voice.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hashes.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/gift.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/stanek-charge.js",
+          "ram": 2,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/solvers.js",
+          "ram": 2.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/dispatch.js",
+          "ram": 4.95,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/contract.js",
+          "ram": 22.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hacking-planner.js",
+          "ram": 5.85,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/reputation-boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/services/root.js",
+          "ram": 3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacking.js",
+          "ram": 14.5,
+          "error": null
+        },
+        {
+          "file": "matrix/services/telemetry.js",
+          "ram": 4.9,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/hack.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/grow.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/weaken.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/share.js",
+          "ram": 4,
+          "error": null
+        },
+        {
+          "file": "matrix/services/cloud.js",
+          "ram": 6.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacknet.js",
+          "ram": 10.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/go.js",
+          "ram": 9.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/contracts.js",
+          "ram": 5.15,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stock.js",
+          "ram": 43.45,
+          "error": null
+        },
+        {
+          "file": "matrix/services/progression.js",
+          "ram": 130.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/coordinator.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/singularity.js",
+          "ram": 251.35,
+          "error": null
+        },
+        {
+          "file": "matrix/services/gang.js",
+          "ram": 29.2,
+          "error": null
+        },
+        {
+          "file": "matrix/services/sleeves.js",
+          "ram": 39.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stanek.js",
+          "ram": 10.05,
+          "error": null
+        },
+        {
+          "file": "matrix/services/bladeburner.js",
+          "ram": 56.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/corporation.js",
+          "ram": 342.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/state.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/budget-ledger.js",
+          "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "native-rp01.js",
+          "ram": 6.35,
+          "error": null
+        }
+      ]
+    },
+    {
+      "node": 1,
+      "sf4": 3,
+      "scripts": [
+        {
+          "file": "matrix/bootstrap.js",
+          "ram": 6.15,
+          "error": null
+        },
+        {
+          "file": "matrix/kernel.js",
+          "ram": 5.05,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/stages.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/update.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/early.js",
+          "ram": 14.05,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/early.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/earlyloop.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/batch.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/propagate.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/seed.js",
+          "ram": 7.2,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/spread.js",
+          "ram": 5.55,
+          "error": null
+        },
+        {
+          "file": "matrix/worm/drone.js",
+          "ram": 2.4,
+          "error": null
+        },
+        {
+          "file": "matrix/start.js",
+          "ram": 9.25,
+          "error": null
+        },
+        {
+          "file": "matrix/dashboard.jsx",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/common.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/network.js",
+          "ram": 2.45,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/capabilities.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hud.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singleton.js",
+          "ram": 1.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/factions.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/augmentations.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/goban.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/voice.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hashes.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/gift.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/stanek-charge.js",
+          "ram": 2,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/solvers.js",
+          "ram": 2.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/dispatch.js",
+          "ram": 4.95,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/contract.js",
+          "ram": 22.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/hacking-planner.js",
+          "ram": 5.85,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/reputation-boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/boost.js",
+          "ram": 2.9,
+          "error": null
+        },
+        {
+          "file": "matrix/services/root.js",
+          "ram": 3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacking.js",
+          "ram": 14.5,
+          "error": null
+        },
+        {
+          "file": "matrix/services/telemetry.js",
+          "ram": 4.9,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/hack.js",
+          "ram": 1.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/grow.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/weaken.js",
+          "ram": 1.75,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/share.js",
+          "ram": 4,
+          "error": null
+        },
+        {
+          "file": "matrix/services/cloud.js",
+          "ram": 6.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/hacknet.js",
+          "ram": 10.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/go.js",
+          "ram": 9.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/contracts.js",
+          "ram": 5.15,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stock.js",
+          "ram": 43.45,
+          "error": null
+        },
+        {
+          "file": "matrix/services/progression.js",
+          "ram": 34.8,
+          "error": null
+        },
+        {
+          "file": "matrix/services/coordinator.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/singularity.js",
+          "ram": 65.35,
+          "error": null
+        },
+        {
+          "file": "matrix/services/gang.js",
+          "ram": 29.2,
+          "error": null
+        },
+        {
+          "file": "matrix/services/sleeves.js",
+          "ram": 39.3,
+          "error": null
+        },
+        {
+          "file": "matrix/services/stanek.js",
+          "ram": 10.05,
+          "error": null
+        },
+        {
+          "file": "matrix/services/bladeburner.js",
+          "ram": 56.6,
+          "error": null
+        },
+        {
+          "file": "matrix/services/corporation.js",
+          "ram": 342.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/state.js",
+          "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/budget-ledger.js",
+          "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "native-rp01.js",
+          "ram": 6.35,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "hashes": {
+    "matrix/VERSION.txt": "730d7ee00d380f4a0e40f760f91218a0bcbbe8438c20ff3d5e1da782d5caa758",
+    "matrix/bootstrap.js": "9fec03060e70ebf9393a0c989f6fd2ef949ca52bbc40fa7c300f524e5b3d5ce7",
+    "matrix/config.json": "22826275493872b9c41bcac7f5f310f0f0260b3ba3f626a578dfd60dec5682fb",
+    "matrix/kernel.js": "4902f749d7d0804972e9b9f5f158a64b24159e242311e5f34729d42d40a6d3b8",
+    "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
+    "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
+    "matrix/early.js": "90cf5c252ab44df4f992f18faf0f6189cde1841d1be33f4c49cf39ce099a5dc1",
+    "matrix/workers/early.js": "91e03a775db620f0ff92c0c4b00b6f2cdbb4dec481367f4fc88eaf14a71068cd",
+    "matrix/lib/earlyloop.js": "d486ad608bded9ac853674496c233d1e205224af811343abd33fc8958a715302",
+    "matrix/lib/batch.js": "53c887aad901d3f0de91746774bafd0288b763aadf6f0806f96eacf242932eb9",
+    "matrix/lib/propagate.js": "3cd73085806d8ab9cd517a367e032c388b986c0a20f0a6952f05004189688f9c",
+    "matrix/worm/seed.js": "e2ced207e14d8c102410b95d656ccdd897c387a08920904fd87abc38b105a270",
+    "matrix/worm/spread.js": "6d4c5aafa3b954995ff8869c24d9035c00cfbb9c5f7983bfff2aeafe13b3323f",
+    "matrix/worm/drone.js": "d92b5e0f3a9b7d5a4b14d1db326de8e38edff436fead17bb7e7ba8621e42d0b9",
+    "matrix/start.js": "95b32c2b8ee08668ec2117b50c54fa1640a021cb997cb3fae983d2b4853d8084",
+    "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
+    "matrix/lib/common.js": "3abdf69078bff7f72e5aab851bc21081b7b39226e6f09f22bcd9599362ac6b32",
+    "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
+    "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
+    "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
+    "matrix/lib/singleton.js": "862e27a4f6b6e28617010b0f51597189ee39604bafb750985058346b668759dc",
+    "matrix/lib/factions.js": "f85d89801e74be7726af8e6338da9366bf8ac998285fcda7ef773630e56c8cb3",
+    "matrix/lib/augmentations.js": "8cdc4262e4db6c4393b7e3ff35e263344eb065cac56cfcbef9fbaf068dd819a8",
+    "matrix/lib/goban.js": "082ca50dd71a925609d720c70817f15ecbdc77f8f5fbdc30036e5baab5eda5ec",
+    "matrix/lib/voice.js": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23",
+    "matrix/lib/hashes.js": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf",
+    "matrix/lib/gift.js": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd",
+    "matrix/workers/stanek-charge.js": "594f17d3721623770a912168af479a6ccc75e0c23f6f49853a454c5aaa0d67dc",
+    "matrix/lib/solvers.js": "ad41d60264def9ba5f5d21297b5143e44313a1607fb7dbf1c621b87036ee403b",
+    "matrix/lib/dispatch.js": "74f83083af0547a626937ee53bc3b98a50f5cc88560b2a272257b35c930d12ac",
+    "matrix/workers/contract.js": "f19e9317fd813209df63b2734835ec5476ca5e9a06180159dc6b11fb9f70c6b5",
+    "matrix/lib/hacking-planner.js": "e454c3401d160ea16c206037c3a54c99266fb409d97349bbeb39be3cb1a2be8c",
+    "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
+    "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
+    "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
+    "matrix/services/hacking.js": "5905e940e6b2ca00ba33ce8bbcad5d6425971f490e820d78cd4c5622fe1f2b3c",
+    "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
+    "matrix/workers/hack.js": "75ca796dd3d41c4e780ad32bb1c91a3d4b24eadb42ecc4b59786569b01757a8f",
+    "matrix/workers/grow.js": "c7b7cc731b653db81470e6f4f8886586306ab7a823187f27eaf22cecf12b93dd",
+    "matrix/workers/weaken.js": "b45336bd61ebaabd016c6c20de918fc6d4384519a87e18b77fe2dbb01bf24ad7",
+    "matrix/workers/share.js": "7d898ca5e21a514b84b326aa5a66dbea4315fce925136de53360e2805b0774d9",
+    "matrix/services/cloud.js": "34a3175565002b62c1e77ea1a2b066c7167b54c41e171580347ff94627ac8382",
+    "matrix/services/hacknet.js": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd",
+    "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
+    "matrix/services/contracts.js": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc",
+    "matrix/services/stock.js": "e47493b55b48750d0196632358272c1470f351252460dc44235333e9b05091df",
+    "matrix/services/progression.js": "c69638d6b8ff2e8f52da8e01513e863a105c94e3cac7c613f8a9291b6a92f366",
+    "matrix/services/coordinator.js": "27e072d8461e92f46dba8b2733124f60a5988fa8c0d10aec10420f4186e93cb8",
+    "matrix/services/singularity.js": "064c48c3b776b0a3ad1f8ab829fd68135de3d57d91020392e4982e221996ec84",
+    "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
+    "matrix/services/sleeves.js": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9",
+    "matrix/services/stanek.js": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695",
+    "matrix/services/bladeburner.js": "acf8b9bd1aebe0970f5b8b79ed8697bd2c684fb43e1c6e7939cffc103c241b4d",
+    "matrix/services/corporation.js": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184",
+    "matrix/lib/state.js": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6",
+    "matrix/lib/budget-ledger.js": "c46a6a808211d65da1353b652b7fd9902ccac7575c253b7afc25fdc7a44c4341"
+  },
+  "errors": []
+}
