@@ -10,8 +10,12 @@ import { homeReserveFor } from "/matrix/lib/capabilities.js";
 import {
     PLANNER_NATIVE,
     PLANNER_FORMULAS,
+    SHAPE_POLICY_EFFICIENCY,
+    SHAPE_POLICY_RAM_AWARE,
     formulaBatchShape,
+    formulaBatchShapeAtFraction,
     formulaProbePlanningSnapshot,
+    formulaRamAwareShapePlan,
     formulaTargetScore,
     selectPlanningContext,
 } from "/matrix/lib/hacking-planner.js";
@@ -44,6 +48,8 @@ const TARGET_TELEMETRY_LIMIT = 40;
 const LAUNCH_MARGIN_MS = 300;
 const SNAPSHOT_PROBE_SECURITY_EPSILON = 0.01;
 const FORMULA_RANK_REFRESH_MS = 5_000;
+const FORMULA_SHAPE_PLAN_REFRESH_MS = 15_000;
+const SHAPE_FRACTION_EPSILON = 1e-6;
 
 function pushBounded(list, value, limit) {
     list.push(value);
@@ -194,6 +200,7 @@ function batchShape(ns, target, cfg) {
         const metric = expected / Math.max(1, ramSeconds);
 
         const shape = {
+            requestedFraction: Math.max(0, Number(Number(f).toFixed(6)) || 0),
             f: actualFraction,
             ht,
             gt,
@@ -216,12 +223,28 @@ function batchShape(ns, target, cfg) {
     return best;
 }
 
-function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner) {
+function capturePlanningSnapshot(
+    ns,
+    target,
+    cfg,
+    gap,
+    configuredMax,
+    planner,
+    desiredFraction = null,
+    shapePolicy = null,
+) {
     const live = targetLiveState(ns, target);
     const useFormulas = planner?.kind === PLANNER_FORMULAS;
-    const shape = useFormulas
-        ? formulaBatchShape(ns, target, cfg, planner)
-        : batchShape(ns, target, cfg);
+    const hasDesiredFraction = desiredFraction != null && Number.isFinite(Number(desiredFraction));
+    let shape = null;
+    if (useFormulas && hasDesiredFraction) {
+        shape = formulaBatchShapeAtFraction(ns, target, cfg, planner, Number(desiredFraction));
+    }
+    if (!shape) {
+        shape = useFormulas
+            ? formulaBatchShape(ns, target, cfg, planner)
+            : batchShape(ns, target, cfg);
+    }
     if (!shape) return null;
     const depth = pipelineDepth({
         weakenTimeMs: shape.wTime,
@@ -231,6 +254,7 @@ function capturePlanningSnapshot(ns, target, cfg, gap, configuredMax, planner) {
     return {
         target,
         planner: useFormulas ? PLANNER_FORMULAS : PLANNER_NATIVE,
+        shapePolicy: useFormulas ? (shapePolicy ?? SHAPE_POLICY_EFFICIENCY) : PLANNER_NATIVE,
         capturedAt: Date.now(),
         hackingLevel: ns.getHackingLevel(),
         moneyFraction: live.moneyFraction,
@@ -586,6 +610,20 @@ function activePrepRam(activePrep) {
     return ram;
 }
 
+function legacyHwgwRam(ns, workers) {
+    const hRam = Math.max(0, ns.getScriptRam(H, "home"));
+    const gRam = Math.max(0, ns.getScriptRam(G, "home"));
+    const wRam = Math.max(0, ns.getScriptRam(W, "home"));
+    let ram = 0;
+    for (const worker of workers ?? []) {
+        const threads = Math.max(0, Number(worker.threads) || 0);
+        if (sameScriptPath(worker.script, H)) ram += threads * hRam;
+        else if (sameScriptPath(worker.script, G)) ram += threads * gRam;
+        else if (sameScriptPath(worker.script, W)) ram += threads * wRam;
+    }
+    return ram;
+}
+
 function boostProcessesOnHost(ns, host, boostId = null) {
     let processes = [];
     try { processes = ns.ps(host); } catch { return []; }
@@ -867,11 +905,13 @@ function targetTelemetry(ns, {
     taintedTargets,
     staleSnapshots,
     rankMap,
+    shapePlan,
 }) {
     const out = [];
     for (const target of ranked.slice(0, TARGET_TELEMETRY_LIMIT)) {
         const snapshot = snapshots.get(target);
         const shape = snapshot?.shape ?? null;
+        const desired = shapePlan?.byTarget?.get(target) ?? null;
         const live = targetLiveState(ns, target);
         let liveTimes = null;
         try { liveTimes = operationTimes(ns, target); } catch {}
@@ -890,9 +930,14 @@ function targetTelemetry(ns, {
             pipelineDepth: depth,
             availableSlots: depth == null ? null : Math.max(0, depth - active),
             planningPlanner: snapshot?.planner ?? null,
+            planningShapePolicy: snapshot?.shapePolicy ?? null,
             planningSnapshotCapturedAt: snapshot?.capturedAt ?? null,
             planningHackingLevel: snapshot?.hackingLevel ?? null,
             planningHackPerThread: snapshot?.hackPerThread ?? null,
+            planningRequestedHackFraction: shape?.requestedFraction ?? null,
+            desiredRequestedHackFraction: desired?.requestedFraction ?? null,
+            desiredFullDepthRam: desired?.fullDepthRam ?? null,
+            desiredExpectedMoneyPerSec: desired?.expectedPerSec ?? null,
             planningMoneyFraction: snapshot?.moneyFraction ?? null,
             planningSecurityExcess: snapshot?.securityExcess ?? null,
             planningBatchRam: shape?.ram ?? null,
@@ -947,8 +992,12 @@ export async function main(ns) {
     let snapshotStaleDrains = 0;
     let snapshotRefreshes = 0;
     let plannerSnapshotSwitches = 0;
+    let shapeReplanDrains = 0;
     let formulaRankedCache = [];
     let formulaRankRefreshAt = 0;
+    let formulaShapePlan = null;
+    let formulaShapePlanRefreshAt = 0;
+    let formulaShapePlanKey = "";
     let boostRuntime = null;
     let boostStats = { hostCount: 0, workerCount: 0, threadCount: 0, ram: 0, error: null };
     let lastBoostReconcileAt = 0;
@@ -1191,10 +1240,126 @@ export async function main(ns) {
             Math.max(0, Number(cfg.hacking?.waveReserveFraction ?? 0.05) || 0),
         );
 
+        // The shape allocator plans against steady-state hacking capacity rather
+        // than instantaneous free RAM. Current H/G/W, prep, and restart-legacy
+        // RAM are all recoverable by the hacking engine, while unrelated service
+        // RAM and the Home reserve stay outside the budget. This mirrors the live
+        // scheduler's dynamic reserve semantics without treating a transient prep
+        // or controlled service restart as a reason to shrink every batch shape.
+        const shapeTargets = ranked.slice(0, maxTargets);
+        const shapeRamNow = liveRam(ns, hosts, cfg, boost);
+        const shapeRecoverableRam =
+            activeHwgwRam(activeBatches) +
+            activePrepRam(activePrep) +
+            legacyHwgwRam(ns, legacy.workers);
+        const shapeUsableIdleRam = Math.max(
+            0,
+            shapeRamNow.schedulableFree - shapeRamNow.schedulableFree * reserveFraction,
+        );
+        const shapeBudgetRam = shapeRecoverableRam + shapeUsableIdleRam;
+        const shapePlanKey = shapeTargets.join("\u001f");
+
+        if (mode === "money" && planner.kind === PLANNER_FORMULAS && !admissionPaused) {
+            const planNow = Date.now();
+            if (!formulaShapePlan ||
+                planNow >= formulaShapePlanRefreshAt ||
+                shapePlanKey !== formulaShapePlanKey) {
+                formulaShapePlan = formulaRamAwareShapePlan(
+                    ns,
+                    shapeTargets,
+                    cfg,
+                    planner,
+                    {
+                        gapMs: gap,
+                        budgetRam: shapeBudgetRam,
+                        depthForShape: shape => pipelineDepth({
+                            weakenTimeMs: shape.wTime,
+                            gapMs: gap,
+                            configuredMax,
+                        }),
+                    },
+                );
+                formulaShapePlanRefreshAt = planNow + FORMULA_SHAPE_PLAN_REFRESH_MS;
+                formulaShapePlanKey = shapePlanKey;
+            }
+        } else if (mode !== "money" || planner.kind !== PLANNER_FORMULAS) {
+            formulaShapePlan = null;
+            formulaShapePlanRefreshAt = 0;
+            formulaShapePlanKey = "";
+        }
+
+        // Existing snapshots are immutable. If a later global frontier refresh
+        // wants a different requested fraction, drain at most one target at a
+        // time. Correctness stale-drains always take priority because we only
+        // initiate a shape-policy drain when NO stale target is already present.
+        if (!admissionPaused && formulaShapePlan && staleSnapshots.size === 0) {
+            const replanCandidates = [];
+            for (const host of shapeTargets) {
+                const snapshot = planningSnapshots.get(host);
+                const desired = formulaShapePlan.byTarget.get(host);
+                const active = activeCounts.get(host) ?? 0;
+                if (!snapshot || snapshot.planner !== PLANNER_FORMULAS || active <= 0 || !desired) continue;
+                const currentRequested = Number(snapshot.shape?.requestedFraction);
+                if (!Number.isFinite(currentRequested)) continue;
+                const delta = desired.requestedFraction - currentRequested;
+                if (Math.abs(delta) <= SHAPE_FRACTION_EPSILON) continue;
+
+                // Do not introduce efficiency-metric churn that did not exist in
+                // 1.10.1. Efficiency mode only drains snapshots that were
+                // previously enlarged by the RAM-aware overlay and now need to
+                // unwind because the steady-state budget contracted/was disabled.
+                if (formulaShapePlan.policy !== SHAPE_POLICY_RAM_AWARE &&
+                    snapshot.shapePolicy !== SHAPE_POLICY_RAM_AWARE) {
+                    continue;
+                }
+
+                const currentFullDepthRam = Math.max(0, Number(snapshot.shape?.ram) || 0) * snapshot.depth;
+                const currentExpectedPerSec =
+                    Math.max(0, Number(snapshot.shape?.expected) || 0) * formulaShapePlan.slotRate;
+                replanCandidates.push({
+                    host,
+                    snapshot,
+                    desired,
+                    currentRequested,
+                    delta,
+                    currentFullDepthRam,
+                    desiredFullDepthRam: desired.fullDepthRam,
+                    ramRelief: Math.max(0, currentFullDepthRam - desired.fullDepthRam),
+                    expectedGain: desired.expectedPerSec - currentExpectedPerSec,
+                    downgrade: delta < 0,
+                });
+            }
+
+            replanCandidates.sort((a, b) => {
+                if (a.downgrade !== b.downgrade) return a.downgrade ? -1 : 1;
+                if (a.downgrade) return b.ramRelief - a.ramRelief;
+                if (Math.abs(b.expectedGain - a.expectedGain) > 1e-9) return b.expectedGain - a.expectedGain;
+                return (rankMap.get(a.host) ?? Number.MAX_SAFE_INTEGER) -
+                    (rankMap.get(b.host) ?? Number.MAX_SAFE_INTEGER);
+            });
+
+            const chosen = replanCandidates[0];
+            if (chosen) {
+                const observedAt = Date.now();
+                staleSnapshots.set(chosen.host, {
+                    staleSince: observedAt,
+                    observedAt,
+                    reason: "ram-aware-shape-change",
+                    currentRequestedFraction: chosen.currentRequested,
+                    desiredRequestedFraction: chosen.desired.requestedFraction,
+                    currentFullDepthRam: chosen.currentFullDepthRam,
+                    desiredFullDepthRam: chosen.desiredFullDepthRam,
+                    requiresDrain: true,
+                });
+                snapshotStaleDrains += 1;
+                shapeReplanDrains += 1;
+            }
+        }
+
         schedulerState.clear();
         const ready = [];
 
-        for (const host of ranked.slice(0, maxTargets)) {
+        for (const host of shapeTargets) {
             const inFlight = activeCounts.get(host) ?? 0;
             const hasLegacy = (legacy.byTarget.get(host) ?? 0) > 0;
             const stale = staleSnapshots.get(host);
@@ -1235,6 +1400,7 @@ export async function main(ns) {
 
                 const existing = planningSnapshots.get(host);
                 if (!existing || existing.used) {
+                    const desired = formulaShapePlan?.byTarget?.get(host) ?? null;
                     const snapshot = capturePlanningSnapshot(
                         ns,
                         host,
@@ -1242,6 +1408,12 @@ export async function main(ns) {
                         gap,
                         configuredMax,
                         planner,
+                        mode === "money" && planner.kind === PLANNER_FORMULAS
+                            ? desired?.requestedFraction ?? null
+                            : null,
+                        mode === "money" && planner.kind === PLANNER_FORMULAS
+                            ? formulaShapePlan?.policy ?? SHAPE_POLICY_EFFICIENCY
+                            : null,
                     );
                     if (!snapshot) {
                         schedulerState.set(host, "no-shape");
@@ -1581,6 +1753,20 @@ export async function main(ns) {
             plannerFallbackReason: planner.fallbackReason,
             plannerSnapshotSwitches,
             formulaRankRefreshAt: formulaRankRefreshAt || null,
+            shapePolicy: formulaShapePlan?.policy ??
+                (planner.kind === PLANNER_FORMULAS ? SHAPE_POLICY_EFFICIENCY : PLANNER_NATIVE),
+            shapePlanReason: formulaShapePlan?.reason ?? null,
+            shapePlanBudgetRam: formulaShapePlan?.budgetRam ?? null,
+            shapePlanBaselineRam: formulaShapePlan?.baselineRam ?? null,
+            shapePlanRam: formulaShapePlan?.plannedRam ?? null,
+            shapePlanRemainingRam: formulaShapePlan?.remainingRam ?? null,
+            shapePlanBaselineExpectedMoneyPerSec: formulaShapePlan?.baselineExpectedMoneyPerSec ?? null,
+            shapePlanExpectedMoneyPerSec: formulaShapePlan?.plannedExpectedMoneyPerSec ?? null,
+            shapePlanImprovementFraction: formulaShapePlan?.improvementFraction ?? null,
+            shapePlanUpgradeSteps: formulaShapePlan?.upgradeSteps ?? 0,
+            shapePlanUpgradedTargets: formulaShapePlan?.upgradedTargets ?? 0,
+            shapePlanRefreshAt: formulaShapePlanRefreshAt || null,
+            shapeReplanDrains,
             target: leadTarget,
             gapMs: gap,
             candidateCount: ranked.length,
@@ -1608,6 +1794,10 @@ export async function main(ns) {
                 growThreadShortfall: meta.growThreadShortfall ?? null,
                 planningHackFraction: meta.plannedHackFraction ?? null,
                 observedHackFraction: meta.currentHackFraction ?? null,
+                currentRequestedFraction: meta.currentRequestedFraction ?? null,
+                desiredRequestedFraction: meta.desiredRequestedFraction ?? null,
+                currentFullDepthRam: meta.currentFullDepthRam ?? null,
+                desiredFullDepthRam: meta.desiredFullDepthRam ?? null,
                 planningHackingLevel: planningSnapshots.get(target)?.hackingLevel ?? null,
                 observedHackingLevel: meta.hackingLevel ?? null,
                 activeBatchesRemaining: refreshedCounts.get(target) ?? 0,
@@ -1621,6 +1811,7 @@ export async function main(ns) {
             schedulableFreeRam: afterAll.schedulableFree,
             inflightHwgwRam: activeHwgwRam(activeBatches),
             prepRam: activePrepRam(activePrep),
+            legacyHwgwRam: legacyHwgwRam(ns, legacy.workers),
             intentionallyReservedRam,
             usableIdleRam,
             freeRam: afterAll.free,
@@ -1637,6 +1828,7 @@ export async function main(ns) {
                 taintedTargets,
                 staleSnapshots,
                 rankMap,
+                shapePlan: formulaShapePlan,
             }),
             targetTelemetryTruncated: ranked.length > TARGET_TELEMETRY_LIMIT,
             prepTargets,
