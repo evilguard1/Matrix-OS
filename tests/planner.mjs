@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { pipelineDepth } from "../matrix/lib/batch.js";
 import {
     PLANNER_NATIVE,
     PLANNER_FORMULAS,
+    SHAPE_POLICY_EFFICIENCY,
+    SHAPE_POLICY_RAM_AWARE,
+    formulaBatchFrontier,
     formulaBatchShape,
+    formulaBatchShapeAtFraction,
     formulaProbePlanningSnapshot,
+    formulaRamAwareShapePlan,
     formulaServer,
     formulaTargetScore,
     selectPlanningContext,
@@ -112,6 +118,7 @@ function makeNs({ formulas = true, hacking = 500 } = {}) {
     const shape = formulaBatchShape(ns, "alpha", cfg, context);
     assert.ok(shape, "Formulas planner should produce a batch shape");
     assert.equal(shape.planner, PLANNER_FORMULAS);
+    assert.ok(shape.requestedFraction >= 0.05 && shape.requestedFraction <= 0.20);
     assert.ok(shape.ht >= 1 && shape.gt >= 1 && shape.wt1 >= 1 && shape.wt2 >= 1);
     assert.ok(shape.expected > 0 && shape.metric > 0 && shape.ram > 0);
     assert.equal(shape.hTime, 1_000);
@@ -132,8 +139,76 @@ function makeNs({ formulas = true, hacking = 500 } = {}) {
     }
 }
 
-// Money ranking is the predicted clean Formula yield per RAM-second. A much
-// slower target must lose even if it is otherwise hackable.
+// The explicit frontier must preserve every configured 2.5-point step, while an
+// exact-fraction capture regenerates the chosen policy under the current player.
+{
+    const ns = makeNs();
+    const context = selectPlanningContext(ns);
+    const cfg = { hacking: { minHackFraction: 0.05, maxHackFraction: 0.20 } };
+    const frontier = formulaBatchFrontier(ns, "alpha", cfg, context);
+    assert.deepEqual(
+        frontier.map(shape => shape.requestedFraction),
+        [0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.20],
+    );
+    const exact = formulaBatchShapeAtFraction(ns, "alpha", cfg, context, 0.20);
+    assert.equal(exact.requestedFraction, 0.20);
+    assert.deepEqual(
+        [exact.ht, exact.gt, exact.wt1, exact.wt2],
+        [frontier.at(-1).ht, frontier.at(-1).gt, frontier.at(-1).wt1, frontier.at(-1).wt2],
+    );
+    const efficient = formulaBatchShape(ns, "alpha", cfg, context);
+    assert.equal(efficient.metric, Math.max(...frontier.map(shape => shape.metric)));
+}
+
+// RAM-aware planning is an abundance overlay, never a replacement for the
+// validated efficiency baseline. If every baseline target cannot fit, nothing is
+// enlarged. With abundant RAM the greedy frontier may buy larger per-slot shapes.
+{
+    const ns = makeNs();
+    const context = selectPlanningContext(ns);
+    const cfg = { hacking: { minHackFraction: 0.05, maxHackFraction: 0.20, ramAwareBatchShapes: true } };
+    const depthForShape = shape => pipelineDepth({ weakenTimeMs: shape.wTime, gapMs: 120 });
+
+    const probe = formulaRamAwareShapePlan(ns, ["alpha", "beta"], cfg, context, {
+        gapMs: 120,
+        budgetRam: Number.MAX_SAFE_INTEGER,
+        depthForShape,
+    });
+    assert.equal(probe.policy, SHAPE_POLICY_RAM_AWARE);
+    assert.equal(probe.entries.length, 2);
+    assert.ok(probe.plannedRam >= probe.baselineRam);
+    assert.ok(probe.plannedExpectedMoneyPerSec >= probe.baselineExpectedMoneyPerSec);
+    assert.ok(probe.upgradeSteps > 0);
+    assert.equal(probe.byTarget.get("alpha").requestedFraction, 0.20);
+    assert.equal(probe.byTarget.get("beta").requestedFraction, 0.20);
+
+    const constrained = formulaRamAwareShapePlan(ns, ["alpha", "beta"], cfg, context, {
+        gapMs: 120,
+        budgetRam: Math.max(0, probe.baselineRam - 1),
+        depthForShape,
+    });
+    assert.equal(constrained.policy, SHAPE_POLICY_EFFICIENCY);
+    assert.equal(constrained.reason, "baseline-exceeds-budget");
+    assert.equal(constrained.upgradeSteps, 0);
+    for (const entry of constrained.entries) {
+        assert.equal(entry.requestedFraction, entry.baselineRequestedFraction);
+    }
+
+    const disabled = formulaRamAwareShapePlan(
+        ns,
+        ["alpha", "beta"],
+        { hacking: { ...cfg.hacking, ramAwareBatchShapes: false } },
+        context,
+        { gapMs: 120, budgetRam: Number.MAX_SAFE_INTEGER, depthForShape },
+    );
+    assert.equal(disabled.policy, SHAPE_POLICY_EFFICIENCY);
+    assert.equal(disabled.reason, "disabled");
+    assert.equal(disabled.upgradeSteps, 0);
+}
+
+// Money ranking remains the predicted clean Formula yield per RAM-second. A much
+// slower target must lose even if it is otherwise hackable. The RAM-aware overlay
+// is applied later, after the validated eligibility/ranking layer.
 {
     const ns = makeNs();
     const context = selectPlanningContext(ns);
@@ -178,6 +253,10 @@ assert.match(source, /\bns\.getServerGrowth\s*\(/,
     "Formulas planner needs the 0.1 GB serverGrowth accessor");
 assert.match(source, /\bns\.getPlayer\s*\(/,
     "Formulas planner needs one current player snapshot");
+assert.match(source, /formulaRamAwareShapePlan/,
+    "the Formula planner must expose the global RAM-aware shape allocator");
+assert.match(source, /baselineRam\s*<=\s*budgetRam/,
+    "adaptive shapes must activate only after the complete efficiency baseline fits");
 
 // rankTargets invokes every scorer as scorer(ns, host). The Formula adapter must
 // therefore accept the same two-argument scorer interface; a one-argument arrow
@@ -190,4 +269,4 @@ assert.doesNotMatch(hackingSource,
     /\?\s*h\s*=>\s*formulaTargetScore\(ns,\s*h,\s*cfg,\s*planner\)/,
     "one-argument Formula scorer drops the real host when rankTargets calls scorer(ns, host)");
 
-console.log("MATRIX-OS planner passed: native fallback, synthetic Formula shapes, ranking, and stale probes.");
+console.log("MATRIX-OS planner passed: native fallback, Formula frontiers, RAM-aware allocation, ranking, and stale probes.");
