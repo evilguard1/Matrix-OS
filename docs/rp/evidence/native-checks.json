@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "scope": "Official Bitburner v3.0.1 local build, isolated fresh browser game; synthetic telemetry; not user Steam save",
+  "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "actualRamGB": 1.7,
+  "ramCalculationError": null,
+  "firstLease": {
+    "service": "dashboard",
+    "updated": 1788606463772,
+    "pid": 1,
+    "phase": "alive",
+    "ticks": 1
+  },
+  "lastLease": {
+    "service": "dashboard",
+    "updated": 1788606527587,
+    "pid": 1,
+    "phase": "alive",
+    "ticks": 29
+  },
+  "openingGeometry": {
+    "width": 1476,
+    "top": 119
+  },
+  "tailResizeCases": [
+    {
+      "requested": 1024,
+      "width": 1022,
+      "scrollWidth": 1022,
+      "navDirection": "column"
+    },
+    {
+      "requested": 736,
+      "width": 734,
+      "scrollWidth": 734,
+      "navDirection": "row"
+    },
+    {
+      "requested": 390,
+      "width": 388,
+      "scrollWidth": 388,
+      "navDirection": "row"
+    }
+  ],
+  "nativeTabs": [
+    "Passerelle",
+    "Réseau",
+    "Services",
+    "Hacking",
+    "Économie",
+    "Progression",
+    "Campagne",
+    "Journal",
+    "Réglages"
+  ],
+  "checks": [
+    "actual Netscript execution",
+    "native React tail render",
+    "tail opening geometry",
+    "top scroll alignment",
+    "tail container responsiveness",
+    "actual config file mutation and readback",
+    "stale data rejection",
+    "telemetry recovery",
+    "target selection",
+    "capital samples",
+    "heartbeat continuity"
+  ],
+  "pageErrors": [],
+  "dashboardSha256": "18885fb73e61940ced4305a1669c70b2a67b40539cd23ee7c9edb5a13c2d107a",
+  "observedHeartbeatDurationMs": 63815
+}

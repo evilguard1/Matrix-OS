@@ -23,10 +23,12 @@ function age(time) { if (!time) return "OFFLINE"; const seconds = Math.max(0, (D
 
 function state(ns) {
     const overview = readJson(ns, `${STATE_DIR}/overview.txt`, null);
-    if (overview && Date.now() - (overview.updated ?? 0) < 15_000) return overview;
+    // Preserve an old observation rather than silently replacing it with a
+    // bootstrap view. The presentation reports its age and disables writes.
+    if (overview && typeof overview === "object" && !Array.isArray(overview)) return overview;
     const bootstrap = readJson(ns, `${STATE_DIR}/bootstrap.txt`, {}), early = readJson(ns, `${STATE_DIR}/early.txt`, {});
     const boot = (early.updated ?? 0) > (bootstrap.updated ?? 0) ? early : bootstrap;
-    return { updated: boot.updated ?? 0, player: { money: ns.getServerMoneyAvailable("home") }, network: { discovered: boot.discovered ?? 0, rooted: boot.rooted ?? 0, maxRam: boot.homeRam ?? 0, ramPct: 0 }, services: { bootstrap: { status: boot.status ?? "starting" }, hacking: { status: boot.phase ?? "bootstrap", target: boot.target ?? "n00dles" } }, events: [] };
+    return { updated: boot.updated ?? 0, player: { money: ns.getServerMoneyAvailable("home") }, network: { discovered: boot.discovered, rooted: boot.rooted }, services: { bootstrap: { updated: boot.updated, status: boot.status ?? "starting" }, hacking: { status: boot.phase ?? "bootstrap", target: boot.target } }, events: [] };
 }
 
 // ---------------------------------------------------------------------------
@@ -44,16 +46,25 @@ function state(ns) {
 // commands the UI queues. The UI is a pure function of that snapshot.
 // ---------------------------------------------------------------------------
 const store = {
-    snapshot: { data: {}, config: {} },
+    snapshot: { data: {}, config: {}, configReady: false, history: [], commandLog: [] },
     listeners: new Set(),
     commands: [],
+    commandLog: [],
+    history: [],
+    historyEpoch: null,
+    nextId: 0,
     publish(snapshot) {
         store.snapshot = snapshot;
         // One broken subscriber must not stop the others, or stop main().
         for (const listener of [...store.listeners]) { try { listener(); } catch {} }
     },
     subscribe(listener) { store.listeners.add(listener); return () => store.listeners.delete(listener); },
-    send(command) { store.commands.push(command); },
+    send(command) {
+        if (store.commands.length >= 20) return;
+        store.commands.push({ ...command, id: ++store.nextId });
+        store.commandLog = [...store.commandLog, { t: Date.now(), status: "pending", message: `Modification demandée : ${command.path}. En attente d’écriture.` }].slice(-40);
+        store.publish({ ...store.snapshot, commandLog: store.commandLog });
+    },
     drain() { const pending = store.commands; store.commands = []; return pending; },
 };
 
@@ -148,20 +159,12 @@ function Service({ name, value, sourceFiles }) {
 }
 
 function ManualActions({ data }) {
-    const actions = data.manual ?? [];
-    if (data.singularity) {
-        return (
-            <>
-                <div className="mxValue" style={{ fontSize: 17, color: COLOR.mint }}>FULLY AUTONOMOUS</div>
-                <div className="mxHint">Singularity is available - MATRIX buys RAM, programs and augmentations itself.</div>
-            </>
-        );
-    }
+    const actions = ghostArray(data.manual);
     if (!actions.length) return <div className="mxEmpty">NOTHING OUTSTANDING</div>;
     return (
         <>
             <div className="mxHint" style={{ marginBottom: 8 }}>
-                Bitburner gates these behind Singularity (Source-File 4). No script can do them yet - you must.
+                Instructions publiées par la télémétrie. Un accès Singularity ne prouve pas qu’un exécuteur est actif.
             </div>
             {actions.map(action => (
                 <div className="mxRow" key={action.id}>
@@ -178,7 +181,13 @@ function ManualActions({ data }) {
         </>
     );
 }
-function Toggle({ config, path, label }) { const parts = path.split("."); let value = config; for (const part of parts) value = value?.[part]; const change = () => { const next = JSON.parse(JSON.stringify(config ?? {})); let current = next; for (let index = 0; index < parts.length - 1; index++) current = current[parts[index]] ??= {}; current[parts.at(-1)] = !value; store.send({ type: "config", value: next }); }; return <button className={`mxBtn ${value !== false ? "active" : ""}`} onClick={change}>{label} {value !== false ? "ON" : "OFF"}</button>; }
+function Toggle({ config, path, label }) {
+    const parts = path.split("."); let value = config;
+    for (const part of parts) value = value?.[part];
+    const pending = store.commands.some(c => c.path === path);
+    const disabled = pending || !store.snapshot.configReady || !ghostFresh(store.snapshot.data?.updated);
+    return <button type="button" className="gx-button" aria-pressed={value !== false} disabled={disabled} onClick={() => store.send({ type: "patch", path, value: value === false, expected: value })}>{pending ? "En attente…" : `${label} ${value !== false ? "ON" : "OFF"}`}</button>;
+}
 
 // "Wake up, Neo." Everything the game will not let a script do yet arrives
 // here as an instruction, in priority order, so there is always one clear next
@@ -378,12 +387,12 @@ function Hacking({ data }) {
     const rows = [
         ["Target host", hacking.target ?? "--"],
         ["Engine phase", hacking.phase ?? hacking.status ?? "offline"],
-        ["Active HWGW batches", hacking.batches ?? 0],
+        ["Active HWGW batches", hacking.activeBatches ?? hacking.batches ?? "--"],
         ["Hack extraction %", extraction],
         ["Expected money / batch", money(hacking.expectedPerBatch)],
         ["Batch RAM footprint", ram(hacking.batchRam)],
         ["Launch delay gap", hacking.gapMs ? `${hacking.gapMs} ms` : "--"],
-        ["Completed batch count", hacking.batchCounter ?? 0],
+        ["Successful batch launches", hacking.successfulBatchLaunches ?? hacking.batchCounter ?? "--"],
     ];
 
     return (
@@ -623,55 +632,125 @@ class DeckBoundary extends React.Component {
     }
 }
 
-function App() {
-    const { data, config } = useStore();
-    const [tab, setTab] = React.useState("OVERVIEW");
+// GHOST / native React 17 presentation. No network clients or Netscript calls.
+const ghostCss = `
+.gx{container-type:inline-size;container-name:matrix-ghost;white-space:normal;--green:#89f4bc;--mint:#89f4bc;--dim:#9aabb9;--ink:#080d13;--red:#ff879b;--amber:#eac28a;--cyan:#81d7ed}
+.gx .gx-node{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gx .gx-node span{white-space:normal}.gx .gx-saved{background:#14271f;border-color:#3c5f4d;color:#b2eac9}
+.gx{--g-bg:#080d13;--g-panel:#0e1721;--g-line:#24313e;--g-ink:#eef4f7;--g-muted:#9aabb9;--g-mint:#89f4bc;--g-cyan:#81d7ed;--g-amber:#eac28a;color:var(--g-ink);background:var(--g-bg);font:400 14px/1.5 'Segoe UI',Arial,sans-serif;min-height:100%;isolation:isolate;color-scheme:dark}.gx *{box-sizing:border-box}.gx button,.gx select{font:inherit}.gx button{cursor:pointer}.gx button:disabled{opacity:.45;cursor:not-allowed}.gx button:focus-visible,.gx select:focus-visible{outline:2px solid var(--g-cyan);outline-offset:3px}.gx h1,.gx h2,.gx h3,.gx p{margin:0}.gx h2{font-size:18px;font-weight:500;letter-spacing:-.3px}.gx h3{font-size:14px;font-weight:500}.gx-mono{font-family:'Cascadia Code',Consolas,monospace;font-variant-numeric:tabular-nums}.gx-top{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:20px 26px;border-bottom:1px solid var(--g-line);background:#0b121a}.gx-brand{display:flex;align-items:center;gap:13px;min-width:0}.gx-emblem{color:var(--g-mint);width:33px;flex:none}.gx-wordmark{font-size:19px;font-weight:600;letter-spacing:3px;white-space:nowrap}.gx-edition{font:11px/1.5 Consolas,monospace;letter-spacing:2px;color:var(--g-muted);margin-top:2px}.gx-topright{display:flex;gap:20px;align-items:center;font-size:12px;color:var(--g-muted)}.gx-link{color:var(--g-mint);display:flex;align-items:center;gap:8px}.gx-led{width:6px;height:6px;display:inline-block;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;flex:none}.gx-warn{color:var(--g-amber)!important}.gx-preview{background:#312616;color:#f5d69c;padding:6px 26px;font:12px/1.5 Consolas,monospace;border-bottom:1px solid #5b4729}.gx-body{display:grid;grid-template-columns:184px minmax(0,1fr)}.gx-side{padding:24px 14px;background:#0b121a;border-right:1px solid var(--g-line);display:flex;flex-direction:column;gap:5px}.gx-navlabel{font:10px/1.5 Consolas,monospace;letter-spacing:2px;color:var(--g-muted);padding:0 12px 14px}.gx-nav{display:flex;align-items:center;gap:13px;width:100%;text-align:left;color:var(--g-muted);border:1px solid transparent;background:transparent;border-radius:7px;padding:11px 12px;min-height:43px}.gx-nav:hover{color:var(--g-ink);background:#121f2a}.gx-nav[aria-current=page]{background:#192b2a;color:var(--g-mint);border-color:#2d4640}.gx-navnum{font:11px/1.5 Consolas,monospace;opacity:.75}.gx-sidefoot{margin-top:auto;padding:60px 12px 6px;color:var(--g-muted);font-size:11px;line-height:1.8}.gx-sidefoot b{color:var(--g-cyan);font-weight:500}.gx-main{padding:26px;min-width:0;max-width:1800px;width:100%;margin:0 auto}.gx-intro{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}.gx-eyebrow{font:11px/1.5 Consolas,monospace;letter-spacing:2px;color:var(--g-mint);margin-bottom:6px}.gx-title{font-size:clamp(26px,3vw,38px);line-height:1.15;font-weight:500;letter-spacing:-1.3px}.gx-sub{color:var(--g-muted);font-size:12px;margin-top:8px}.gx-control{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.gx-button{border:1px solid #354653;background:#14212b;color:var(--g-ink);border-radius:6px;padding:8px 12px;min-height:37px;white-space:normal}.gx-button:hover{background:#1d3240;border-color:#678390}.gx-button[aria-pressed=true]{border-color:#608276;color:var(--g-mint);background:#1c332d}.gx-button.gx-primary{background:var(--g-mint);color:#0a2016;border-color:var(--g-mint)}.gx-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:22px;border:1px solid var(--g-line);border-radius:9px;background:linear-gradient(130deg,#121d28,#0c141c)}.gx-stat{padding:18px 20px;min-width:0;border-right:1px solid var(--g-line)}.gx-stat:last-child{border-right:0}.gx-statlabel{color:var(--g-muted);font-size:12px}.gx-statvalue{font:400 clamp(22px,2.3vw,30px)/1.3 'Cascadia Code',Consolas,monospace;letter-spacing:-1px;margin:6px 0;color:var(--g-ink);overflow-wrap:anywhere}.gx-statnote{font-size:11px;color:var(--g-muted)}.gx-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:18px}.gx-pane{border:1px solid var(--g-line);border-radius:9px;background:var(--g-panel);min-width:0;overflow:hidden}.gx-panehead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px 20px;border-bottom:1px solid var(--g-line)}.gx-caption{font:10px/1.5 Consolas,monospace;letter-spacing:1.4px;color:var(--g-muted)}.gx-panecontent{padding:18px 20px}.gx-orbit{position:relative;min-height:336px;overflow:hidden;background:radial-gradient(ellipse at 50% 52%,#143b354f,transparent 48%),radial-gradient(circle at 50% 50%,transparent 37%,#89f4bc09 37.2%,transparent 37.6%),linear-gradient(#22344228 1px,transparent 1px),linear-gradient(90deg,#22344228 1px,transparent 1px),#0a121a;background-size:auto,auto,32px 32px,32px 32px,auto}.gx-orbit:before{content:'';position:absolute;inset:22px;border:1px solid #30483855;border-radius:50%;transform:scaleX(.95);pointer-events:none}.gx-orbit-svg{position:absolute;inset:0;width:100%;height:100%;color:#365b4d}.gx-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:172px;height:172px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:50%;background:#0c181c;box-shadow:0 0 65px #69f2ad12,inset 0 0 35px #89f4bc05;z-index:1}.gx-core svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}.gx-corevalue{font:32px/1.2 Consolas,monospace;color:var(--g-mint);letter-spacing:-1px}.gx-corelabel{font:10px/1.5 Consolas,monospace;letter-spacing:2px;color:var(--g-muted);margin-top:6px}.gx-corebottom{font:10px/1.5 Consolas,monospace;color:var(--g-cyan);margin-top:10px}.gx-node{position:absolute;transform:translate(-50%,-50%);padding:7px 10px;color:var(--g-muted);background:#0e1b24;border:1px solid #324452;border-radius:5px;max-width:140px;text-align:left;z-index:2;font:11px/1.4 Consolas,monospace;min-height:39px;overflow-wrap:anywhere}.gx-node:hover,.gx-node[aria-pressed=true]{color:var(--g-mint);border-color:var(--g-mint);background:#132b27;box-shadow:0 0 20px #89f4bc13}.gx-node span{display:block;font:10px/1.4 'Segoe UI',sans-serif;color:var(--g-muted);margin-top:2px}.gx-orbit-empty{position:absolute;bottom:13px;left:12px;right:12px;text-align:center;font-size:12px;color:var(--g-muted)}.gx-orbit-legend{position:absolute;top:12px;left:15px;color:var(--g-muted);font:10px/1.5 Consolas,monospace;letter-spacing:1px}.gx-targetbar{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#111f29;border-top:1px solid var(--g-line)}.gx-targetname{font:20px/1.4 Consolas,monospace;color:var(--g-ink);overflow-wrap:anywhere}.gx-targetmeta{font-size:11px;color:var(--g-muted);margin-top:3px}.gx-targetbadge{color:var(--g-mint);font:10px/1.5 Consolas,monospace;padding:5px 7px;border:1px solid #365447;border-radius:4px}.gx-mission{display:flex;flex-direction:column;gap:18px}.gx-missiontitle{font-size:22px!important;line-height:1.25;letter-spacing:-.6px!important;color:var(--g-ink)}.gx-missionreason{font-size:13px;color:var(--g-muted);margin:12px 0 18px!important;line-height:1.65}.gx-progresslabel{display:flex;justify-content:space-between;gap:14px;color:var(--g-muted);font-size:11px}.gx-track{height:4px;background:#24313a;border-radius:3px;margin-top:9px;overflow:hidden}.gx-track i{display:block;height:100%;background:var(--g-mint)}.gx-next{margin-top:20px;padding-top:15px;border-top:1px solid var(--g-line);font-size:13px;line-height:1.5}.gx-next small{display:block;font:10px/1.5 Consolas,monospace;color:var(--g-cyan);letter-spacing:1.5px;margin-bottom:6px}.gx-campaign{background:radial-gradient(ellipse at 100% 0,#34453744,transparent 75%),#111a1d;border-color:#374b42}.gx-campaign .gx-panecontent{padding-top:16px}.gx-chapter{display:flex;align-items:center;justify-content:space-between;gap:15px;font:10px/1.5 Consolas,monospace;color:var(--g-mint);letter-spacing:1.5px}.gx-campaign h2{font-size:22px;margin:10px 0 8px;letter-spacing:-.6px}.gx-campaign p{color:var(--g-muted);font-size:12px;line-height:1.65}.gx-route{display:flex;align-items:center;gap:12px;margin-top:17px;font:12px/1.5 Consolas,monospace;color:var(--g-muted)}.gx-route strong{font-weight:400;color:var(--g-ink)}.gx-route i{height:1px;flex:1;background:#405749}.gx-lower{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;margin-top:18px}.gx-chart{height:126px;position:relative}.gx-chart svg{width:100%;height:100%;display:block}.gx-chartlabels{display:flex;justify-content:space-between;gap:10px;font:10px/1.5 Consolas,monospace;color:var(--g-muted);margin-top:8px}.gx-empty{padding:22px 6px;color:var(--g-muted);font-size:13px;text-align:center}.gx-actions{display:grid;gap:13px}.gx-action{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:12px;line-height:1.5}.gx-action b{display:block;font-size:13px;font-weight:500;color:var(--g-ink);margin-bottom:3px}.gx-action span{color:var(--g-muted)}.gx-actionicon{font:12px/1.5 Consolas,monospace;color:var(--g-amber);padding-top:2px}.gx-code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--g-cyan);background:#09131b;padding:9px 11px;margin-top:8px;border-left:2px solid #41646e;font:11px/1.6 Consolas,monospace;user-select:all}.gx-bottom{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;color:var(--g-muted);font:10px/1.5 Consolas,monospace;letter-spacing:.7px;margin-top:20px}.gx-notice{padding:12px 15px;margin-bottom:18px;background:#251e15;border:1px solid #594833;border-radius:6px;color:var(--g-amber);font-size:12px}.gx-servicegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}.gx-service{padding:17px;border:1px solid var(--g-line);border-radius:8px;background:var(--g-panel)}.gx-servicehead{display:flex;align-items:center;gap:9px;margin-bottom:8px}.gx-servicehead h3{font-family:Consolas,monospace}.gx-service p{font-size:12px;color:var(--g-muted);overflow-wrap:anywhere}.gx-service-state{margin-left:auto;font-size:11px;color:var(--g-muted)}.gx-targets{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.85fr);gap:18px}.gx-targetlist{display:flex;flex-direction:column;gap:7px;padding:12px;max-height:700px;overflow:auto}.gx-targetrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;border:1px solid transparent;background:#101c27;color:var(--g-ink);padding:13px;border-radius:6px}.gx-targetrow[aria-pressed=true]{background:#182d29;border-color:#49715c}.gx-targetrow small{display:block;color:var(--g-muted);font-size:11px;margin-top:4px}.gx-details{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px}.gx-details dt{font-size:11px;color:var(--g-muted);margin-bottom:5px}.gx-details dd{margin:0;font:15px/1.5 Consolas,monospace;overflow-wrap:anywhere}.gx-eventlist{padding:0 20px}.gx-eventrow{display:grid;grid-template-columns:65px 100px minmax(0,1fr);gap:14px;padding:13px 0;border-bottom:1px solid var(--g-line);font-size:12px;overflow-wrap:anywhere}.gx-eventrow:last-child{border:0}.gx-eventrow time{font:10px/1.6 Consolas,monospace;color:var(--g-muted)}.gx-eventrow b{font:10px/1.7 Consolas,monospace;color:var(--g-cyan)}.gx-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:17px}.gx-campaignfull{max-width:850px;margin:0 auto;padding:38px;background:radial-gradient(ellipse at 85% 10%,#2045396b,transparent 60%),#10191f}.gx-campaignfull h2{font-size:clamp(30px,5vw,57px);line-height:1.08;letter-spacing:-2px;margin:15px 0 22px;font-weight:500}.gx-campaignfull p{max-width:570px;color:var(--g-muted);line-height:1.8;font-size:14px}.gx-campaignfull .gx-route{margin:30px 0;max-width:430px}.gx-settingsrow{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--g-line)}.gx-settingsrow p{color:var(--g-muted);font-size:12px;line-height:1.6;max-width:650px}.gx .mxGrid{margin-top:0}.gx .mxPanel{background:var(--g-panel);border-color:var(--g-line);border-radius:9px;box-shadow:none;color:var(--g-ink)}.gx .mxPanel:before,.gx .mxPanel:after,.gx .mxRadar{display:none}.gx .mxPanelTitle,.gx .mxHint,.gx .mxEmpty{color:var(--g-muted);font-size:12px;letter-spacing:0}.gx .mxRow{font-size:13px;border-color:var(--g-line)}.gx .mxValue{color:var(--g-ink);text-shadow:none}.gx .mxTable{font-size:12px}.gx .mxTable th{font-size:11px}.gx .mxBtn{border-radius:5px;font-size:12px;letter-spacing:0}.gx .mxWireBody b{font-size:13px}.gx .mxWireBody em{font-size:12px}.gx .mxCmd{font-size:12px}.gx .mxVoice{font-size:12px}.gx .mxTargetName{font-size:36px;text-shadow:none}.gx .mxServiceStatus{font-size:11px}.gx .mxBadge{font-size:11px}.gx-motion .gx-core{animation:gx-breathe 7s ease-in-out infinite}@keyframes gx-breathe{50%{box-shadow:0 0 75px #69f2ad28,inset 0 0 35px #89f4bc12}}
+@media(prefers-reduced-motion:reduce){.gx *{animation:none!important;transition:none!important}}
+@container matrix-ghost (max-width:1150px){.gx-body{grid-template-columns:154px minmax(0,1fr)}.gx-main{padding:20px}.gx-side{padding:20px 9px}.gx-layout{grid-template-columns:minmax(0,1.25fr) minmax(250px,1fr)}.gx-stat{padding:16px 13px}.gx-node{max-width:112px;font-size:10px}.gx-core{width:145px;height:145px}.gx-corevalue{font-size:27px}.gx-topright{gap:12px}.gx-intro{align-items:flex-start;flex-wrap:wrap}}
+@container matrix-ghost (max-width:920px){.gx-body{grid-template-columns:1fr}.gx-side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--g-line);padding:9px 14px;gap:5px}.gx-nav{width:auto;padding:8px 11px;gap:7px;min-height:36px;font-size:12px}.gx-navlabel,.gx-sidefoot{display:none}.gx-top{padding:17px 20px}.gx-topright .gx-build{display:none}.gx-layout{grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr)}.gx-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.gx-stat:nth-child(2){border-right:0}.gx-stat:nth-child(-n+2){border-bottom:1px solid var(--g-line)}.gx-targets{grid-template-columns:1fr}}
+@container matrix-ghost (max-width:690px){.gx-main{padding:15px}.gx-layout,.gx-lower{grid-template-columns:1fr}.gx-core{width:165px;height:165px}.gx-orbit{min-height:330px}.gx-node{max-width:120px}.gx-top{flex-wrap:wrap;gap:12px;padding:15px}.gx-wordmark{font-size:17px}.gx-title{font-size:29px}.gx-eventrow{grid-template-columns:57px minmax(0,1fr);gap:7px}.gx-eventrow>span{grid-column:1/-1}.gx-campaignfull{padding:23px}.gx-settingsrow{align-items:flex-start}.gx-navnum{display:none}}
+@container matrix-ghost (max-width:400px){.gx-node{max-width:85px;padding:6px;font-size:10px}.gx-core{width:125px;height:125px}.gx-corevalue{font-size:23px}.gx-corebottom{font-size:9px}.gx-corelabel{font-size:9px}.gx-orbit{min-height:330px}.gx-orbit-legend{font-size:9px}.gx-targetbar{flex-wrap:wrap}.gx-statvalue{font-size:22px}.gx-stat{padding:13px}.gx-panehead,.gx-panecontent{padding:15px}.gx-caption{font-size:9px}.gx-topright{flex-wrap:wrap}.gx-servicegrid{grid-template-columns:minmax(0,1fr)}}
+`;
 
-    const tabs = ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"];
-    const content =
-        tab === "HACKING" ? (
-            <Hacking data={data} />
-        ) : tab === "ECONOMY" ? (
-            <Economy data={data} />
-        ) : tab === "PROGRESS" ? (
-            <Progress data={data} />
-        ) : tab === "SETTINGS" ? (
-            <Settings config={config} />
-        ) : (
-            <Overview data={data} />
-        );
-
-    return (
-        <div className="mxRoot">
-            <style>{css}</style>
-            <MatrixRainCanvas enabled={config.ui?.matrixRain !== false} />
-            <div className="mxSweep" />
-            <main className="mxShell">
-                <header className="mxHeader">
-                    <div className="mxBrand">
-                        <div className="mxKicker">BITBURNER // CYBER OPERATIONS SYSTEM</div>
-                        <div className="mxLogo">MATRIX COMMAND DECK</div>
-                        <div className="mxSubtitle">
-                            VERSION {data.game?.version ?? "3.x"} / TELEMETRY {age(data.updated)} / HOME LINK ACTIVE
-                        </div>
-                    </div>
-                    <div className="mxSignal">
-                        <i style={{ color: config.masterEnabled === false ? COLOR.amber : COLOR.green }} />
-                        {config.masterEnabled === false ? "AUTOPILOT PAUSED" : "AUTOPILOT ENGAGED"}
-                    </div>
-                </header>
-                <nav className="mxTabs">
-                    {tabs.map(name => (
-                        <button key={name} className={`mxBtn ${tab === name ? "active" : ""}`} onClick={() => setTab(name)}>
-                            {name}
-                        </button>
-                    ))}
-                </nav>
-                {content}
-            </main>
-        </div>
-    );
+function ghostNumber(value) { return typeof value === "number" && Number.isFinite(value) ? value : null; }
+function ghostText(value, fallback = "—") { return typeof value === "string" || typeof value === "number" && Number.isFinite(value) ? String(value) : fallback; }
+function ghostArray(value) { return Array.isArray(value) ? value.filter(v => v && typeof v === "object" && !Array.isArray(v)) : []; }
+function ghostFresh(time, now = Date.now()) { return typeof time === "number" && time > 0 && now - time < 15000 && time - now < 5000; }
+function ghostTargets(data) {
+    const h = data?.services?.hacking ?? {};
+    const seen = new Set();
+    return ghostArray(h.targetScheduler ?? h.targets).map(t => ({ ...t, target: ghostText(t.target ?? t.host, "") })).filter(t => t.target && !seen.has(t.target) && seen.add(t.target)).slice(0, 128);
 }
+function ghostRatio(value) { const n = ghostNumber(value); return n === null ? "—" : `${Math.round(Math.max(0, Math.min(1, n)) * 100)}%`; }
+function ghostService(value) {
+    if (!value || typeof value !== "object") return { label: "Sans données", tone: "muted", reason: "Aucun état reçu. Accès et démarrage non déterminés." };
+    if (!ghostFresh(value.updated)) return { label: "Ancien", tone: "amber", reason: `Dernier état : ${ghostText(value.status, "non renseigné")}. Actualité non confirmée.` };
+    const status = ghostText(value.status, "non renseigné");
+    return { label: status, tone: /error|fail|paused|unavailable|locked/.test(status) ? "amber" : "mint", reason: ghostText(value.error ?? value.reason ?? value.phase, "État déclaré par le service ; un heartbeat ne prouve pas le progrès.") };
+}
+function GhostMark() { return <svg className="gx-emblem" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M3 28V8l15 16L33 8v20M3 8l15 8L33 8M18 24v8" stroke="currentColor" strokeWidth="2" /></svg>; }
+function GhostStat({ label, value, note }) { return <div className="gx-stat"><div className="gx-statlabel">{label}</div><div className="gx-statvalue">{value}</div><div className="gx-statnote">{note}</div></div>; }
+function GhostPane({ title, tag, children, className = "" }) { return <section className={`gx-pane ${className}`}><div className="gx-panehead"><h2>{title}</h2><span className="gx-caption">{tag}</span></div>{children}</section>; }
+function GhostOrbit({ data, targets, selected, choose }) {
+    const ratio = ghostNumber(data.network?.ramPct);
+    const positions = [[22,23],[78,23],[18,53],[82,53],[25,81],[75,81]];
+    return <div className="gx-orbit">
+        <div className="gx-orbit-legend">CIBLES · VUE SCHÉMATIQUE</div>
+        <svg className="gx-orbit-svg" viewBox="0 0 600 336" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="300" cy="168" rx="230" ry="130" fill="none" stroke="currentColor" strokeDasharray="2 8" opacity=".7" />{targets.slice(0,6).map((t,i) => <path key={t.target} d={`M300 168 L${positions[i][0]*6} ${positions[i][1]*3.36}`} stroke={t.target===selected?.target?"#89f4bc":"#2f4a43"} strokeWidth="1" fill="none" />)}</svg>
+        <div className="gx-core" role="img" aria-label={`RAM utilisée sur le réseau : ${ghostRatio(ratio)}`}><svg viewBox="0 0 172 172" aria-hidden="true"><circle cx="86" cy="86" r="81" fill="none" stroke="#2b3b40" strokeWidth="2" /><circle cx="86" cy="86" r="81" fill="none" stroke="#89f4bc" strokeWidth="2.5" strokeDasharray={`${Math.max(0,Math.min(1,ratio ?? 0))*509} 509`} strokeLinecap="round" /><circle cx="86" cy="86" r="69" fill="none" stroke="#25413b" strokeWidth="1" strokeDasharray="1 7" /></svg><div className="gx-corevalue">{ghostRatio(ratio)}</div><div className="gx-corelabel">RAM RÉSEAU</div><div className="gx-corebottom">{ghostText(data.network?.rooted)} HÔTES ROOTÉS</div></div>
+        {targets.slice(0,6).map((t,i) => <button type="button" key={t.target} className="gx-node" style={{left:`${positions[i][0]}%`,top:`${positions[i][1]}%`}} aria-pressed={selected?.target===t.target} onClick={()=>choose(t.target)}>{t.target}<span>{ghostText(t.state,"état inconnu")} · {ghostText(t.activeBatches ?? t.batches)} lots</span></button>)}
+        {!targets.length && <div className="gx-orbit-empty">En attente de la liste des cibles du scheduler.</div>}
+    </div>;
+}
+function GhostCapital({ history }) {
+    const samples = ghostArray(history).filter(x=>ghostNumber(x.money)!==null && ghostNumber(x.t)!==null);
+    if (samples.length < 2) return <div className="gx-empty">Le graphique se construit avec les observations reçues.<br/>Aucun historique inventé.</div>;
+    const low=Math.min(...samples.map(x=>x.money)),high=Math.max(...samples.map(x=>x.money)),range=Math.max(1,high-low),elapsed=Math.max(1,samples.at(-1).t-samples[0].t);
+    const points=samples.map(x=>`${8+(x.t-samples[0].t)/elapsed*484},${102-(x.money-low)/range*82}`).join(" ");
+    return <div className="gx-panecontent"><div className="gx-chart" role="img" aria-label={`Capital sur ${Math.round(elapsed/1000)} secondes, minimum ${money(low)}, maximum ${money(high)}.`}><svg viewBox="0 0 500 120" preserveAspectRatio="none" aria-hidden="true"><path d="M8 20H492 M8 61H492 M8 102H492" stroke="#25343d" strokeWidth="1" fill="none" /><polygon points={`8,112 ${points} 492,112`} fill="#89f4bc0d" /><polyline points={points} stroke="#89f4bc" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" /></svg></div><div className="gx-chartlabels"><span>MIN {money(low)} · MAX {money(high)}</span><span>{Math.round(elapsed/1000)} S OBSERVÉES</span></div></div>;
+}
+function GhostActions({ data, limit=3 }) {
+    const actions=[...ghostArray(data.manual),...ghostArray(data.directives).filter(x=>x.ready || x.urgent)];
+    const unique=actions.filter((x,i)=>actions.findIndex(y=>(y.id ?? y.label)===(x.id ?? x.label))===i).slice(0,limit);
+    return <div className="gx-panecontent gx-actions">{unique.length?unique.map((a,i)=><div className="gx-action" key={a.id ?? i}><div className="gx-actionicon">{String(i+1).padStart(2,"0")}</div><div><b>{ghostText(a.label,"Instruction à examiner")}</b><span>{ghostText(a.detail ?? a.where ?? a.short,"Consulter la progression pour les prérequis.")}</span>{typeof a.command==="string" && <code className="gx-code">{a.command}</code>}</div></div>):<div className="gx-empty">Aucune instruction publiée.<br/>Cela ne prouve pas une autonomie complète.</div>}</div>;
+}
+function GhostCampaign({ data, full=false }) {
+    const bn=data.reset?.currentNode;
+    return <section className={`gx-pane gx-campaign ${full?"gx-campaignfull":""}`}><div className="gx-panecontent"><div className="gx-chapter"><span>THE GHOST NODE WAR</span><span>EN ATTENTE</span></div><h2>{full?<>De l’autre côté<br/>du signal.</>:"De l’autre côté du signal."}</h2><p>{bn===1?"BN1 est observé. La campagne attend la traversée réelle vers BN4.":bn===4?"BN4 est observé. Le moteur de campagne n’est pas encore connecté ; aucune scène n’est déclarée jouée.":"Le contexte de campagne reste à confirmer. Le BitNode observé ne suffit pas à reconstituer l’histoire."}</p><div className="gx-route"><strong>BN1</strong><i/><span>TRAVERSÉE</span><i/><strong>BN4</strong></div>{full && <><p>Le GPT personnalisé incarnera MATRIX dans ChatGPT. Ce panneau est réservé aux scènes autorisées et aux faits vérifiés ; il ne synchronise pas encore la conversation.</p><div className="gx-next"><small>STATUT DU MODULE</small>Préparation visuelle disponible. Aucun choix, reset ou événement RP déclenché par cette interface.</div></>}</div></section>;
+}
+function GhostOverview({ data, history, selected, targets, choose, navigate }) {
+    const coord=data.services?.coordinator ?? {},h=data.services?.hacking ?? {},n=data.network ?? {};
+    const milestone=coord.milestone,progress=ghostNumber(milestone?.pct);
+    return <>
+        <div className="gx-stats"><GhostStat label="Capital disponible" value={money(ghostNumber(data.player?.money))} note={`Hacking cumulé : ${money(ghostNumber(data.income?.hacking))}`} /><GhostStat label="Mémoire du réseau" value={ram(ghostNumber(n.usedRam))} note={`${ram(ghostNumber(n.maxRam))} au total · hôtes rootés`} /><GhostStat label="Lots HWGW en vol" value={ghostText(h.activeBatches ?? h.batches)} note={`${ghostText(h.readyTargets)} cibles prêtes · ${ghostText(h.preppingTargets)} en préparation`} /><GhostStat label="Compétence hacking" value={ghostText(data.player?.skills?.hacking)} note={`${ghostText(data.player?.city,"Ville inconnue")} · BN${ghostText(data.reset?.currentNode,"?")}`} /></div>
+        <div className="gx-layout"><GhostPane title="Constellation d’opérations" tag={`${targets.length} CIBLES PUBLIÉES`}><GhostOrbit data={data} targets={targets} selected={selected} choose={choose}/><div className="gx-targetbar"><div><div className="gx-caption">CIBLE INSPECTÉE</div><div className="gx-targetname">{selected?.target ?? ghostText(h.target,"En attente")}</div><div className="gx-targetmeta">{selected?`Capital cible ${ghostRatio(selected.liveMoneyFraction)} · ${ghostText(selected.activeBatches ?? selected.batches)} lots actifs`:"Les détails apparaîtront à réception du scheduler."}</div></div><button type="button" className="gx-button" onClick={()=>navigate("NETWORK")}>Inspecter →</button></div></GhostPane>
+        <div className="gx-mission"><GhostPane title="Directive principale" tag="COORDINATEUR"><div className="gx-panecontent"><h3 className="gx-missiontitle">{ghostText(coord.title,"Établir le signal.")}</h3><p className="gx-missionreason">{ghostText(coord.reason,"Le coordinateur n’a pas encore publié d’objectif. Les données du jeu restent la référence.")}</p>{milestone && <><div className="gx-progresslabel"><span>{ghostText(milestone.name,"Jalon publié")}</span><span>{progress===null?"—":`${meter(progress).toFixed(1)}%`}</span></div><div className="gx-track"><i style={{width:`${meter(progress)}%`}}/></div></>}<div className="gx-next"><small>PROCHAINE ÉTAPE</small>{ghostText(coord.nextStep,"En attente d’une directive vérifiable.")}</div></div></GhostPane><GhostCampaign data={data}/></div></div>
+        <div className="gx-lower"><GhostPane title="Trace du capital" tag="SESSION DU DASHBOARD"><GhostCapital history={history}/></GhostPane><GhostPane title="À toi de jouer" tag="INSTRUCTIONS PUBLIÉES"><GhostActions data={data}/></GhostPane></div>
+    </>;
+}
+function GhostNetwork({ data, targets, selected, choose }) {
+    const details=[["État",selected?.state],["Lots actifs",selected?.activeBatches ?? selected?.batches],["Profondeur pipeline",selected?.pipelineDepth],["RAM par lot",ram(ghostNumber(selected?.planningBatchRam))],["Capital cible",ghostRatio(selected?.liveMoneyFraction)],["Excès de sécurité",ghostNumber(selected?.liveSecurityExcess)?.toFixed(3)],["Extraction planifiée",ghostRatio(selected?.planningRequestedHackFraction)],["Temps weaken",ghostNumber(selected?.liveWeakenTime)===null?"—":`${(selected.liveWeakenTime/1000).toFixed(1)} s`]];
+    return <><div className="gx-targets"><GhostPane title="Cibles du scheduler" tag={`${targets.length} PUBLIÉES`}><div className="gx-targetlist">{targets.length?targets.map(t=><button type="button" key={t.target} className="gx-targetrow" aria-pressed={selected?.target===t.target} onClick={()=>choose(t.target)}><div><span className="gx-mono">{t.target}</span><small>{ghostText(t.state,"état non renseigné")} · capital {ghostRatio(t.liveMoneyFraction)}</small></div><span className="gx-targetbadge">{ghostText(t.activeBatches ?? t.batches)} LOTS</span></button>):<div className="gx-empty">Aucune liste reçue. Le réseau n’est pas supposé vide.</div>}</div></GhostPane><GhostPane title={selected?.target ?? "Inspection"} tag="LECTURE SEULE"><dl className="gx-details">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{ghostText(value)}</dd></div>)}</dl><div className="gx-panecontent"><p className="gx-sub">{selected?.snapshotStale?`Plan marqué ancien : ${ghostText(selected.snapshotStaleReason)}.`:"Valeurs publiées par le scheduler. Les traits de la constellation ne représentent pas des routes de connexion."}</p></div></GhostPane></div>{data.services?.hacking?.targetTelemetryTruncated && <p className="gx-sub">La télémétrie source est tronquée. Cette liste ne représente pas toutes les cibles du jeu.</p>}<div className="gx-lower"><GhostPane title="Répartition des ressources" tag="SCHEDULER"><dl className="gx-details">{[["HWGW en vol",data.services?.hacking?.inflightHwgwRam],["Préparation",data.services?.hacking?.prepRam],["Réserve intentionnelle",data.services?.hacking?.intentionallyReservedRam],["RAM inactive utilisable",data.services?.hacking?.usableIdleRam]].map(([k,v])=><div key={k}><dt>{k}</dt><dd>{ram(ghostNumber(v))}</dd></div>)}</dl></GhostPane><GhostPane title="Lecture du réseau" tag="PÉRIMÈTRE"><div className="gx-panecontent"><p className="gx-sub">{ghostText(data.network?.rooted)} hôtes rootés sur {ghostText(data.network?.discovered)} découverts. La mémoire affichée couvre les hôtes rootés, y compris Home ; elle n’est pas toute nécessairement allouable.</p></div></GhostPane></div></>;
+}
+function GhostServices({ data }) {
+    const services=data.services ?? {},names=[...new Set([...SERVICE_ORDER,...Object.keys(services)])];
+    return <div className="gx-servicegrid">{names.map(name=>{const s=ghostService(services[name]);return <section className="gx-service" key={name}><div className="gx-servicehead"><i className="gx-led" style={{color:`var(--g-${s.tone})`}}/><h3>{name}</h3></div><div className="gx-caption" style={{color:`var(--g-${s.tone})`,marginBottom:9}}>{s.label}</div><p>{s.reason}</p><p style={{marginTop:10}}>État reçu : {age(services[name]?.updated)}</p></section>;})}</div>;
+}
+function GhostJournal({ data, commands, filter, setFilter }) {
+    const entries=[...ghostArray(commands).map(c=>({t:c.t,service:"commande",level:c.status,message:c.message})),...ghostArray(data.events)].filter(e=>filter==="all" || filter==="commands"&&e.service==="commande" || filter==="errors"&&/error|failed|conflict|warn/.test(String(e.level))).sort((a,b)=>(b.t ?? 0)-(a.t ?? 0)).slice(0,120);
+    return <><div className="gx-filters">{[["all","Tout"],["commands","Commandes"],["errors","À examiner"]].map(([k,label])=><button type="button" key={k} className="gx-button" aria-pressed={filter===k} onClick={()=>setFilter(k)}>{label}</button>)}</div><GhostPane title="Journal d’opérations" tag="120 ÉVÉNEMENTS MAX."><div className="gx-eventlist">{entries.length?entries.map((e,i)=><div className="gx-eventrow" key={`${e.t}-${i}`}><time>{ghostNumber(e.t)!==null?new Date(e.t).toLocaleTimeString("fr-CA",{hour12:false}):"—"}</time><b className={/error|failed|conflict|warn/.test(String(e.level))?"gx-warn":""}>{ghostText(e.service,"système")}</b><span>{ghostText(e.message,"Événement sans message.")}</span></div>):<div className="gx-empty">Aucun événement pour cette vue.</div>}</div></GhostPane></>;
+}
+function GhostSettings({ config, motion, setMotion }) {
+    return <GhostPane title="Autorité & présentation" tag="CONFIGURATION"><div className="gx-panecontent"><div className="gx-settingsrow"><div><h3>Ambiance lumineuse</h3><p>Respiration lente du noyau. Arrêtée si les animations sont réduites dans le système.</p></div><button type="button" className="gx-button" aria-pressed={motion} onClick={()=>setMotion(!motion)}>{motion?"Activée":"Désactivée"}</button></div><div className="gx-settingsrow"><div><h3>Autorisation de l’autopilot</h3><p>Modifie la configuration existante. Les managers la lisent à leur prochain cycle. Les workers et activités persistantes peuvent continuer : ce bouton n’est pas un arrêt d’urgence.</p></div><Toggle config={config} path="masterEnabled" label="AUTOPILOT"/></div>{Object.keys(config.automation ?? {}).map(key=><div className="gx-settingsrow" key={key}><div><h3>{key}</h3><p>Autorisation du module ; l’état observé est disponible dans Services.</p></div><Toggle config={config} path={`automation.${key}`} label={key}/></div>)}</div></GhostPane>;
+}
+function App() {
+    const rootRef = React.useRef(null);
+    React.useEffect(() => {
+        // Change only the log surface containing THIS React root. Bitburner
+        // reverses its logs by default, which otherwise opens a tall dashboard
+        // at the bottom. Refs avoid global DOM lookup and its RAM surcharge.
+        let wrapper = rootRef.current?.parentElement;
+        for (let depth = 0; wrapper && depth < 4; depth++, wrapper = wrapper.parentElement) {
+            if (wrapper.style.flexDirection === "column" && wrapper.parentElement?.style.display === "flex") break;
+        }
+        const surface = wrapper?.parentElement;
+        if (wrapper?.style.flexDirection !== "column" || surface?.style.display !== "flex") return;
+        const previous = surface.style.flexDirection;
+        surface.style.flexDirection = "column";
+        surface.scrollTop = 0;
+        return () => { surface.style.flexDirection = previous; };
+    }, []);
+    const snapshot=useStore(),data=snapshot.data ?? {},config=snapshot.config ?? {};
+    const [tab,setTab]=React.useState("OVERVIEW"),[selectedHost,setSelectedHost]=React.useState(null),[motion,setMotion]=React.useState(false),[filter,setFilter]=React.useState("all");
+    const tabs=[["OVERVIEW","Passerelle"],["NETWORK","Réseau"],["SERVICES","Services"],["HACKING","Hacking"],["ECONOMY","Économie"],["PROGRESS","Progression"],["CAMPAIGN","Campagne"],["JOURNAL","Journal"],["SETTINGS","Réglages"]];
+    const targets=ghostTargets(data),selected=targets.find(t=>t.target===selectedHost) ?? targets.find(t=>t.target===data.services?.hacking?.target) ?? targets[0];
+    const fresh=ghostFresh(data.updated),latest=ghostArray(snapshot.commandLog).at(-1);
+    const title={OVERVIEW:"Le signal est à toi.",NETWORK:"Chaque cible. Chaque ressource.",SERVICES:"Une flotte sous observation.",HACKING:"La mécanique du revenu.",ECONOMY:"La puissance a un coût.",PROGRESS:"La prochaine frontière.",CAMPAIGN:"Une histoire à ouvrir.",JOURNAL:"Rien ne disparaît sans trace.",SETTINGS:"Tes règles. Ton système."}[tab] ?? "Passerelle";
+    let content;
+    if(tab==="NETWORK")content=<GhostNetwork data={data} targets={targets} selected={selected} choose={setSelectedHost}/>;
+    else if(tab==="SERVICES")content=<GhostServices data={data}/>;
+    else if(tab==="HACKING")content=<Hacking data={data}/>;
+    else if(tab==="ECONOMY")content=<Economy data={data}/>;
+    else if(tab==="PROGRESS")content=<Progress data={data}/>;
+    else if(tab==="CAMPAIGN")content=<GhostCampaign data={data} full/>;
+    else if(tab==="JOURNAL")content=<GhostJournal data={data} commands={snapshot.commandLog} filter={filter} setFilter={setFilter}/>;
+    else if(tab==="SETTINGS")content=<GhostSettings config={config} motion={motion} setMotion={setMotion}/>;
+    else content=<GhostOverview data={data} history={snapshot.history} targets={targets} selected={selected} choose={setSelectedHost} navigate={setTab}/>;
+    return <div className={`gx ${motion?"gx-motion":""}`} lang="fr" ref={rootRef}><style>{css}{ghostCss}</style>{data.preview && <div className="gx-preview">{data.preview === "engine" ? "ESSAI NATIF BITBURNER 3.0.1 · PARTIE ISOLÉE · TÉLÉMÉTRIE SYNTHÉTIQUE" : "APERÇU DU VRAI COMPOSANT · DONNÉES SIMULÉES · AUCUNE CONNEXION AU JEU"}</div>}<header className="gx-top"><div className="gx-brand"><GhostMark/><div><div className="gx-wordmark">MATRIX OS</div><div className="gx-edition">GHOST / COMMAND DECK</div></div></div><div className="gx-topright"><span className="gx-build">BITBURNER {ghostText(data.game?.version,"VERSION INCONNUE")}</span><span className={`gx-link ${fresh?"":"gx-warn"}`}><i className="gx-led"/>{fresh?"Télémétrie récente":data.updated?"Télémétrie ancienne":"En attente du signal"}</span><span className="gx-mono">BN{ghostText(data.reset?.currentNode,"?")}</span></div></header><div className="gx-body"><nav className="gx-side" aria-label="Navigation principale"><div className="gx-navlabel">CONTRÔLE DU SYSTÈME</div>{tabs.map(([key,label],i)=><button type="button" className="gx-nav" key={key} aria-current={tab===key?"page":undefined} onClick={()=>setTab(key)}><span className="gx-navnum">{String(i+1).padStart(2,"0")}</span>{label}</button>)}<div className="gx-sidefoot"><b>LOCAL FIRST.</b><br/>Le moteur reste dans le jeu.<br/>Le récit attend les faits.<br/><br/>GHOST EDITION / 01</div></nav><main className="gx-main"><div className="gx-intro"><div><div className="gx-eyebrow">MATRIX // {tabs.find(t=>t[0]===tab)?.[1]?.toUpperCase() ?? "PASSERELLE"}</div><h1 className="gx-title">{title}</h1><div className="gx-sub">{config.masterEnabled===false?"Automatisation désactivée dans la configuration · arrêt des activités non garanti":"Observer. Comprendre. Décider."}</div></div><div className="gx-control"><button type="button" className="gx-button" onClick={()=>setTab("JOURNAL")}>Journal ↗</button><button type="button" className="gx-button" onClick={()=>setTab("SETTINGS")}>Contrôles</button></div></div>{!fresh && <div className="gx-notice">{data.updated?`Dernière observation : ${age(data.updated)}. Les valeurs ci-dessous ne sont pas confirmées actuelles.`:"Aucune télémétrie récente. Attente du bootstrap ou du service telemetry."} Les changements de configuration sont désactivés.</div>}{latest && <div className={`gx-notice ${latest.status==="saved"?"gx-saved":""}`} role="status">{latest.message}</div>}{content}<footer className="gx-bottom"><span>{fresh?"OBSERVATION RÉCENTE":"OBSERVATION NON CONFIRMÉE"} · {age(data.updated)}</span><span>REACT NATIF / NETSCRIPT ISOLÉ</span></footer></main></div></div>;
+}
+
 
 const LEASE = `${STATE_DIR}/dashboard.txt`;
 
@@ -691,17 +770,48 @@ async function writeLease(ns, phase, ticks, error) {
 
 // Every ns call in the deck happens here, in the script's own context.
 function publish(ns) {
-    let data = {}, settings = {};
+    let data = {}, settings = null;
     try { data = state(ns) ?? {}; } catch {}
-    try { settings = readJson(ns, CONFIG, {}); } catch {}
-    store.publish({ data, config: settings });
+    try { settings = readJson(ns, CONFIG, null); } catch {}
+    const configReady = Boolean(settings && typeof settings === "object" && !Array.isArray(settings));
+    const epoch = `${data.reset?.currentNode ?? "?"}:${data.reset?.lastAugReset ?? "?"}:${data.reset?.lastNodeReset ?? "?"}`;
+    if (epoch !== store.historyEpoch) { store.history = []; store.historyEpoch = epoch; }
+    if (ghostFresh(data.updated) && ghostNumber(data.player?.money) !== null) {
+        const last = store.history.at(-1);
+        if (last && (data.updated < last.t || data.updated - last.t > 15000)) store.history = [];
+        if (!store.history.length || data.updated - store.history.at(-1).t >= 1000) {
+            store.history = [...store.history, { t: data.updated, money: data.player.money }].slice(-90);
+        }
+    }
+    store.publish({ data, config: configReady ? settings : {}, configReady, history: store.history, commandLog: store.commandLog });
 }
 
 // Config toggles are queued by the UI and applied here, never in the handler.
 async function applyCommands(ns) {
     for (const command of store.drain()) {
-        if (command?.type !== "config") continue;
-        try { await ns.write(CONFIG, JSON.stringify(command.value, null, 2), "w"); } catch {}
+        let status = "failed", message;
+        try {
+            if (command?.type !== "patch" || typeof command.value !== "boolean") throw new Error("Commande non prise en charge.");
+            const allowed = command.path === "masterEnabled" || /^automation\.[a-z][a-zA-Z0-9]*$/.test(command.path ?? "") && !/constructor|prototype/i.test(command.path);
+            if (!allowed) throw new Error("Clé de configuration interdite.");
+            const observed = state(ns);
+            if (!ghostFresh(observed?.updated)) throw new Error("Télémétrie ancienne ; modification refusée.");
+            const settings = readJson(ns, CONFIG, null);
+            if (!settings || typeof settings !== "object" || Array.isArray(settings)) throw new Error("Configuration illisible ; fichier conservé.");
+            const parts = command.path.split("."), key = parts.at(-1);
+            const owner = parts.length === 1 ? settings : settings.automation;
+            if (!owner || typeof owner !== "object" || Array.isArray(owner) || !Object.hasOwn(owner, key)) throw new Error("Option absente de la configuration actuelle.");
+            if (owner[key] !== command.expected) { status = "conflict"; throw new Error("Option modifiée entre-temps ; actualiser avant de réessayer."); }
+            owner[key] = command.value;
+            const result = await ns.write(CONFIG, JSON.stringify(settings, null, 2), "w");
+            if (result === false) throw new Error("Écriture refusée.");
+            const check = readJson(ns, CONFIG, null);
+            const actual = parts.length === 1 ? check?.[key] : check?.automation?.[key];
+            if (actual !== command.value) throw new Error("Écriture non confirmée à la relecture.");
+            status = "saved";
+            message = `${command.path} = ${command.value ? "ON" : "OFF"} enregistré. L’état des activités doit être vérifié dans Services.`;
+        } catch (error) { message = `Modification non confirmée : ${String(error?.message ?? error)}`; }
+        store.commandLog = [...store.commandLog, { t: Date.now(), id: command?.id, status, message }].slice(-40);
     }
 }
 
@@ -709,6 +819,9 @@ function refreshMs(settings) {
     const value = Number(settings?.ui?.refreshMs);
     return Math.max(350, Number.isFinite(value) && value > 0 ? value : 750);
 }
+
+// Pure presentation exports used by the standalone preview and regression tests.
+export { App, store, ghostTargets, ghostFresh, ghostService, publish, applyCommands };
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -738,28 +851,33 @@ export async function main(ns) {
         return;
     }
     try { ns.tail(); } catch {}
-    try { ns.ui.setTailTitle("MATRIX // COMMAND DECK"); } catch {}
-    try {
-        const [width, height] = ns.ui.windowSize();
-        ns.ui.resizeTail(Math.min(Math.max(760, Math.floor(width * 0.88)), 1560), Math.min(Math.max(610, Math.floor(height * 0.84)), 980));
-        ns.ui.moveTail(Math.max(10, Math.floor(width * 0.06)), Math.max(10, Math.floor(height * 0.07)));
-    } catch {
-        try {
-            ns.ui.resizeTail(1260, 760);
-            ns.ui.moveTail(40, 40);
-        } catch {}
-    }
+    try { ns.ui.setTailTitle("MATRIX OS // GHOST COMMAND DECK"); } catch {}
     ns.ui.openTail();
     await writeLease(ns, "alive", 0);
     ns.tprint(`MATRIX-OS // COMMAND DECK ONLINE (pid ${ns.pid})`);
     // Re-assert ownership rather than trusting the one check at startup, and
     // leave a heartbeat so a deck that dies is diagnosable rather than silent.
+    let placed = false;
     let ticks = 0;
     let lastBeat = 0;
     while (true) {
         // Never wrap ns.sleep: catching it would swallow the game's own
         // termination signal when the script is killed.
         await ns.sleep(refreshMs(store.snapshot.config));
+        // Tail properties exist only after React has mounted the log surface.
+        if (!placed) {
+            try {
+                const [width, height] = ns.ui.windowSize();
+                ns.ui.resizeTail(Math.min(Math.max(760, Math.floor(width * 0.88)), 1560), Math.min(Math.max(610, Math.floor(height * 0.84)), 980));
+                ns.ui.moveTail(Math.max(10, Math.floor(width * 0.06)), Math.max(10, Math.floor(height * 0.07)));
+            } catch {
+                try {
+                    ns.ui.resizeTail(1260, 760);
+                    ns.ui.moveTail(40, 40);
+                } catch {}
+            }
+            placed = true;
+        }
         await applyCommands(ns);
         // Drives the UI from OUR context. The tree never calls ns itself.
         publish(ns);

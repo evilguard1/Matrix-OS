@@ -1,0 +1,42 @@
+{
+  "kind": "synthetic-read-only-reproductions",
+  "root": "Matrix-OS @ 681045f8c45963e4569db1aed221e598c7cf50f6",
+  "results": [
+    {
+      "id": "karma-scale",
+      "observed": "BOOTSTRAP_INCOME",
+      "defectObserved": true,
+      "expected": "GANG_KARMA for SF2 outside BN2, karma -100 > -54000"
+    },
+    {
+      "id": "reserve-overwrite",
+      "objective": "RESERVE_MILESTONE",
+      "budgets": null,
+      "reserve": 9000000000,
+      "defectObserved": true,
+      "expected": "milestoneReserve=100000000000 retained"
+    },
+    {
+      "id": "hack-fraction-cap",
+      "configured": 0.4,
+      "actual": 0.6,
+      "defectObserved": true,
+      "expected": "reject target if one thread already exceeds configured maximum"
+    },
+    {
+      "id": "pre4s-liquidation",
+      "soldCalls": 0,
+      "published": {
+        "service": "stock",
+        "updated": 1788608316964,
+        "status": "online",
+        "fourS": false,
+        "positions": 0,
+        "exposure": 0,
+        "reason": "4S not yet acquired"
+      },
+      "defectObserved": true,
+      "expected": "liquidate existing position even without 4S"
+    }
+  ]
+}

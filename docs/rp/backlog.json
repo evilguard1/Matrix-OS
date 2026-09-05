@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "baselineSha": "681045f8c45963e4569db1aed221e598c7cf50f6",
+  "scope": "rp-bn4-v1",
+  "tasks": [
+    {
+      "id": "RP00",
+      "title": "Base, audit et Ghost",
+      "dependsOn": [],
+      "legacyLots": [
+        "L00",
+        "UI01",
+        "UI02",
+        "UI03",
+        "UI04"
+      ],
+      "status": "delivered-audit-only",
+      "files": [
+        "docs/rp",
+        "matrix/dashboard.jsx",
+        "tests/ghost-deck.mjs",
+        "tests/ghost-installer.mjs"
+      ],
+      "implementation": "Conserver 1.10.2, intégrer Ghost identique au SHA testé, inventorier branches et propositions, distinguer preuves rapportées/locales/natives.",
+      "acceptance": "npm test; test:ghost; test:rp-contract. La preuve native de Ghost doit correspondre aux octets de source; rpReady reste false.",
+      "rollback": "Revenir au commit parent restaure le dashboard; les originaux et le dossier auteur sont conservés."
+    },
+    {
+      "id": "RP01",
+      "title": "Vérité opérationnelle et budgets",
+      "dependsOn": [
+        "RP00"
+      ],
+      "legacyLots": [
+        "L01",
+        "L03"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/services/coordinator.js",
+        "matrix/lib/common.js",
+        "matrix/lib/state.js",
+        "matrix/lib/budget-ledger.js"
+      ],
+      "implementation": "Une écriture canonique conserve budgets, id, phase et révision. Ajouter epoch/TTL, prix API avant achat, grants atomiques réservés par propriétaire et journal. Corriger karma hors BN2 et maintenir chemins de dépense propriétaire.",
+      "acceptance": "A01 devient test de résultat 100 G$; zéro budget discrétionnaire à 60 G$ sur cet objectif. Deux dépenses simultanées ne dépassent pas le cash engagé. État corrompu/périmé ne devient pas permission de dépenser.",
+      "rollback": "Lecteur N-1 et reconstruction du ledger depuis reçus; pas de répétition automatique des achats au rollback."
+    },
+    {
+      "id": "RP02",
+      "title": "Canal RP et mises à jour reprenables",
+      "dependsOn": [
+        "RP01"
+      ],
+      "legacyLots": [
+        "L04"
+      ],
+      "status": "planned",
+      "files": [
+        "install.js",
+        "matrix/update.js",
+        "matrix/lib/common.js",
+        "matrix/start.js",
+        "manifest.json"
+      ],
+      "implementation": "Introduire profil de release séparé de config : canal autorisé, SHA immuable, version de schéma, hashes du payload et précédent connu bon. Pas de fallback silencieux main. Préparer dans staging, valider, journaliser, arrêter propriétaires, promouvoir, lancer, constater santé; rollback si lancement invalide. Config protégée reste conservée.",
+      "acceptance": "Installations aux paliers 8/16/64/128/256 et passage automatique conservent le même canal. Coupures simulées à chaque phase, fichier manquant, hash faux et rate limit GitHub : aucun mélange de versions accepté. Mesurer RAM native de l'installateur.",
+      "rollback": "Pointeur sur release précédente avec journal de migration; restauration contrôlée des seuls fichiers possédés."
+    },
+    {
+      "id": "RP03",
+      "title": "Capacités, pause et arbitre des activités",
+      "dependsOn": [
+        "RP01"
+      ],
+      "legacyLots": [
+        "L02",
+        "L03",
+        "L07"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/start.js",
+        "matrix/lib/capabilities.js",
+        "matrix/services",
+        "matrix/worm",
+        "matrix/lib/activity-arbiter.js"
+      ],
+      "implementation": "Registre unique : API permise, fichier installé, RAM mesurée, service vivant, progrès et test de postcondition. Leases exclusives pour activité joueur, faction sleeve et backdoor. Drainage H/G/W, partage, Go, worm, Stanek et tâches persistantes sous protocole commun.",
+      "acceptance": "Pause pendant charge : aucune nouvelle admission après acquittement; tâches possédées finissent/cessent selon policy; processus étranger intact; reprendre ne crée pas de doublons. Singularity disponible sans exécuteur n'est jamais READY.",
+      "rollback": "Lecture seule possible; expiration des leases sans voler une activité manuelle inconnue."
+    },
+    {
+      "id": "RP04",
+      "title": "Routeur de commandes et journal durable",
+      "dependsOn": [
+        "RP02",
+        "RP03"
+      ],
+      "legacyLots": [
+        "L08"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/control",
+        "matrix/lib/commands.js",
+        "matrix/state",
+        "tests/control"
+      ],
+      "implementation": "Définir schemas stricts, plans persistants, version et préconditions. Rejet du code libre. Dispatcher par exécuteurs installés à RAM mesurée, enveloppes de dépense, TTL, idempotence et acquittement métier. Annulation et planification longue hors GPT.",
+      "acceptance": "Doublon, conflit de payload, deux clients, requête périmée, changement d'epoch et crash avant/après effet : aucun double achat/reset. Reçu succeeded seulement si postcondition vérifiée.",
+      "rollback": "Désactiver admissions externes, conserver le journal, réconcilier les travaux; ne pas purger les reçus."
+    },
+    {
+      "id": "RP05",
+      "title": "Parcours Singularity BN4 complet",
+      "dependsOn": [
+        "RP01",
+        "RP03",
+        "RP04"
+      ],
+      "legacyLots": [
+        "L11",
+        "L12"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/services/singularity.js",
+        "matrix/lib/factions.js",
+        "matrix/lib/company.js",
+        "matrix/workers/singularity",
+        "matrix/lib/route-planner.js"
+      ],
+      "implementation": "Découper les appels coûteux en workers courts. Implémenter TOR/programmes/Home, voyage, entraînement, crimes, candidature/travail company, invitations, backdoors, travail faction, dons et panier d'augmentations avec prérequis. Détecter la route réalisable selon SF/ville/faction/argent. Poursuivre un objectif sans tours GPT supplémentaires.",
+      "acceptance": "Route nouvelle partie BN4 pauvre → programmes → faction de hacking → réputation → achat. RAM native de chaque worker sous BN4 puis SF4 niveaux 1/2/3 hors BN4; leases empêchent tout écrasement de tâche manuelle; interruption/reprise de backdoor testée.",
+      "rollback": "Suspendre le plan, libérer ses leases, conserver les étapes déjà accomplies; aucune annulation fictive des achats."
+    },
+    {
+      "id": "RP06",
+      "title": "Augmentations, liquidation et boucle de reset",
+      "dependsOn": [
+        "RP02",
+        "RP04",
+        "RP05"
+      ],
+      "legacyLots": [
+        "L05",
+        "L12"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/services/stock.js",
+        "matrix/services/singularity.js",
+        "matrix/services/progression.js",
+        "matrix/lib/reset-plan.js"
+      ],
+      "implementation": "Valoriser et liquider positions TIX avec ou sans 4S; contrôler résultat de vente et commissions. Distinguer augs achetées/installées. Construire plan de reset coût/bénéfice, achat cher d'abord/NFG borné, autorisation liée au plan, checkpoint, reboot et nouvel epoch. Route World Daemon conforme 3.0.1; initialement sortie vers BN4 explicitement choisie.",
+      "acceptance": "A05 ferme sur ventes réelles simulées et portefeuille relu; vente refusée ne publie pas zéro. Un cycle achat→installation→redémarrage reconstruit objectifs et contrôle. Double soumission de reset ne produit qu'un effet. BN1→BN4 déclenche une seule transition.",
+      "rollback": "Restaurer le programme et son journal; un reset du jeu est irréversible dans ce protocole, jamais relancé pour corriger une absence de reçu."
+    },
+    {
+      "id": "RP07",
+      "title": "Briefing, objectifs et options réalisables",
+      "dependsOn": [
+        "RP04",
+        "RP05",
+        "RP06"
+      ],
+      "legacyLots": [
+        "L09",
+        "L11",
+        "UI03"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/lib/objectives.js",
+        "matrix/lib/briefing.js",
+        "matrix/control/plans",
+        "matrix/services/telemetry.js"
+      ],
+      "implementation": "Calculer métriques et blocages explicites, comparer le curseur aux événements, produire 2–3 plans utiles seulement si admissibles, ou moins si aucune alternative réelle. Progression versionnée par objectif, coûts bornés, ETA nullable, stale interdit. Un objectif long compose des primitives installées.",
+      "acceptance": "100000/250000→40% de réputation, jamais 40% natif BN. Une inconnue conserve null. Trois choix obsolètes ne sont pas réofferts. Simulation de pénurie, API verrouillée, lease occupée : blocage correct et voie viable ou report.",
+      "rollback": "Servir le dernier snapshot étiqueté périmé, aucune nouvelle option exécutable tant que l'état manque."
+    },
+    {
+      "id": "RP08",
+      "title": "Gateway et Actions du GPT",
+      "dependsOn": [
+        "RP04",
+        "RP07"
+      ],
+      "legacyLots": [
+        "L09"
+      ],
+      "status": "planned",
+      "files": [
+        "gateway",
+        "docs/rp/reference/gateway-openapi.json",
+        "tests/gateway"
+      ],
+      "implementation": "Auditer le bridge existant, propriétaire unique RFA; adapter plutôt que doubler. Ajouter lectures cohérentes, plans, commandes, reçus et pagination. HTTPS/auth, schema strict, sessions non exposées; aucune API de shell/code du GPT. Étendre le schéma initial seulement pour les commandes passées en recette.",
+      "acceptance": "Dans le GPT réel : lecture fraîche, option, ordre, reçu final; 401, 429, timeout, déconnexion et reconnexion. Requêtes asynchrones bornées sous 45s; un doublon conserve requestId. Routes majeures séparées et confirmation liée au plan.",
+      "rollback": "Couper les écritures API; autopilote local poursuit sa politique existante. Rotation d'une clé sans changer l'état du jeu."
+    },
+    {
+      "id": "RP09",
+      "title": "Directeur narratif et continuité",
+      "dependsOn": [
+        "RP06",
+        "RP07",
+        "RP08"
+      ],
+      "legacyLots": [
+        "L10"
+      ],
+      "status": "planned",
+      "files": [
+        "campaign/engine",
+        "campaign/schema",
+        "gateway/projection",
+        "tests/campaign"
+      ],
+      "implementation": "Interpréter des données de scènes avec conditions, effets narratifs bornés, choix et report; aucun code dynamique. Journal des connaissances séparé du coffre GM privé. Déclenchement BN4 observé; préserver découvertes entre resets d'augmentations et conversations. Couvrir toutes les branches du premier chapitre avec options exécutables.",
+      "acceptance": "Replay d'événement et nouvelle conversation ne doublent pas scène/révélation. Choix refusé ou reporté ne bloque pas le jeu. Aucun secret futur dans payload, log ou bundle. Scène sans plan admissible propose attendre/expliquer, jamais développer un script.",
+      "rollback": "Désactiver nouvelles scènes et conserver le journal; pas d'effacement des connaissances déjà révélées."
+    },
+    {
+      "id": "RP10",
+      "title": "Ghost comme console de commandement",
+      "dependsOn": [
+        "RP03",
+        "RP07",
+        "RP09"
+      ],
+      "legacyLots": [
+        "UI01",
+        "UI02",
+        "UI03",
+        "UI04"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/dashboard.jsx",
+        "tests/render-deck.mjs",
+        "tests/ghost-deck.mjs"
+      ],
+      "implementation": "Raccorder les neuf vues au même briefing/routeur que le GPT. Cartes de décisions, coûts, blocages, journal et reçus métier; commandes de configuration héritées distinguent saved et achieved jusqu'au remplacement. Conserver mode léger, accessibilité et largeur du tail.",
+      "acceptance": "Chaque choix UI et GPT produit le même plan/reçu. Fresh/stale/locked/ram-blocked/draining distincts; callbacks React sans Netscript; mesurer RAM native aux paliers et navigation sans fuite de fenêtres.",
+      "rollback": "Lecture seule Ghost ou ancienne UI; aucun état de campagne supprimé."
+    },
+    {
+      "id": "RP11",
+      "title": "Certification et gel de la version jouable",
+      "dependsOn": [
+        "RP02",
+        "RP03",
+        "RP04",
+        "RP05",
+        "RP06",
+        "RP07",
+        "RP08",
+        "RP09",
+        "RP10"
+      ],
+      "legacyLots": [
+        "L00",
+        "L20"
+      ],
+      "status": "planned",
+      "files": [
+        "docs/rp/RELEASE-GATES.md",
+        "docs/rp/release-status.json",
+        "tests/e2e",
+        "release"
+      ],
+      "implementation": "Exécuter tous les scénarios sur release immuable, parcours BN4 complet et tests de panne; collecter preuves, décider go/no-go. Revue des 24 constats : tout P0/P1 sur un chemin activé doit être fermé ou le chemin retiré du profil. Publier ensuite un tag rp-bn4-v1.0.0 et geler API/mécaniques pendant le chapitre.",
+      "acceptance": "Tous les gates passent; zéro édition de scripts pendant le parcours, un reset augmentation et un cycle fin BN4 observés, 8h de stabilité, trois reprises et 100 dialogues/choix sans capacité inventée. Aucun rpReady=true avant preuves.",
+      "rollback": "Revenir à la release précédente validée entre sessions; incidents en lecture seule explicable, pas d'auto-patch par le GPT."
+    },
+    {
+      "id": "RP12",
+      "title": "Optimisations et domaines optionnels",
+      "dependsOn": [
+        "RP11"
+      ],
+      "legacyLots": [
+        "L06",
+        "L13",
+        "L14",
+        "L15",
+        "L16",
+        "L17",
+        "L18",
+        "L19",
+        "L20"
+      ],
+      "status": "planned",
+      "files": [
+        "matrix/lib/core-aware.js",
+        "matrix/services/darknet.js",
+        "matrix/services",
+        "tests"
+      ],
+      "implementation": "Porter PR6 sans perdre 1.10.2; tester PR7 intégré. Compléter solveurs, Hacknet, gang, sleeves, Bladeburner, corporation, Stanek, Grafting et autres BN par paquets de capacités versionnés. Les corrections bloquantes A07/A08 sur le moteur actif remontent avant RP11; les nouvelles optimisations restent optionnelles.",
+      "acceptance": "Recette ciblée par paquet, coûts RAM et non-régression revenus/drainage/propriété. Aucun chapitre ne dépend d'un paquet non certifié; demander une capacité indisponible donne un choix viable existant.",
+      "rollback": "Désactiver le paquet et ses seules tâches, journal intact; ne jamais remplacer tout le scheduler par une branche ancienne."
+    }
+  ]
+}

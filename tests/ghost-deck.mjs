@@ -1,0 +1,34 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { transform } from "esbuild";
+import { scriptRam } from "./ram-budget.mjs";
+globalThis.React={Component:class{},createElement(){},useState:x=>[x,()=>{}],useEffect(){}};
+const root=process.cwd(),source=fs.readFileSync("matrix/dashboard.jsx","utf8");
+const js=(await transform(source,{loader:"jsx",format:"esm"})).code.replace(/from\s*["'](\/matrix\/[^"']+)["']/g,(_,p)=>`from "${pathToFileURL(path.join(root,p.slice(1))).href}"`);
+const {store,publish,applyCommands,ghostTargets,ghostFresh,ghostService}=await import(`data:text/javascript;base64,${Buffer.from(js).toString("base64")}`);
+const CFG="/matrix/config.json",STATE="/matrix/state/overview.txt";
+let files,writes;
+const ns={read:p=>files[p] ?? "",write:async(p,v)=>{writes++;files[p]=v;return true;},getServerMoneyAvailable:()=>44};
+function reset(){files={[CFG]:JSON.stringify({masterEnabled:true,automation:{hacking:true,stock:true},unrelated:{keep:42}}),[STATE]:JSON.stringify({updated:Date.now(),player:{money:10},reset:{currentNode:1,lastAugReset:1}})};writes=0;store.commands=[];store.commandLog=[];store.history=[];store.historyEpoch=null;publish(ns);}
+function patch(path,value,expected){store.send({type:"patch",path,value,expected});}
+reset();patch("automation.hacking",false,true);patch("automation.stock",false,true);await applyCommands(ns);
+assert.deepEqual(JSON.parse(files[CFG]),{masterEnabled:true,automation:{hacking:false,stock:false},unrelated:{keep:42}});
+assert.equal(store.commandLog.at(-1).status,"saved");
+reset();patch("masterEnabled",false,true);const external=JSON.parse(files[CFG]);external.unrelated.keep=100;files[CFG]=JSON.stringify(external);await applyCommands(ns);assert.equal(JSON.parse(files[CFG]).unrelated.keep,100,"patch must read the latest configuration");
+reset();patch("masterEnabled",false,true);files[CFG]=JSON.stringify({masterEnabled:false});await applyCommands(ns);assert.equal(writes,0);assert.equal(store.commandLog.at(-1).status,"conflict");
+reset();patch("masterEnabled",false,true);files[STATE]=JSON.stringify({updated:Date.now()-30000});await applyCommands(ns);assert.equal(writes,0,"freshness must be rechecked during execution");
+reset();patch("masterEnabled",false,true);files[CFG]="{BROKEN";await applyCommands(ns);assert.equal(files[CFG],"{BROKEN");assert.equal(writes,0);
+reset();patch("automation.__proto__",false,true);patch("automation.constructor",false,true);patch("money",false,true);await applyCommands(ns);assert.equal(writes,0);
+reset();patch("masterEnabled",false,true);await applyCommands({...ns,write:async()=>false});assert.equal(store.commandLog.at(-1).status,"failed");
+reset();patch("masterEnabled",false,true);await applyCommands({...ns,write:async()=>true});assert.equal(store.commandLog.at(-1).status,"failed","must verify persisted value, not just the write return");
+reset();for(let i=0;i<200;i++){files[STATE]=JSON.stringify({updated:Date.now()-14000+i*100,player:{money:i},reset:{currentNode:1,lastAugReset:1}});publish(ns);}assert.ok(store.history.length<=90);
+files[STATE]=JSON.stringify({updated:Date.now(),player:{money:100},reset:{currentNode:4,lastAugReset:2}});publish(ns);assert.equal(store.history.length,1,"a new epoch must clear prior capital samples");
+files[STATE]=JSON.stringify({updated:Date.now()-120000,player:{money:999}});publish(ns);assert.equal(store.snapshot.data.player.money,999,"old telemetry must remain inspectable");assert.equal(ghostFresh(store.snapshot.data.updated),false);
+assert.equal(ghostFresh(Date.now()+60000),false);assert.equal(ghostFresh("recent"),false);
+assert.deepEqual(ghostTargets({services:{hacking:{targetScheduler:{bad:1}}}}),[]);
+assert.equal(ghostTargets({services:{hacking:{targetScheduler:[null,{target:"a"},{target:"a"},{target:[]}]}}}).length,1);
+assert.equal(ghostService(null).label,"Sans données");assert.equal(ghostService({updated:Date.now()-30000,status:"online"}).label,"Ancien");
+const measured=scriptRam(source,{root});assert.equal(measured.ram,1.7);assert.equal(measured.used.includes("<dom>"),false);
+console.log("Ghost deck passed: patch conflict/failure/freshness guards, independent changes, history epoch/limits, old telemetry, target normalization; static RAM 1.7 GB.");

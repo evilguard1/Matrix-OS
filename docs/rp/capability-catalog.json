@@ -1,0 +1,522 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "rp-bn4-draft-1",
+  "runtimeStatus": "design-only-not-a-router",
+  "activationRule": "Runtime may publish a command only after installed executor, actual game capability, RAM admission, policy and postcondition tests pass. All exposedToGPT flags are false in this audit.",
+  "capabilities": [
+    {
+      "id": "briefing.read",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "cursor": "optional event cursor"
+      },
+      "postcondition": "Paquet cohérent frais ou état déconnecté explicite.",
+      "deliveryTask": "RP07",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "objective.set",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/coordinator.js"
+      ],
+      "inputs": {
+        "objectiveId": "published id",
+        "constraints": "budget, horizon, scope"
+      },
+      "postcondition": "Plan durable engagé; objectif et révision relus.",
+      "deliveryTask": "RP07",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "strategy.set",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/config.json"
+      ],
+      "inputs": {
+        "profile": "published balanced/money/reputation plan"
+      },
+      "postcondition": "Politique effective consommée par les services, pas seulement config sauvegardée.",
+      "deliveryTask": "RP04",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "pause.drain",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/hacking.js",
+        "matrix/lib/reputation-boost.js"
+      ],
+      "inputs": {
+        "scope": "owned services"
+      },
+      "postcondition": "Admission fermée; tous les effets persistants déclarés réconciliés.",
+      "deliveryTask": "RP03",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "resume",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/start.js"
+      ],
+      "inputs": {},
+      "postcondition": "Admission reprise sans doublon et nouveau progrès observé.",
+      "deliveryTask": "RP03",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "rep.boost",
+      "requiredForBN4": true,
+      "backendStatus": "adapter-required",
+      "evidencePaths": [
+        "matrix/boost.js",
+        "matrix/lib/reputation-boost.js"
+      ],
+      "inputs": {
+        "mode": "normal|max",
+        "durationSeconds": "integer 10..600"
+      },
+      "postcondition": "Drain si MAX, partage possédé, expiration et reprise vérifiés.",
+      "deliveryTask": "RP04",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "rep.boost.cancel",
+      "requiredForBN4": true,
+      "backendStatus": "adapter-required",
+      "evidencePaths": [
+        "matrix/boost.js"
+      ],
+      "inputs": {},
+      "postcondition": "Uniquement workers de partage possédés révoqués; revenu reprend.",
+      "deliveryTask": "RP04",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "infrastructure.plan",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/cloud.js",
+        "matrix/services/hacknet.js"
+      ],
+      "inputs": {
+        "planId": "published upgrade plan",
+        "maxSpend": "finite nonnegative"
+      },
+      "postcondition": "Achats au prix relu, grants débités, capacité observée.",
+      "deliveryTask": "RP01",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "program.acquire",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Programme ou TOR réellement possédé.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "home.upgrade",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "RAM/coeurs et solde relus après prix API.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "travel",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Ville cible observée, coût dans enveloppe.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "train",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Activité observée puis cible de compétence atteinte ou blocage publié.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "crime.work",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Travail stable, karma/cash observés, arrêt et reprise contrôlés.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "company.work",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Candidature/job et travail admissibles observés.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "faction.join",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Invitation admissible et faction observée dans le joueur.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "faction.work",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Travail observé, progression réputation et arrêt contrôlés.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "faction.donate",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Prix/grant débités et réputation relue.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "backdoor.install",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "backdoorInstalled relu sur hôte admissible, lease connexion libérée.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "augmentation.plan",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published plan only"
+      },
+      "postcondition": "Panier admissible avec coûts et prérequis courants.",
+      "deliveryTask": "RP05",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "augmentation.buy",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "published bounded purchase plan"
+      },
+      "postcondition": "Augs achetées relues distinctes des installées; reçu des coûts.",
+      "deliveryTask": "RP06",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "stocks.liquidate",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/stock.js"
+      ],
+      "inputs": {
+        "planId": "published portfolio liquidation plan"
+      },
+      "postcondition": "Positions restantes relues avec/sans 4S, échecs de vente explicites.",
+      "deliveryTask": "RP06",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "augmentation.install",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/singularity.js"
+      ],
+      "inputs": {
+        "planId": "frozen approved reset plan"
+      },
+      "postcondition": "Nouvel epoch et augs installées observés, moteur relancé.",
+      "deliveryTask": "RP06",
+      "consequential": true,
+      "exposedToGPT": false
+    },
+    {
+      "id": "node.exit",
+      "requiredForBN4": true,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/progression.js"
+      ],
+      "inputs": {
+        "planId": "frozen approved node transition"
+      },
+      "postcondition": "Destination réelle et nouveau reset observés une seule fois.",
+      "deliveryTask": "RP06",
+      "consequential": true,
+      "exposedToGPT": false
+    },
+    {
+      "id": "plan.cancel",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "planId": "owned active plan"
+      },
+      "postcondition": "Sous-tâches annulables closes; effets accomplis conservés.",
+      "deliveryTask": "RP04",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "campaign.choice",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "sceneId": "published",
+        "choiceId": "published"
+      },
+      "postcondition": "Choix enregistré une seule fois; aucune action jeu implicite.",
+      "deliveryTask": "RP09",
+      "consequential": true,
+      "exposedToGPT": false
+    },
+    {
+      "id": "campaign.defer",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "sceneId": "published"
+      },
+      "postcondition": "Scène différée, autopilote continue sans pénalité cachée.",
+      "deliveryTask": "RP09",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "campaign.ack",
+      "requiredForBN4": true,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "sceneId": "published"
+      },
+      "postcondition": "Acquittement durable sans déclencher de révélation suivante.",
+      "deliveryTask": "RP09",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "darknet.explore",
+      "requiredForBN4": false,
+      "backendStatus": "candidate",
+      "evidencePaths": [
+        "matrix/services/darknet.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "corporation.manage",
+      "requiredForBN4": false,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/corporation.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "bladeburner.manage",
+      "requiredForBN4": false,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/bladeburner.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "gang.manage",
+      "requiredForBN4": false,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/gang.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "sleeves.assign",
+      "requiredForBN4": false,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/sleeves.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "stanek.configure",
+      "requiredForBN4": false,
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/services/stanek.js"
+      ],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "grafting.plan",
+      "requiredForBN4": false,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    },
+    {
+      "id": "stocks.trade-pre4s",
+      "requiredForBN4": false,
+      "backendStatus": "missing",
+      "evidencePaths": [],
+      "inputs": {
+        "planId": "future certified plan"
+      },
+      "postcondition": "Preuve spécifique du paquet, isolation et résultat réel.",
+      "deliveryTask": "RP12",
+      "consequential": false,
+      "exposedToGPT": false
+    }
+  ]
+}

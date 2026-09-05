@@ -1,0 +1,195 @@
+{
+  "status": "passed",
+  "scope": "Actual React 17 components in Edge, synthetic Netscript adapter; no live game",
+  "cases": [
+    {
+      "width": 1500,
+      "view": "Passerelle"
+    },
+    {
+      "width": 1500,
+      "view": "Réseau"
+    },
+    {
+      "width": 1500,
+      "view": "Services"
+    },
+    {
+      "width": 1500,
+      "view": "Hacking"
+    },
+    {
+      "width": 1500,
+      "view": "Économie"
+    },
+    {
+      "width": 1500,
+      "view": "Progression"
+    },
+    {
+      "width": 1500,
+      "view": "Campagne"
+    },
+    {
+      "width": 1500,
+      "view": "Journal"
+    },
+    {
+      "width": 1500,
+      "view": "Réglages"
+    },
+    {
+      "width": 1024,
+      "view": "Passerelle"
+    },
+    {
+      "width": 1024,
+      "view": "Réseau"
+    },
+    {
+      "width": 1024,
+      "view": "Services"
+    },
+    {
+      "width": 1024,
+      "view": "Hacking"
+    },
+    {
+      "width": 1024,
+      "view": "Économie"
+    },
+    {
+      "width": 1024,
+      "view": "Progression"
+    },
+    {
+      "width": 1024,
+      "view": "Campagne"
+    },
+    {
+      "width": 1024,
+      "view": "Journal"
+    },
+    {
+      "width": 1024,
+      "view": "Réglages"
+    },
+    {
+      "width": 736,
+      "view": "Passerelle"
+    },
+    {
+      "width": 736,
+      "view": "Réseau"
+    },
+    {
+      "width": 736,
+      "view": "Services"
+    },
+    {
+      "width": 736,
+      "view": "Hacking"
+    },
+    {
+      "width": 736,
+      "view": "Économie"
+    },
+    {
+      "width": 736,
+      "view": "Progression"
+    },
+    {
+      "width": 736,
+      "view": "Campagne"
+    },
+    {
+      "width": 736,
+      "view": "Journal"
+    },
+    {
+      "width": 736,
+      "view": "Réglages"
+    },
+    {
+      "width": 390,
+      "view": "Passerelle"
+    },
+    {
+      "width": 390,
+      "view": "Réseau"
+    },
+    {
+      "width": 390,
+      "view": "Services"
+    },
+    {
+      "width": 390,
+      "view": "Hacking"
+    },
+    {
+      "width": 390,
+      "view": "Économie"
+    },
+    {
+      "width": 390,
+      "view": "Progression"
+    },
+    {
+      "width": 390,
+      "view": "Campagne"
+    },
+    {
+      "width": 390,
+      "view": "Journal"
+    },
+    {
+      "width": 390,
+      "view": "Réglages"
+    },
+    {
+      "width": 320,
+      "view": "Passerelle"
+    },
+    {
+      "width": 320,
+      "view": "Réseau"
+    },
+    {
+      "width": 320,
+      "view": "Services"
+    },
+    {
+      "width": 320,
+      "view": "Hacking"
+    },
+    {
+      "width": 320,
+      "view": "Économie"
+    },
+    {
+      "width": 320,
+      "view": "Progression"
+    },
+    {
+      "width": 320,
+      "view": "Campagne"
+    },
+    {
+      "width": 320,
+      "view": "Journal"
+    },
+    {
+      "width": 320,
+      "view": "Réglages"
+    }
+  ],
+  "interactions": [
+    "target selection",
+    "selection retained on navigation",
+    "configuration change and readback",
+    "stale write disabled",
+    "empty telemetry",
+    "BN4 campaign gated"
+  ],
+  "pageErrors": []
+}

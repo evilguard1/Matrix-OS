@@ -1,3 +1,5 @@
+> **Branche RP — audit du 2026-09-05.** Base 1.10.2 + Ghost. Pour l'état actuel, les limites et le plan de version jouable, lire [le dossier RP](rp/README.md). Les sections historiques ci-dessous ne constituent pas une certification actuelle. Le programme RP complet n'est pas encore livré.
+
 # MATRIX-OS Capability Matrix
 
 Audit of the current implementation against the mature public Bitburner

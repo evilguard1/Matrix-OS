@@ -1,0 +1,54 @@
+{
+  "auditDate": "2026-09-04",
+  "gameTarget": "3.0.1",
+  "userContext": {
+    "currentBitNode": 1,
+    "campaignStartsOnTransitionTo": 4,
+    "client": "Custom GPT with Actions",
+    "verification": "user-declared; no live game inspection"
+  },
+  "documents": [
+    {
+      "file": "Matrix-Compendium-COMPLETE.md",
+      "sha256": "8c7c9da394b276cf245a893d7c94ff60d488dc86ba77de80728d5040bbcc8988",
+      "bytes": 357877
+    },
+    {
+      "file": "Bitburner_The_Ghost_Node_War_FINAL.md",
+      "sha256": "eaafbe4efd7654905bcc448899d0a838b994e17f3bac3a10facfa58156644437",
+      "bytes": 58263
+    }
+  ],
+  "repositories": [
+    {
+      "repository": "evilguard1/Matrix-OS",
+      "sha": "2e6977cc15d3aea05bdc2c80b9073b963c76108e",
+      "url": "https://github.com/evilguard1/Matrix-OS/tree/2e6977cc15d3aea05bdc2c80b9073b963c76108e"
+    },
+    {
+      "repository": "bitburner-official/bitburner-src",
+      "sha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+      "url": "https://github.com/bitburner-official/bitburner-src/tree/3162fd2590e221eadd0c0fbd46151913f7c4c41c"
+    },
+    {
+      "repository": "alainbryden/bitburner-scripts",
+      "sha": "7a8951a1987c0734ae3035894a25c9495e2b28d1",
+      "url": "https://github.com/alainbryden/bitburner-scripts/tree/7a8951a1987c0734ae3035894a25c9495e2b28d1"
+    },
+    {
+      "repository": "TheDroidYourLookingFor/BitBurner-Scripts",
+      "sha": "8964992a9aca2f3c20e60dd00f1756689aac07dd",
+      "url": "https://github.com/TheDroidYourLookingFor/BitBurner-Scripts/tree/8964992a9aca2f3c20e60dd00f1756689aac07dd"
+    },
+    {
+      "repository": "drabepet/bitburner",
+      "sha": "2e32643d5a396c698587bfc892bb1153c9d09c4c",
+      "url": "https://github.com/drabepet/bitburner/tree/2e32643d5a396c698587bfc892bb1153c9d09c4c"
+    }
+  ],
+  "officialOpenAI": [
+    "https://developers.openai.com/api/docs/actions/production",
+    "https://developers.openai.com/api/docs/actions/authentication",
+    "https://developers.openai.com/api/docs/actions/introduction"
+  ]
+}

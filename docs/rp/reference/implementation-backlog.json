@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "baselineSha": "2e6977cc15d3aea05bdc2c80b9073b963c76108e",
+  "tasks": [
+    {
+      "id": "L00",
+      "title": "Figer et mesurer la base",
+      "dependsOn": [],
+      "status": "planned-not-implemented",
+      "specification": "**Entrées :** SHA audité et sauvegarde du joueur. **Fichiers :** tests, docs, manifeste. Capturer `npm test`, versions, SHA, configuration, API disponibles, état réel des services et RAM calculée dans 3.0.1. Utiliser `getDefinitionFile`/`calculateRam` via RFA si connexion autorisée et disponible. Enregistrer 15 minutes de revenu, RAM, erreurs et p95/p99 des fins de workers sur la sauvegarde de test. Ne pas exporter une sauvegarde vers le GPT.\n\n**Acceptation :** rapport reproductible avec labels `static`, `mock`, `live`; écarts RAM expliqués; aucune supposition de SF ou d’argent. **Dépendance :** aucune. **Retour arrière :** aucune mutation du runtime."
+    },
+    {
+      "id": "L01",
+      "title": "États canoniques et réserves",
+      "dependsOn": [
+        "L00"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `coordinator.js`, `common.js`, nouveaux `state.js`, `budget-ledger.js`; tests coordinateur/économie. Remplacer la double écriture par un objet unique conservant `budgets`, `id`, statut et objectifs; publier une révision commune aux directives. Ajouter epoch et TTL. Les lecteurs rejettent un état périmé. Corriger −54 en règle valide, avec exemption BN2 et options de partie.\n\n**Acceptation :** avec 60 milliards de cash et objectif Daedalus à 100 milliards, un manager ne reçoit pas un budget hors objectif; une dépense propriétaire reste possible; karma −100 avec SF2 hors BN2 reste en phase karma. Reproduction actuelle remplacée par assertions attendues. **Dépendance :** L00. **Retour :** compatibilité de lecture N−1, état reconstruit sans écraser la config."
+    },
+    {
+      "id": "L02",
+      "title": "Registre, pause et santé",
+      "dependsOn": [
+        "L01"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `start.js`, tous les services, `worm/`, `telemetry.js`, `capabilities.js`, `dashboard.jsx`. Créer registre pur avec `id,path,stage,capability,pollMs,stateSchema,quiescePolicy,ownedWorkerPatterns`. Ajouter health avec `lastProgressAt` distinct du heartbeat. Désactivation globale ou individuelle traitée sur les processus existants. Corriger autoOpen pour tous les tails.\n\n**Acceptation :** pause en charge coupe nouvelles admissions; Go et worm se taisent; activités persistantes déclarées/arrêtées suivant leur politique; processus étranger intact; aucun storm au réveil du jeu. La UI reste contrôlable et indique ce qui tourne encore. **Dépendance :** L01."
+    },
+    {
+      "id": "L03",
+      "title": "Dépenses et activité unifiées",
+      "dependsOn": [
+        "L01",
+        "L02"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** économie, Singularity, sleeves, corporation, Bladeburner; `action-arbiter.js`. Migrer achats TOR/programmes/augs/dons/Home, frais de formation et voyage, équipement gang, augmentations de sleeves, création de corporation. Réserver les fonds avant effet. Dons plafonnés au déficit réel avec seuil `getFavorToDonate()`. Corriger `lastGoal` et les réassignations de sleeves.\n\n**Acceptation :** deux demandes concurrentes ne peuvent engager le même cash; hausse de prix refuse le grant; huit sleeves partagent une seule enveloppe; changer de faction ne redémarre pas chaque crime; intervention manuelle détectée. **Dépendances :** L01–L02."
+    },
+    {
+      "id": "L04",
+      "title": "Mise à jour récupérable",
+      "dependsOn": [
+        "L01",
+        "L02"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `install.js`, `kernel.js`, `stages.js`, `propagate.js`, registre. Fixer un SHA une fois pour l’ensemble de la transaction, sans re-résolution de main entre installer et manifeste. Échec de résolution : rester sur la release courante, sans repli implicite sur main. Vérifier tous les fichiers éligibles, tailles/empreintes, imports et RAM. Préparer les backups avant arrêt, journaliser l’ordre de copie et écrire le marqueur final seulement après vérification.\n\n**Acceptation :** injection de panne avant et après chaque écriture ramène à une release cohérente au prochain kernel; stop-set dérivé inclut Go/coordinateur/Stanek; config et journal RP inchangés; workers distants ont le bon SHA, y compris deux builds de même version. Ne pas prétendre disposer d’un rename atomique de répertoire Netscript. **Dépendances :** L01–L02."
+    },
+    {
+      "id": "L05",
+      "title": "Bourse et progression cohérentes",
+      "dependsOn": [
+        "L01",
+        "L02",
+        "L03"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `stock.js`, `progression.js`, `coordinator.js`, `readiness.js`, Singularity. Extraire l’inventaire et la liquidation hors de 4S; supprimer WSE comme prérequis de TIX; mesurer positions après vente; exposer `redPillQueued`, `redPillInstalled`, disponibilité du World Daemon, route hacking/Bladeburner et autorisation de sortie. Corriger le plan BN14/15 par catalogue officiel.\n\n**Acceptation :** liquidation d’une position pré-4S; échec de vente conserve la position réelle; route BlackOp détectée; destination invalide rejetée; aucune déclaration de transition avant nouvel epoch observé. Préparer le passage BN1→BN4 et sa validation humaine. **Dépendances :** L01–L03."
+    },
+    {
+      "id": "L06",
+      "title": "Scheduler : bornes et admission",
+      "dependsOn": [
+        "L02",
+        "L03"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `hacking.js`, `hacking-planner.js`, `batch.js`, workers. Après arrondi, calculer le prélèvement réel et rejeter toute forme au-delà du maximum. Si un thread suffit à dépasser, la cible est inadmissible sous cette politique. Distinguer impossibilité pour une cible et saturation globale; poursuivre l’examen des suivantes avec limite de travail par tick et équité.\n\nAjouter ensuite les cores au placement, resimuler le grow distribué et la sécurité dans l’ordre d’atterrissage, enregistrer prédiction/résultat. Ne pas appliquer un multiplicateur de cores global à tous les hôtes. Ajuster `batchGapMs` suivant jitter mesuré, avec plafond et retour au mode conservateur.\n\n**Acceptation :** fraction ≤ plafond; une cible de 100 Go refusée ne bloque pas une cible prête de 20 Go qui tient; interruption d’un worker entraîne récupération; ni dette sécurité ni fuite PID. Gain de revenu à mesurer sur mêmes fixtures. **Dépendances :** L02–L03; placement cores après L07."
+    },
+    {
+      "id": "L07",
+      "title": "Propriété de RAM et relève réseau",
+      "dependsOn": [
+        "L02",
+        "L04",
+        "L06"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** `ram-leases.js`, scheduler, root, worm, contracts, Stanek, reputation boost. Ajouter leases par host/PID/génération. Centraliser scan/root/deploy après acquittement du contrôleur; compteur worm fondé sur processus identifiés, pas RAM totale/2,4. Préemption limitée aux tâches déclarées récupérables.\n\n**Acceptation :** deux clients ne sur-réservent pas un hôte; perte de scheduler détectée; absence d’une copie worker réparée; transition à 64 Go ne laisse pas le réseau sans revenu. Comparer temps CPU et revenu à l’ancien worm avant retrait. **Dépendances :** L02, L04, L06 de base."
+    },
+    {
+      "id": "L08",
+      "title": "Bridge lecture seule et protocole",
+      "dependsOn": [
+        "L00",
+        "L01",
+        "L02"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** bridge-agent, protocol, gateway RFA/HTTP/journal, CLI. Implémenter connexion partagée, health, snapshot, événements, projection de campagne; authentification, quotas, redaction et schémas stricts. Pas d’exécution de commandes dans cette première PR.\n\n**Acceptation :** une Action du GPT obtient un snapshot réel avec version 3.0.1 et BN1; déconnexion produit `stale/disconnected`; aucune valeur fictive; reconnexion après veille; aucun fichier privé ou vault dans les réponses. **Dépendances :** L00–L02. Peut précéder L06–L07."
+    },
+    {
+      "id": "L09",
+      "title": "Commandes GPT bornées",
+      "dependsOn": [
+        "L02",
+        "L03",
+        "L08"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** control, policy, adaptateurs, gateway commands. Implémenter les quatre commandes MVP et leur journal. Le boost normal réutilise les fonctions 1.10.0; mode MAX exige une durée au MVP. Le runtime relit politique et reset avant effet. Une commande étrangère, périmée ou inconsciente du reset est refusée.\n\n**Acceptation :** une demande « boost réputation 2 minutes » s’arrête réellement; résultat lié à l’identifiant; répétition d’une Action ne prolonge pas le boost; aucun code arbitraire; file bornée. **Dépendances :** L02–L03, L08."
+    },
+    {
+      "id": "L10",
+      "title": "Campagne et passage BN1→BN4",
+      "dependsOn": [
+        "L05",
+        "L08",
+        "L09"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** campaign, journal, projections, instructions GPT. Installer les documents RP révisés. Conserver `PRE_CAMPAIGN_BN1` jusqu’à preuve de changement d’epoch et BN4. Le directeur de campagne attribue une scène, le GPT la raconte; il n’invente pas le déclencheur. Journaliser l’acte de capture fictive distinctement de la sortie réelle.\n\n**Acceptation :** aucune arrivée BN4 tant que le jeu reste BN1; reprise dans une nouvelle conversation sans répéter l’ouverture; mêmes événements n’activent pas deux fois une révélation; vault inaccessible au GPT. **Dépendances :** L05, L08–L09. C’est le seuil de livraison du MVP RP."
+    },
+    {
+      "id": "L11",
+      "title": "Singularity fractionnée et acquisition des factions",
+      "dependsOn": [
+        "L03",
+        "L05",
+        "L09"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Fichiers :** observer et worker ponctuel Singularity; `factions.js`, `augmentations.js`, `manualActions`. Séparer observation, programmes/Home, travail, voyage/company, backdoor et reset pour éviter le service monolithique bloqué à 512 Go. Admission réelle par script, accès BN4 ou niveau SF4 exact. Créer les parcours des factions, les exclusions des villes et les étapes carrière/combat/crime. Guider les infiltrations sans inventer une API d’exécution.\n\n**Acceptation :** en BN4, chaque action qui tient en RAM est disponible sans attendre le monolithe; une tâche manuelle reste visible si l’exécuteur manque; backdoor emprunte un chemin réel puis vérifie le flag; travail et terminal ne se concurrencent pas. **Dépendances :** L03, L05, L09."
+    },
+    {
+      "id": "L12",
+      "title": "Augmentations et resets par objectif",
+      "dependsOn": [
+        "L03",
+        "L04",
+        "L05",
+        "L10",
+        "L11"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Comparer un panier d’augmentations en ordre de dépendances avec multiplicateurs de prix, délai d’épargne, gain de réputation et prochaine opportunité. Ne pas acheter un petit implant simplement parce que le gros objectif n’est pas encore abordable. Ajouter achat NFG de fin de cycle suivant budget, traiter la Red Pill séparément et conserver les prérequis déjà achetés en file comme valides.\n\n**Acceptation :** un reset ne jette pas un objectif proche sans décision motivée; panier prix réel recalculé après chaque achat; gate Stanek résolu quand applicable; quiesce, sauvegarde et journal avant reset; redémarrage et rapprochement après reset. **Dépendances :** L03–L05, L10–L11."
+    },
+    {
+      "id": "L13",
+      "title": "Contrats fiables et complets",
+      "dependsOn": [
+        "L01",
+        "L02",
+        "L07"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Remplacer Set « dispatched » par jobs avec PID, tentative, type, hash d’entrée, version solver, état final. Worker envoie un résultat via port au collecteur home, qui le persiste; ne pas supposer qu’un fichier écrit sur l’hôte distant se trouve sur home. Un crash avant `attempt` peut être retenté; résultat incertain après `attempt` exige relecture des tentatives restantes/présence. Ajouter `Total Number of Primes` et `Largest Rectangle in a Matrix`; comparer catalogue runtime aux solveurs.\n\n**Acceptation :** crash récupérable, erreur de solveur sans consommation, pas de tentative double après reconnexion; tests génératifs et dummy contracts en 3.0.1. **Dépendances :** L01–L02, L07."
+    },
+    {
+      "id": "L14",
+      "title": "Hacknet et investissements",
+      "dependsOn": [
+        "L03",
+        "L06",
+        "L07"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Ajouter cache conditionné au coût du prochain achat de hashes; supprimer la prétendue limite globale de 12 et consulter les niveaux officiels. Classer chaque achat matériel par delta production/coût et horizon; valoriser hashes par usage actuel. Arrêter la réduction de sécurité à sa limite réelle et réévaluer les cibles. Home/cloud/cores comparent prix exact, coût d’opportunité et RAM réservée.\n\n**Acceptation :** achat de hashes inaccessible par capacité déclenche une extension utile; cible à sécurité minimale ne monopolise pas les hashes; aucun plafond présenté comme règle du jeu sans source. **Dépendances :** L03, L06–L07."
+    },
+    {
+      "id": "L15",
+      "title": "Bourse avant 4S et influence",
+      "dependsOn": [
+        "L05",
+        "L06",
+        "L07",
+        "L14"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Implanter observations de ticks, historique borné, modèle de prévision avec incertitude, frais/spread, limite d’exposition et arrêt si modèle non calibré. L’influence HGW par `stock:true` devient une directive précise symbole→serveur seulement lorsque l’association et le rendement sont validés. Tester d’abord en observation, ensuite avec petite allocation.\n\n**Acceptation :** benchmark sur données séparées de calibration; résultat net des commissions; aucune promesse de profit; liquidation indépendante du modèle. **Dépendances :** L05–L07, L14."
+    },
+    {
+      "id": "L16",
+      "title": "Gang et sleeves avancés",
+      "dependsOn": [
+        "L03",
+        "L11",
+        "L12",
+        "L14"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Gang : équipements/augmentations avec grant global, ascension suivant rôle, scoring Formulas lorsque disponible, garde wanted/territoire. Sleeves : portefeuille de tâches distinctes, shock→0 avant achats, villes correctes, company et Bladeburner suivant accès, achats permanents/mémoire BN10 avant sortie si retenus par la politique.\n\n**Acceptation :** aucun doublon faction interdit; aucune réinitialisation de tâche inchangée; dépenses bornées; branche BN2 sans grind karma inutile; progression permanente BN10 évaluée explicitement. **Dépendances :** L03, L11–L14."
+    },
+    {
+      "id": "L17",
+      "title": "Bladeburner et Stanek",
+      "dependsOn": [
+        "L03",
+        "L05",
+        "L07",
+        "L12"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Bladeburner : utiliser borne basse de probabilité pour actions à risque, qualité d’estimation, sélection de niveau/ville/équipe, adhésion faction et utilité des skills. Stanek : séparer acceptation, layout et charge; résoudre la décision avant achat normal d’augmentation ou auto-grant Simulacrum SF7.3; placement légal et charge multi-hôtes sous leases.\n\n**Acceptation :** aucune acceptation Stanek simulée à partir d’un layout vide; une BlackOp n’est pas lancée sur une moyenne trompeuse; progression Bladeburner/BlackOps publiée avec preuves; charge respecte budget et cores. **Dépendances :** L03, L05, L07, L12."
+    },
+    {
+      "id": "L18",
+      "title": "Corporation complète par phases",
+      "dependsOn": [
+        "L03",
+        "L14"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Étapes : accès API → première division/ville → alimentation matières → cash-flow → expansion → boost materials/warehouse → recherche → produits → investissements/IPO/dividendes. Utiliser les états `nextUpdate()` du cycle. Séparer cash joueur et trésorerie; calculer un plancher de liquidité pour inputs/salaires. Évaluer les offres suivant progression/valorisation et objectifs, pas `offer > funds*6`.\n\n**Acceptation :** simulation puis test réel de départ autofinancé atteignent production soutenue sans parier sur une offre salvatrice; aucune expansion à sec; recherche et produits ont états explicites. **Dépendances :** L03, L14."
+    },
+    {
+      "id": "L19",
+      "title": "Darknet et progression 3.x",
+      "dependsOn": [
+        "L07",
+        "L08",
+        "L09",
+        "L14"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "Domaine séparé du réseau ordinaire : `probe`, authentification, sessions propres au processus, mutations, caches et tâches limitées. Conserver noms et signatures de 3.0.1, notamment `getServerDetails`. Un accès authentifié dans le scanner n’implique pas automatiquement une session pour tous les workers. Commencer par reconnaissance/collecte contrôlée; puis exploitation, stasis, labyrinthe et progression suivant le catalogue réel. Ne pas traiter un serveur Darknet comme un simple serveur `nuke`.\n\n**Acceptation :** expiration de session et disparition d’hôte récupérées; tentatives/auth RAM/temps bornés; aucun débordement de la file générale. **Dépendances :** L07–L09, L14. Référence d’algorithmes : Droid, sans adoption globale."
+    },
+    {
+      "id": "L20",
+      "title": "IPvGO, Grafting et couverture finale",
+      "dependsOn": [
+        "L03",
+        "L11",
+        "L12",
+        "L17",
+        "L19"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "IPvGO : résultats par adversaire, gain mesuré par unité de temps, récompense d’une défaite non supposée nulle, adversaire spécial correctement gated, cheat SF14.2 optionnel. Grafting : catalogue, entropy, comparaison avec parcours faction, coût réservé et travail non préemptible. Classer tout domaine restant comme automatique, assisté, expérimental ou indisponible.\n\n**Acceptation :** aucune régression du contrôle global; benchmarks documentés; couverture des factions/BN1–15 dérivée des définitions 3.0.1; fonctions de confort sans API stable explicitement assistées. **Dépendances :** L03, L11–L19 selon le sous-lot. Découper en plusieurs PR."
+    }
+  ]
+}

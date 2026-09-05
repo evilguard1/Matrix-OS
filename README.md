@@ -1,3 +1,5 @@
+> **Branche RP — audit du 2026-09-05.** Base 1.10.2 + Ghost. Pour l'état actuel, les limites et le plan de version jouable, lire [le dossier RP](docs/rp/README.md). Les sections historiques ci-dessous ne constituent pas une certification actuelle. Le programme RP complet n'est pas encore livré.
+
 # MATRIX-OS
 
 MATRIX-OS is a staged autonomous control system for **Bitburner Steam v3.0.1**. It starts as one RAM-safe fresh-save process, then downloads and activates more of the system as Home RAM makes each stage useful.

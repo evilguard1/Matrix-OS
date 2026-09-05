@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "kind": "acceptance-specification-not-executed",
+  "scenarios": [
+    {
+      "id": "S01",
+      "title": "Premier briefing sans télémétrie",
+      "commands": [
+        "briefing.read"
+      ],
+      "expected": "fresh=false, aucune statistique inventée et aucune option exécutable.",
+      "status": "not-run"
+    },
+    {
+      "id": "S02",
+      "title": "Pourcentage mesurable",
+      "commands": [
+        "briefing.read"
+      ],
+      "expected": "Fixture 100000/250000 donne 40% du seul objectif; dénominateur inconnu donne null.",
+      "status": "not-run"
+    },
+    {
+      "id": "S03",
+      "title": "Retour après absence",
+      "commands": [
+        "briefing.read"
+      ],
+      "expected": "Événements depuis curseur, écarts observés et bloqueurs; pas de répétition de scène acquittée.",
+      "status": "not-run"
+    },
+    {
+      "id": "S04",
+      "title": "Choix de boost normal",
+      "commands": [
+        "rep.boost",
+        "rep.boost.cancel"
+      ],
+      "expected": "Ordre accepté puis effet observé; HWGW reste actif; annulation et expiration sans worker orphelin.",
+      "status": "not-run"
+    },
+    {
+      "id": "S05",
+      "title": "Choix MAX",
+      "commands": [
+        "rep.boost",
+        "resume"
+      ],
+      "expected": "Drain naturel avant le compteur; durée effective bornée; retour aux opérations.",
+      "status": "not-run"
+    },
+    {
+      "id": "S06",
+      "title": "Départ BN4 à faible RAM",
+      "commands": [
+        "program.acquire",
+        "infrastructure.plan",
+        "home.upgrade"
+      ],
+      "expected": "Progression depuis Home initial; capacités RAM-blocked explicitement planifiées, aucun achat manuel de dépannage requis.",
+      "status": "not-run"
+    },
+    {
+      "id": "S07",
+      "title": "Route de faction entière",
+      "commands": [
+        "objective.set",
+        "travel",
+        "backdoor.install",
+        "faction.join",
+        "faction.work"
+      ],
+      "expected": "Une intention engage toutes les étapes admissibles; reprise après arrêt sans refaire une étape acquise.",
+      "status": "not-run"
+    },
+    {
+      "id": "S08",
+      "title": "Blocage company ou compétence",
+      "commands": [
+        "company.work",
+        "train",
+        "crime.work"
+      ],
+      "expected": "Les contraintes changent la route proposée; pas de fausse disponibilité ni perte de travail par réassignation.",
+      "status": "not-run"
+    },
+    {
+      "id": "S09",
+      "title": "Budget et priorité",
+      "commands": [
+        "strategy.set",
+        "infrastructure.plan",
+        "faction.donate"
+      ],
+      "expected": "Deux managers ne dépensent pas le même grant; réserve stratégique maintenue; priorité revient à expiration.",
+      "status": "not-run"
+    },
+    {
+      "id": "S10",
+      "title": "Liquidation sans 4S",
+      "commands": [
+        "stocks.liquidate"
+      ],
+      "expected": "Positions existantes liquidées ou échec réel annoncé; positions absentes ne sont pas inventées.",
+      "status": "not-run"
+    },
+    {
+      "id": "S11",
+      "title": "Reset augmentation",
+      "commands": [
+        "augmentation.plan",
+        "augmentation.buy",
+        "augmentation.install"
+      ],
+      "expected": "Plan confirmé, un seul effet, redémarrage et nouveau snapshot; histoire conservée, anciennes commandes rejetées.",
+      "status": "not-run"
+    },
+    {
+      "id": "S12",
+      "title": "Transition BN1 vers BN4",
+      "commands": [
+        "node.exit",
+        "campaign.ack"
+      ],
+      "expected": "Scène de début déclenchée uniquement après transition observée; répétition d'événement sans répétition de scène.",
+      "status": "not-run"
+    },
+    {
+      "id": "S13",
+      "title": "Conflit UI/GPT et annulation",
+      "commands": [
+        "objective.set",
+        "plan.cancel"
+      ],
+      "expected": "Révisions concurrentes rejetées; annulation ciblée, état manuel étranger intact.",
+      "status": "not-run"
+    },
+    {
+      "id": "S14",
+      "title": "Pause en charge",
+      "commands": [
+        "pause.drain",
+        "resume"
+      ],
+      "expected": "Go/worm/HGW/activités possédées réconciliés; draining reste visible jusqu'à pause prouvée.",
+      "status": "not-run"
+    },
+    {
+      "id": "S15",
+      "title": "Déconnexion et crash",
+      "commands": [
+        "briefing.read",
+        "objective.set"
+      ],
+      "expected": "Travail local poursuit policy; outcome-unknown après ambiguïté, pas de double effet au retour.",
+      "status": "not-run"
+    },
+    {
+      "id": "S16",
+      "title": "Antagoniste narratif",
+      "commands": [
+        "campaign.choice",
+        "campaign.defer"
+      ],
+      "expected": "Choix publiés seulement, opérateurs bornés; attendre reste possible, aucun sabotage natif inventé.",
+      "status": "not-run"
+    },
+    {
+      "id": "S17",
+      "title": "Nouvelle conversation",
+      "commands": [
+        "briefing.read",
+        "campaign.ack"
+      ],
+      "expected": "Reprise du journal et des connaissances autorisées; aucun coffre GM ni révélation future.",
+      "status": "not-run"
+    },
+    {
+      "id": "S18",
+      "title": "Capacité optionnelle indisponible",
+      "commands": [
+        "briefing.read"
+      ],
+      "expected": "Darknet/corporation non certifiés absents des options exécutables; scénario continue via capacités de base.",
+      "status": "not-run"
+    },
+    {
+      "id": "S19",
+      "title": "Mise à jour et retour arrière",
+      "commands": [
+        "briefing.read"
+      ],
+      "expected": "Même canal et release complète aux paliers; crash de promotion reprend; aucune régression silencieuse vers main.",
+      "status": "not-run"
+    },
+    {
+      "id": "S20",
+      "title": "Fin réelle de BN4",
+      "commands": [
+        "node.exit"
+      ],
+      "expected": "Parcours complet sans édition de script, sortie confirmée et destination observée; tous les P0/P1 du chemin fermés.",
+      "status": "not-run"
+    }
+  ]
+}

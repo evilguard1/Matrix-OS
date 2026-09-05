@@ -1,0 +1,53 @@
+{
+  "auditDate": "2026-09-05",
+  "baselineSha": "681045f8c45963e4569db1aed221e598c7cf50f6",
+  "previousAuditSha": "2e6977cc15d3aea05bdc2c80b9073b963c76108e",
+  "branches": [
+    {
+      "branch": "feat/core-aware-home",
+      "sha": "cb59e471e0aa15d57f3d875f3146e5372076b517"
+    },
+    {
+      "branch": "feat/darknet-autonomy",
+      "sha": "d582413e1217f18d05e358c696f1716077adab8c"
+    },
+    {
+      "branch": "feat/formulas-planner",
+      "sha": "0c360b2d2f1c6740e635c21fbaa3a05a88c6714b"
+    },
+    {
+      "branch": "feat/ram-aware-batch-shapes",
+      "sha": "5e4ea8995b67d64fa92ce6f556365edf1d804780"
+    },
+    {
+      "branch": "feat/reputation-boost",
+      "sha": "c46df2157e0351fa0e9135aa61c9433c3a03ebf5"
+    },
+    {
+      "branch": "fix/elastic-target-admission",
+      "sha": "e3f3b24d5dd7f8b8ce6f5c123eb987b8a8e73852"
+    },
+    {
+      "branch": "fix/ram-stage-64",
+      "sha": "705f432fbfb1eaef490fd09b8036d25d92223e76"
+    },
+    {
+      "branch": "fix/worm-hwgw-handoff",
+      "sha": "a8a1d57191676d4a7c52ce978868d0c6bfdd136b"
+    },
+    {
+      "branch": "main",
+      "sha": "681045f8c45963e4569db1aed221e598c7cf50f6"
+    },
+    {
+      "branch": "reconstruct/rolling-hwgw",
+      "sha": "a9a7170c52063dafdd2b460559d109e52c06ffb7"
+    }
+  ],
+  "gameVersion": "3.0.1",
+  "gameSourceSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "userGameVerifiedThisAudit": false,
+  "githubVisibility": "public",
+  "scope": "All fetched branch heads, both open PRs, prior audit, compendium registry, implementation/UI proposals and Ghost source. Advanced domain mechanics are static findings, not a full live certification.",
+  "officialActionsDocs": "https://developers.openai.com/api/docs/actions/production"
+}

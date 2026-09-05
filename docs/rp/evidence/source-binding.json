@@ -1,0 +1,6 @@
+{
+  "nativeDashboardSha256": "18885fb73e61940ced4305a1669c70b2a67b40539cd23ee7c9edb5a13c2d107a",
+  "gitLfDashboardSha256": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
+  "transformation": "CRLF to LF only; source bytes checked against original native proof before deriving canonical hash",
+  "gameSourceSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c"
+}

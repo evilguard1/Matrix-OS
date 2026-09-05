@@ -1,0 +1,850 @@
+[
+  {
+    "id": "C001",
+    "line": 28,
+    "title": "Stage completeness probes can suppress required downloads",
+    "status": "Corrigé en partie",
+    "lot": "L04",
+    "note": "Probes de stages distinctes; intégrité complète encore absente."
+  },
+  {
+    "id": "C002",
+    "line": 38,
+    "title": "Coordinator overwrites its own reserve budgets",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L01",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C003",
+    "line": 47,
+    "title": "Worm does not actually relinquish existing RAM to HWGW at 32 GB+",
+    "status": "Historique corrigé",
+    "lot": "L07",
+    "note": "Drones retirés à 64 Go; overhead propagateurs distinct."
+  },
+  {
+    "id": "C004",
+    "line": 56,
+    "title": "`masterEnabled` is not a true global kill switch",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C005",
+    "line": 65,
+    "title": "Gang karma objective uses the wrong scale",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L01",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C006",
+    "line": 74,
+    "title": "Updater process sweep omits newer resident services",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L04",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C007",
+    "line": 83,
+    "title": "Hard-coded base prices ignore BitNode multipliers",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C008",
+    "line": 92,
+    "title": "Corporation manager ignores the coordinator budget protocol",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C009",
+    "line": 103,
+    "title": "Sleeve augmentation budget is multiplied per sleeve",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C010",
+    "line": 106,
+    "title": "Telemetry registry is stale",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C011",
+    "line": 109,
+    "title": "Cloud automation guidance disagrees with runtime gate",
+    "status": "Amendé",
+    "lot": "L02",
+    "note": "Seuil cloud harmonisé à 64 via constante; absence de service réel non prouvée par RAM seule."
+  },
+  {
+    "id": "C012",
+    "line": 112,
+    "title": "Faction planner is incomplete",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C013",
+    "line": 115,
+    "title": "Dashboard architecture is substantially improved",
+    "status": "Acquis conservé",
+    "lot": "L02",
+    "note": "UI isolée et tests de rendu présents."
+  },
+  {
+    "id": "C014",
+    "line": 118,
+    "title": "Dashboard/config mismatch hides default-only toggles",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C015",
+    "line": 121,
+    "title": "Dashboard heartbeat can be bypassed by a still-listed process",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C016",
+    "line": 124,
+    "title": "`ui.autoOpen=false` does not mean no UI",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C017",
+    "line": 127,
+    "title": "Hacking engine is intermediate rather than maximal",
+    "status": "Amendé",
+    "lot": "L06",
+    "note": "Rolling scheduler et voie Formulas déjà présents."
+  },
+  {
+    "id": "C018",
+    "line": 130,
+    "title": "Early hacking weaken threshold is inconsistent",
+    "status": "Corrigé ciblé",
+    "lot": "L00",
+    "note": "Ordre sécurité/argent testé dans earlyloop; ne pas réouvrir sans contre-exemple actuel."
+  },
+  {
+    "id": "C019",
+    "line": 133,
+    "title": "Hacknet hash planner can repeatedly prefer one server upgrade",
+    "status": "Ouvert reformulé",
+    "lot": "L14",
+    "note": "Revoir les priorités de hashes et le cap partagé au lieu de répéter le diagnostic historique."
+  },
+  {
+    "id": "C020",
+    "line": 136,
+    "title": "Coding-contract architecture is strong",
+    "status": "Acquis conservé",
+    "lot": "L13",
+    "note": "Déport et abstention présents; acquittement incomplet."
+  },
+  {
+    "id": "C021",
+    "line": 139,
+    "title": "Bladeburner uses midpoint chance estimates",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C022",
+    "line": 142,
+    "title": "Stanek is only partially autonomous",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C023",
+    "line": 145,
+    "title": "Update pinning has a degraded non-atomic fallback",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L04",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C024",
+    "line": 148,
+    "title": "Event log is append-only without rotation",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L01",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C025",
+    "line": 151,
+    "title": "Documentation contains contradictory generations of the architecture",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L00",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C026",
+    "line": 154,
+    "title": "Tests are valuable but over-rely on structural assertions",
+    "status": "Amendé",
+    "lot": "L00",
+    "note": "Suite plus riche que le baseline; réussite ne vaut pas preuve live."
+  },
+  {
+    "id": "C027",
+    "line": 183,
+    "title": "Stock service unnecessarily requires a WSE account under Bitburner 3.x",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L05",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C028",
+    "line": 194,
+    "title": "MATRIX's stock-manipulation hook is implemented in workers but never activated",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L15",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C029",
+    "line": 205,
+    "title": "Pre-4S stock automation is currently a hard dead zone, but it can be made productive",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L15",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C030",
+    "line": 216,
+    "title": "Bitburner 3.0 Darknet is an entire missing capability domain",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L19",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C031",
+    "line": 227,
+    "title": "Distributed HWGW ignores host-core heterogeneity when sizing grow/weaken work",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L06",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C033",
+    "line": 245,
+    "title": "Gang automation never purchases equipment or member augmentations",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C034",
+    "line": 256,
+    "title": "Gang task selection uses a crude homemade score instead of the actual production model",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C035",
+    "line": 267,
+    "title": "Bladeburner never evaluates or changes cities even though city state directly affects its operating environment",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C036",
+    "line": 278,
+    "title": "IPvGO has no Source-File 14.2 escalation path for the cheat API",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L20",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C037",
+    "line": 289,
+    "title": "Corporation investment-round acceptance is tied to treasury size rather than valuation strategy",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L18",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C039",
+    "line": 307,
+    "title": "Sleeve shock policy delays augmentation eligibility and makes the last 15 shock recover about 3× slower",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C040",
+    "line": 318,
+    "title": "Faction-reputation sleeve directives collapse to one useful sleeve because the game forbids duplicate sleeve work on the same faction",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C041",
+    "line": 329,
+    "title": "Corporation automation omits the core production multipliers and warehouse growth that official strategy treats as first-round essentials",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L18",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C042",
+    "line": 340,
+    "title": "Daedalus reserve logic tracks only cash and can chase an impossible invitation because it ignores the 30-augmentation and skill/combat gates",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C044",
+    "line": 359,
+    "title": "Hacknet Server cache upgrades are completely omitted, which can hard-block expensive hash purchases",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L14",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C045",
+    "line": 370,
+    "title": "The hard-coded `SERVER_UPGRADE_LIMIT = 12` does not match current game mechanics and incorrectly shares one counter across two independent hash upgrades",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L14",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C046",
+    "line": 381,
+    "title": "Hacknet hardware purchases optimize sticker price rather than production ROI",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L14",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C048",
+    "line": 400,
+    "title": "Bladeburner skill spending is a cheapest-price heuristic over only 7 of the 12 current skills",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C049",
+    "line": 411,
+    "title": "Stanek charging dispatches at most one host per five-second cycle, leaving parallel network capacity unused",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C051",
+    "line": 429,
+    "title": "Coding-contract dispatch has no completion acknowledgement, so a launched-but-unsolved contract can become stuck for the lifetime of the service",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L13",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C052",
+    "line": 440,
+    "title": "MATRIX is missing both Coding Contract types added to the current v3.x contract registry",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L13",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C054",
+    "line": 458,
+    "title": "Bladeburner never recruits or assigns team members, leaving a major Operations/BlackOps success multiplier unused",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C055",
+    "line": 469,
+    "title": "Faction donation gating hard-codes favor 150 instead of using Bitburner's BitNode-aware `ns.getFavorToDonate()`",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C057",
+    "line": 488,
+    "title": "The new config migration mechanism fixes behavior in memory but leaves the protected config file semantically stale",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L01",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C058",
+    "line": 499,
+    "title": "Multi-target HWGW ranks targets with a coarse heuristic, then allocates scarce RAM without using the exact batch-efficiency metric it already computed",
+    "status": "Corrigé en partie",
+    "lot": "L06",
+    "note": "Ranking Formulas implémenté; fallback et placement à améliorer."
+  },
+  {
+    "id": "C059",
+    "line": 510,
+    "title": "Corporation automation is still a round-1 bootstrap and never spends Research Points, despite current official guidance making research central to later rounds",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L18",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C060",
+    "line": 521,
+    "title": "Re-validation: the coding-contract acknowledgement defect still exists unchanged in MATRIX 1.8.0",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L13",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C062",
+    "line": 539,
+    "title": "The BitNode progression planner is hard-coded to the pre-BN14 world and cannot autonomously target BN14 or BN15",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L05",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C064",
+    "line": 557,
+    "title": "Darknet is substantially scriptable in every BitNode, but MATRIX has no Darknet service at all",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L19",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C066",
+    "line": 575,
+    "title": "City-faction joining logic is much too restrictive and can throw away compatible faction invitations",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C067",
+    "line": 586,
+    "title": "MATRIX waits for city-dependent faction invitations but never travels to create them",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C068",
+    "line": 597,
+    "title": "4S stock allocation ranks by forecast edge alone instead of volatility-adjusted opportunity and does not price transaction friction",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L15",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C069",
+    "line": 608,
+    "title": "Correction to cycle 10: DarkscapeNavigator acquisition is already partially automated through the generic darkweb-program loop",
+    "status": "Correction historique",
+    "lot": "L19",
+    "note": "Programme acheté par boucle générique; ne signifie pas service Darknet complet."
+  },
+  {
+    "id": "C071",
+    "line": 627,
+    "title": "MATRIX deliberately excludes NeuroFlux Governor from all automated purchases, leaving repeatable end-of-cycle value unused",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L12",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C072",
+    "line": 638,
+    "title": "World Daemon telemetry can report `ready` without The Red Pill, causing repeated impossible destroy attempts",
+    "status": "Contesté pour 3.0.1",
+    "lot": "L05",
+    "note": "API destruction ne teste pas Red Pill directement; route Bladeburner à ajouter."
+  },
+  {
+    "id": "C074",
+    "line": 656,
+    "title": "The augmentation buyer can make a valuable cash-short augmentation more expensive while supposedly using an expensive-first policy",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L12",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C075",
+    "line": 667,
+    "title": "`hasRedPill` telemetry conflates queued and installed Red Pill, which would make the cycle-12 World Daemon fix unsafe if consumed as-is",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L05",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C076",
+    "line": 678,
+    "title": "Verification note: queued augmentation prerequisites are valid and MATRIX's prerequisite filter is correct on this point",
+    "status": "Correction conservée",
+    "lot": "L12",
+    "note": "Les prérequis achetés en file sont valides; ne pas imposer installés uniquement."
+  },
+  {
+    "id": "C078",
+    "line": 697,
+    "title": "Self-funded Corporation bootstrap can spend almost all seed capital before establishing an input-supplied production loop",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L18",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C080",
+    "line": 715,
+    "title": "IPvGO uses one global result streak to climb opponents even though Bitburner tracks and rewards streaks separately per opponent",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L20",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C081",
+    "line": 726,
+    "title": "MATRIX's Go policy assumes losses are worthless, but current v3.x still awards difficulty-adjusted node power after a loss",
+    "status": "À revalider intégralement",
+    "lot": "L17/L20",
+    "note": "Proposition conservée, pas une preuve de défaut actuel; vérifier source 3.0.1 et scénario."
+  },
+  {
+    "id": "C082",
+    "line": 737,
+    "title": "Current v3.x has a Red-Pill-gated `????????????` Go opponent that grants hacking level, but MATRIX's hard-coded catalog can never select it",
+    "status": "À revalider intégralement",
+    "lot": "L17/L20",
+    "note": "Proposition conservée, pas une preuve de défaut actuel; vérifier source 3.0.1 et scénario."
+  },
+  {
+    "id": "C084",
+    "line": 757,
+    "title": "MATRIX joins the Bladeburner division but never explicitly joins the Bladeburners faction, delaying access to its augmentations",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C086",
+    "line": 776,
+    "title": "Bladeburner leaves Contracts and Operations on the game's default autolevel, so a weak max level can hide a viable lower level",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C087",
+    "line": 787,
+    "title": "Supervisor liveness for non-UI services is process-presence-only even though every state write already carries a timestamp",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L02",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C089",
+    "line": 805,
+    "title": "MATRIX never uses the Sleeve-only Bladeburner work modes, leaving contract generation and direct Bladeburner support idle",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C090",
+    "line": 816,
+    "title": "BN10 permanent Sleeve acquisition and Memory progression are completely manual despite new v3.x Netscript support",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L16",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C092",
+    "line": 834,
+    "title": "Stanek automation can never bootstrap the Gift itself because MATRIX never calls `acceptGift()`, and the legal acceptance window can close for the entire BitNode",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L17",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C093",
+    "line": 845,
+    "title": "Reassigning every Sleeve task every 10 seconds destroys in-progress crime state; cycle-18's `getTask()` suggestion is therefore a correctness fix, not just churn reduction",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C095",
+    "line": 864,
+    "title": "SF7.3 Bladeburner auto-join can permanently close Stanek's Gift before Singularity buys anything",
+    "status": "À revalider intégralement",
+    "lot": "L17/L20",
+    "note": "Proposition conservée, pas une preuve de défaut actuel; vérifier source 3.0.1 et scénario."
+  },
+  {
+    "id": "C096",
+    "line": 875,
+    "title": "Bladeburner can cancel Singularity faction work, and Singularity's `lastGoal` cache can prevent that work from ever resuming",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C098",
+    "line": 893,
+    "title": "MATRIX completely omits Grafting, even though SF10 provides a direct-install augmentation path that can bypass faction reputation and the queued-augmentation price multiplier",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L20",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C099",
+    "line": 904,
+    "title": "Grafting must be treated as a non-preemptible paid transaction: current source charges cash at start and refunds nothing if another service cancels the work",
+    "status": "À revalider intégralement",
+    "lot": "L17/L20",
+    "note": "Proposition conservée, pas une preuve de défaut actuel; vérifier source 3.0.1 et scénario."
+  },
+  {
+    "id": "C101",
+    "line": 923,
+    "title": "Grafting before violet Congruity Implant creates persistent global multiplier debt; a graft planner must price Entropy, not just money and time",
+    "status": "À revalider intégralement",
+    "lot": "L17/L20",
+    "note": "Proposition conservée, pas une preuve de défaut actuel; vérifier source 3.0.1 et scénario."
+  },
+  {
+    "id": "C103",
+    "line": 942,
+    "title": "MATRIX has faction-reputation automation but no company-career engine, so megacorporation factions and Silhouette cannot be acquired autonomously",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C104",
+    "line": 954,
+    "title": "MATRIX knows which servers need backdoors but still leaves all backdoor installation manual even after SF4, missing both faction unlocks and a 25% megacorp-reputation shortcut",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C106",
+    "line": 974,
+    "title": "MATRIX models criminal-faction requirements but has no player crime/combat-training executor, so several factions and late-game stat gates still require manual intervention",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C107",
+    "line": 986,
+    "title": "Shadows of Anarchy is absent from MATRIX's faction graph, and the supported Netscript API can analyze infiltrations but cannot perform them",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C109",
+    "line": 1007,
+    "title": "The old finite-wave allocator finding must be amended, but its target-ordering concern survives and is now more important under the rolling scheduler",
+    "status": "Amendé",
+    "lot": "L06",
+    "note": "Rolling déjà présent; ranking Formulas améliore le constat."
+  },
+  {
+    "id": "C110",
+    "line": 1019,
+    "title": "Exact admission is correct, but `break fill` creates head-of-line blocking: one fragmented high-priority batch can prevent every lower-ranked ready target from being tested that pass",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L06",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C111",
+    "line": 1031,
+    "title": "Baseline correction / carry-forward note",
+    "status": "Note historique",
+    "lot": "L06",
+    "note": "Rattacher aux constats corrigés, pas un nouveau ticket."
+  },
+  {
+    "id": "C113",
+    "line": 1044,
+    "title": "SF4 makes MATRIX hide all manual-action guidance even though several advertised Singularity capabilities are still unimplemented",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L11",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C114",
+    "line": 1056,
+    "title": "Augmentation reset arbitration ignores an active high-value reputation goal and can reset immediately after the queue threshold, discarding near-complete faction progress",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L12",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C116",
+    "line": 1076,
+    "title": "`hasTor` telemetry is always reported true whenever Singularity access exists, because `getDarkwebPrograms()` returns an empty list rather than throwing when TOR is absent",
+    "status": "Corrigé en partie",
+    "lot": "L02",
+    "note": "Coordinateur hasTorRouter corrigé; producteur Singularity encore ambigu."
+  },
+  {
+    "id": "C117",
+    "line": 1088,
+    "title": "TOR and Darkweb program purchases bypass the coordinator's strategic reserve, so Singularity can spend billions during an augmentation/Daedalus savings phase",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C119",
+    "line": 1109,
+    "title": "Verification/correction: MATRIX 1.8.1 fixes the old worm-vs-HWGW RAM conflict, so the baseline 35% drone-share defect is now historical",
+    "status": "Correction historique",
+    "lot": "L07",
+    "note": "Handoff drones existant, seuil courant 64 Go."
+  },
+  {
+    "id": "C120",
+    "line": 1121,
+    "title": "After the 32-GB handoff, every >=16-GB rooted host can still run a 5.05-GB full-network propagator; at 64 GB this duplicates `root.js` and scales network-management work roughly quadratically",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L07",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C121",
+    "line": 1133,
+    "title": "Worm telemetry becomes semantically false under rolling HWGW: `drones`, `infected`, and `nodes` are inferred from generic RAM/eligibility rather than actual worm processes",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L07",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C123",
+    "line": 1154,
+    "title": "Fixing `progression.js` alone will not fix the World Daemon false-positive: `coordinator.js` independently declares victory from only root + hacking level and can liquidate the portfolio prematurely",
+    "status": "Contesté en partie",
+    "lot": "L05",
+    "note": "Politique de liquidation à l’approche de sortie valide à revoir; preuve de faux positif Red Pill insuffisante."
+  },
+  {
+    "id": "C124",
+    "line": 1166,
+    "title": "Faction donations are both reserve-blind and deficit-blind: MATRIX can spend protected milestone cash and donate substantially more than the selected augmentation actually needs",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C126",
+    "line": 1187,
+    "title": "`buyAugs()` can spend through coordinator milestone reserves because augmentation purchases use only the static baseline reserve",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L03",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C127",
+    "line": 1199,
+    "title": "Installer downloads are preflighted atomically, but the commit phase is not crash-atomic: interruption after `stopMatrix()` can leave a mixed release while the manifest already claims the new version",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L04",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C129",
+    "line": 1220,
+    "title": "Amendment: the updater stop-list defect is partially fixed in 1.8.2, but `coordinator.js` and `go.js` can still survive a successful update on the old in-memory generation",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L04",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C130",
+    "line": 1232,
+    "title": "Amendment: 1.8.2 fixes the cross-stage probe mistake, but a single representative probe still cannot prove a stage is complete after partial file loss or interrupted commit",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L04",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C131",
+    "line": 1244,
+    "title": "Baseline correction / carry-forward note",
+    "status": "Note historique",
+    "lot": "L04",
+    "note": "Rattacher stop-list/probes aux tickets de mise à jour."
+  },
+  {
+    "id": "C133",
+    "line": 1256,
+    "title": "Amendment: cycle-25's coarse money-target ranking defect is now fixed when Formulas.exe exists; the optimization remains only for the native fallback path",
+    "status": "Correction conservée",
+    "lot": "L06",
+    "note": "Formulas ranking déjà présent."
+  },
+  {
+    "id": "C134",
+    "line": 1268,
+    "title": "Both native and Formula planners can violate `maxHackFraction` because desired fractions are converted to integer hack threads with `ceil()` and the realized fraction is never rejected",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L06",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C135",
+    "line": 1280,
+    "title": "Baseline correction / carry-forward note",
+    "status": "Note historique",
+    "lot": "L06",
+    "note": "Rattacher aux changements de planner."
+  },
+  {
+    "id": "C137",
+    "line": 1292,
+    "title": "Stock liquidation is incorrectly gated behind 4S access, so coordinator-directed liquidation can fail before 4S even when positions already exist",
+    "status": "Chemin MatrixOS recontrôlé",
+    "lot": "L05",
+    "note": "Présence/absence statique confirmée; détails mécaniques avancés et gains à valider au lot."
+  },
+  {
+    "id": "C138",
+    "line": 1304,
+    "title": "Research loop status",
+    "status": "État de recherche",
+    "lot": "L00",
+    "note": "Ne déclenche aucune automation nouvelle."
+  }
+]

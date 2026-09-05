@@ -1,0 +1,34 @@
+
+> matrix-os@1.10.2 test
+> node tests/validate.mjs && node tests/planner.mjs && node tests/reputation-boost.mjs && node tests/factions.mjs && node tests/augmentations.mjs && node tests/coordinator.mjs && node tests/earlyloop.mjs && node tests/economy.mjs && node tests/migrate.mjs && node tests/robustness.mjs && node tests/batch.mjs && node tests/propagate.mjs && node tests/company.mjs && node tests/goban.mjs && node tests/voice.mjs && node tests/hashes.mjs && node tests/gift.mjs && node tests/analyzer.mjs && node tests/websocket.mjs && node tests/integration.mjs && node tests/render-deck.mjs && node tests/concurrency.mjs
+
+MATRIX-OS validation passed: 53 scripts, 54 manifest files.
+  worm RAM: seed 7.2 GB, spread 5.55 GB, drone 2.4 GB.
+  bootstrap.js: 6.15 GB of the 8 GB fresh-save home.
+  64 GB selected full tier: 59.5 GB incl. updater reserve.
+  28 coding-contract solvers, all known-answer tested.
+MATRIX-OS planner passed: native fallback, Formula frontiers, RAM-aware allocation, ranking, and stale probes.
+MATRIX-OS reputation boost passed: bounded duration, ownership, reclaimability, durable MAX control, normalized-path cleanup.
+MATRIX-OS factions passed: 21 factions, 4 live directives for the current save.
+MATRIX-OS augmentations passed: 57 implants from the game's own data, faction names cross-checked.
+MATRIX-OS coordinator passed: owning the TOR router clears its milestone, every objective renders.
+MATRIX-OS early loop passed: security before money, money before hacking, and no hacking an empty server.
+MATRIX-OS economy passed: $1m now buys a server, the reserve never exceeds the balance, aggression is early-only.
+MATRIX-OS migrate passed: 3 migration(s), and a value the player chose is never overwritten.
+MATRIX-OS robustness passed: 923 hostile calls across 12 pure libraries, none threw.
+MATRIX-OS batch passed: rolling depth, atomic placement, stable planning, and bounded diagnostics.
+MATRIX-OS propagate passed: 6 remote files, 2 of them resident, staleness detected by stamped filename.
+MATRIX-OS company passed: 10 faction employers, and home RAM priced against servers at every scale.
+MATRIX-OS goban passed: 6 opponents, chains/liberties/ko computed without the 40 GB of API calls.
+MATRIX-OS voice passed: 7 dormant modules explained, every line deterministic.
+MATRIX-OS hashes passed: compounding server upgrades outrank cash, capped and gated correctly.
+MATRIX-OS gift passed: charge levels the weakest fragment, threads scale to the widest host.
+MATRIX-OS analyzer passed: DOM charged on identifiers and only identifiers, go costs exact.
+MATRIX-OS websocket passed: handshake, all three length forms, TCP and frame reassembly, unmasked replies.
+MATRIX-OS integration passed: worm seeds, spreads, respects RAM, and reports home.
+MATRIX-OS integration passed: contracts dispatch off-home, once each.
+MATRIX-OS integration passed: exactly one command deck survives.
+MATRIX-OS integration passed: stage transitions cannot loop.
+MATRIX-OS integration passed: deck ownership survives an unreliable ns.ps.
+MATRIX-OS deck render passed: 37 telemetry shapes x 9 tabs, 2616 component bodies executed, ns confined to main().
+MATRIX-OS concurrency passed: decks converge to one and stay there.

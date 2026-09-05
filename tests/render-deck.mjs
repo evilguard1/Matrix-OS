@@ -110,7 +110,7 @@ async function run(ns) {
 }
 
 // Every tab must render, not just the default one.
-for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"]) {
+for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS", "NETWORK", "SERVICES", "CAMPAIGN", "JOURNAL"]) {
     globalThis.React.useState = init => [
         typeof init === "function" ? init() : (typeof init === "string" ? tab : init), () => {}];
     const ns = await run(makeNs());
@@ -190,7 +190,7 @@ const shapes = {
 };
 
 for (const [name, overview] of Object.entries(shapes)) {
-    for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS"]) {
+    for (const tab of ["OVERVIEW", "HACKING", "ECONOMY", "PROGRESS", "SETTINGS", "NETWORK", "SERVICES", "CAMPAIGN", "JOURNAL"]) {
         globalThis.React.useState = init => [
             typeof init === "function" ? init() : (typeof init === "string" ? tab : init), () => {}];
         const ns = makeNs();
@@ -253,4 +253,4 @@ const appBody = topLevelFunctions(jsx).find(fn => fn.name === "App")?.body ?? ""
 assert.ok(!/setInterval|setTimeout/.test(appBody),
     "App must repaint from main()'s loop, not a browser timer");
 
-console.log(`MATRIX-OS deck render passed: ${Object.keys(shapes).length} telemetry shapes x 5 tabs, ${rendered} component bodies executed, ns confined to main().`);
+console.log(`MATRIX-OS deck render passed: ${Object.keys(shapes).length} telemetry shapes x 9 tabs, ${rendered} component bodies executed, ns confined to main().`);

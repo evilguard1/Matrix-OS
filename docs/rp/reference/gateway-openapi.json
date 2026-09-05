@@ -1,0 +1,1362 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MatrixOS GPT Gateway",
+    "version": "1.0.0-draft",
+    "description": "Contrat MVP à implanter; domaine exemple à remplacer. API privée limitée aux commandes déclarées."
+  },
+  "servers": [
+    {
+      "url": "https://matrixos.example.com",
+      "description": "Exemple uniquement : remplacer par le gateway réel."
+    }
+  ],
+  "security": [
+    {
+      "GatewayBearer": []
+    }
+  ],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "getMatrixHealth",
+        "description": "État de connexion du pont et identité de la partie.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/snapshot": {
+      "get": {
+        "operationId": "getMatrixSnapshot",
+        "description": "Dernier état du jeu, fraîcheur, droits et services. Une donnée absente reste null.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "operationId": "getMatrixEvents",
+        "description": "Événements accessibles au joueur depuis un curseur opaque.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/v1/campaign/context": {
+      "get": {
+        "operationId": "getCampaignContext",
+        "description": "Contexte de campagne visible au joueur, découvertes et scènes autorisées. Aucun coffre GM.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignContext"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/commands": {
+      "post": {
+        "operationId": "submitMatrixCommand",
+        "description": "Soumet un contrôle réversible autorisé. 202 signifie mis en file, jamais exécution confirmée.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "202": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/commands/{commandId}": {
+      "get": {
+        "operationId": "getMatrixCommand",
+        "description": "Lit le statut et les effets vérifiés d’une commande.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "commandId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/campaign/choices": {
+      "post": {
+        "operationId": "recordCampaignChoice",
+        "description": "Enregistre le choix explicite du joueur parmi les options d’une scène déjà ouverte. Ne lance aucune action du jeu.",
+        "x-openai-isConsequential": true,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChoiceRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/campaign/scenes/{sceneId}/ack": {
+      "post": {
+        "operationId": "ackCampaignScene",
+        "description": "Marque une scène déjà autorisée comme présentée. Ne déverrouille aucun secret.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Résultat structuré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Epoch, révision ou idempotence incompatibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Partie ou données nécessaires indisponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneAckRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sceneId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "GatewayBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "gameVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "releaseSha": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "lastObservedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "protocolVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "connected",
+          "gameVersion",
+          "releaseSha",
+          "sessionId",
+          "lastObservedAt",
+          "protocolVersion"
+        ],
+        "additionalProperties": false
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "locked",
+              "unimplemented",
+              "not-installed",
+              "ram-blocked",
+              "starting",
+              "running",
+              "draining",
+              "paused",
+              "stale",
+              "failed"
+            ]
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "observedAt",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "SourceFile": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "number",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "Snapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "resetEpoch": {
+            "type": "string"
+          },
+          "runtimeEpoch": {
+            "type": "string"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fresh": {
+            "type": "boolean"
+          },
+          "gameVersion": {
+            "type": "string"
+          },
+          "releaseSha": {
+            "type": "string"
+          },
+          "policyRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "bitNode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "cash": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "homeRamGb": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sourceFiles": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SourceFile"
+            }
+          },
+          "controlState": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "DRAINING",
+              "PAUSED",
+              "RECOVERY"
+            ]
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          },
+          "unavailableFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "snapshotId",
+          "sessionId",
+          "resetEpoch",
+          "runtimeEpoch",
+          "seq",
+          "capturedAt",
+          "fresh",
+          "gameVersion",
+          "releaseSha",
+          "policyRevision",
+          "bitNode",
+          "cash",
+          "homeRamGb",
+          "sourceFiles",
+          "controlState",
+          "services",
+          "unavailableFields"
+        ],
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "game",
+              "campaign",
+              "player-decision",
+              "hypothesis"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "resetEpoch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "occurredAt",
+          "source",
+          "type",
+          "resetEpoch",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "EventsPage": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "events",
+          "nextCursor",
+          "hasMore"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignChoice": {
+        "type": "object",
+        "properties": {
+          "optionId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "consequenceSummary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "optionId",
+          "label",
+          "consequenceSummary"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignScene": {
+        "type": "object",
+        "properties": {
+          "sceneId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "campaign"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "choiceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignChoice"
+            }
+          }
+        },
+        "required": [
+          "sceneId",
+          "source",
+          "text",
+          "choiceId",
+          "options"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignContext": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "phase": {
+            "type": "string"
+          },
+          "sharedContext": {
+            "type": "string"
+          },
+          "discoveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "UNKNOWN",
+                    "SUSPECTED",
+                    "EVIDENCE",
+                    "CONFIRMED"
+                  ]
+                },
+                "statement": {
+                  "type": "string"
+                },
+                "evidenceEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "state",
+                "statement",
+                "evidenceEventIds"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "pendingScenes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignScene"
+            }
+          },
+          "lastEventCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaignId",
+          "revision",
+          "phase",
+          "sharedContext",
+          "discoveries",
+          "pendingScenes",
+          "lastEventCursor"
+        ],
+        "additionalProperties": false
+      },
+      "CommandRequest": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "expectedResetEpoch": {
+            "type": "string"
+          },
+          "expectedPolicyRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "control.pause",
+              "control.resume",
+              "objective.set",
+              "reputation.boost"
+            ]
+          },
+          "payload": {
+            "$ref": "#/components/schemas/CommandPayload"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "sessionId",
+          "expectedResetEpoch",
+          "expectedPolicyRevision",
+          "type",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "CommandPayload": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "drain"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "objective": {
+                "type": "string",
+                "enum": [
+                  "income",
+                  "hacking-xp",
+                  "faction-reputation"
+                ]
+              },
+              "faction": {
+                "type": "string",
+                "maxLength": 80
+              }
+            },
+            "required": [
+              "objective"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "max"
+                ]
+              },
+              "durationSeconds": {
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 600
+              }
+            },
+            "required": [
+              "mode",
+              "durationSeconds"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CommandReceipt": {
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "validated",
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "expired",
+              "cancelled",
+              "rejected",
+              "outcome-unknown"
+            ]
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resetEpoch": {
+            "type": "string"
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "verified": {
+                "type": "boolean"
+              },
+              "evidenceEventIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "observedEffects": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "commandId",
+          "idempotencyKey",
+          "status",
+          "issuedAt",
+          "expiresAt",
+          "resetEpoch",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "ChoiceRequest": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "campaignId": {
+            "type": "string"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "choiceId": {
+            "type": "string"
+          },
+          "optionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "campaignId",
+          "expectedRevision",
+          "choiceId",
+          "optionId"
+        ],
+        "additionalProperties": false
+      },
+      "SceneAckRequest": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "campaignId": {
+            "type": "string"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "campaignId",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignReceipt": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "eventId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "already-recorded"
+            ]
+          }
+        },
+        "required": [
+          "campaignId",
+          "revision",
+          "eventId",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

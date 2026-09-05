@@ -1,0 +1,341 @@
+{
+  "baselineSha": "681045f8c45963e4569db1aed221e598c7cf50f6",
+  "findings": [
+    {
+      "id": "A01",
+      "title": "Réserves écrasées",
+      "status": "open-reproduced",
+      "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
+      "evidence": [
+        {
+          "path": "matrix/services/coordinator.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 330,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/coordinator.js#L330"
+        }
+      ]
+    },
+    {
+      "id": "A02",
+      "title": "Pause incomplète",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/go.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 52,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/go.js#L52"
+        }
+      ]
+    },
+    {
+      "id": "A03",
+      "title": "Mise à jour partielle",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "install.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 209,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/install.js#L209"
+        }
+      ]
+    },
+    {
+      "id": "A04",
+      "title": "Dépenses non arbitrées",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/singularity.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 47,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/singularity.js#L47"
+        }
+      ]
+    },
+    {
+      "id": "A05",
+      "title": "Liquidation sans 4S ignorée",
+      "status": "open-reproduced",
+      "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
+      "evidence": [
+        {
+          "path": "matrix/services/stock.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 42,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/stock.js#L42"
+        }
+      ]
+    },
+    {
+      "id": "A06",
+      "title": "Mauvaise échelle de karma",
+      "status": "open-reproduced",
+      "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
+      "evidence": [
+        {
+          "path": "matrix/services/coordinator.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 145,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/coordinator.js#L145"
+        }
+      ]
+    },
+    {
+      "id": "A07",
+      "title": "Plafond de fraction de hack violé",
+      "status": "open-reproduced",
+      "note": "Reproduction relancée contre 1.10.2; voir evidence/reproductions.json.",
+      "evidence": [
+        {
+          "path": "matrix/lib/hacking-planner.js",
+          "unchangedSinceInitialAudit": false,
+          "previousLine": 107,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/hacking-planner.js"
+        }
+      ]
+    },
+    {
+      "id": "A08",
+      "title": "Blocage des cibles suivantes",
+      "status": "open-static",
+      "note": "Relu dans 1.10.2 : break fill demeure aux refus de RAM et de placement. Les formes adaptatives ne suppriment pas ce chemin.",
+      "evidence": [
+        {
+          "path": "matrix/services/hacking.js",
+          "unchangedSinceInitialAudit": false,
+          "previousLine": 1279,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/hacking.js"
+        }
+      ]
+    },
+    {
+      "id": "A09",
+      "title": "Perte de travail sleeves",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/sleeves.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 58,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/sleeves.js#L58"
+        }
+      ]
+    },
+    {
+      "id": "A10",
+      "title": "Budget sleeves et unicité faction",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/sleeves.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 60,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/sleeves.js#L60"
+        }
+      ]
+    },
+    {
+      "id": "A11",
+      "title": "Prix estimés utilisés pour sélectionner les achats",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/cloud.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 29,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/cloud.js#L29"
+        }
+      ]
+    },
+    {
+      "id": "A12",
+      "title": "Capacités trop optimistes",
+      "status": "partially-addressed",
+      "note": "Ghost retire le masquage dans son composant ManualActions, mais lib/capabilities.js retourne encore [] avec Singularity; le producteur et les exécuteurs restent à corriger.",
+      "evidence": [
+        {
+          "path": "matrix/lib/capabilities.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 139,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/capabilities.js#L139"
+        }
+      ]
+    },
+    {
+      "id": "A13",
+      "title": "État installé / acheté confondu",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/singularity.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 206,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/singularity.js#L206"
+        }
+      ]
+    },
+    {
+      "id": "A14",
+      "title": "Readiness World Daemon",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/progression.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 19,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/progression.js#L19"
+        }
+      ]
+    },
+    {
+      "id": "A15",
+      "title": "Contrats sans acquittement",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/lib/dispatch.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 68,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/dispatch.js#L68"
+        }
+      ]
+    },
+    {
+      "id": "A16",
+      "title": "Contrats 3.0.1 manquants",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/lib/solvers.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 230,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/solvers.js#L230"
+        }
+      ]
+    },
+    {
+      "id": "A17",
+      "title": "Cap de hashes artificiel",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/lib/hashes.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 15,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/hashes.js#L15"
+        }
+      ]
+    },
+    {
+      "id": "A18",
+      "title": "Hacknet sans cache ni ROI",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/hacknet.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 4,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/hacknet.js#L4"
+        }
+      ]
+    },
+    {
+      "id": "A19",
+      "title": "Worm coûteux et télémétrie trompeuse",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/worm/spread.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 177,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/worm/spread.js#L177"
+        }
+      ]
+    },
+    {
+      "id": "A20",
+      "title": "Santé fondée sur présence",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/start.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 102,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/start.js#L102"
+        }
+      ]
+    },
+    {
+      "id": "A21",
+      "title": "Gift, Bladeburner et corporation partiels",
+      "status": "open-static",
+      "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
+      "evidence": [
+        {
+          "path": "matrix/services/stanek.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 54,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/stanek.js#L54"
+        }
+      ]
+    },
+    {
+      "id": "A22",
+      "title": "Documentation incohérente",
+      "status": "open-static",
+      "note": "HANDOFF 0.9.2 et matrice des capacités contredisent encore le code 1.10.2; la nouvelle entrée RP les signale comme historiques.",
+      "evidence": [
+        {
+          "path": "matrix/lib/stages.js",
+          "unchangedSinceInitialAudit": true,
+          "previousLine": 4,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/stages.js#L4"
+        }
+      ]
+    },
+    {
+      "id": "A23",
+      "title": "Plan BitNode borné à 13",
+      "status": "open-static",
+      "note": "Fonction common.js relue : plage 1..13 encore présente; hors périmètre bloquant BN4.",
+      "evidence": [
+        {
+          "path": "matrix/lib/common.js",
+          "unchangedSinceInitialAudit": false,
+          "previousLine": 352,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/common.js"
+        }
+      ]
+    },
+    {
+      "id": "A24",
+      "title": "Domaines absents",
+      "status": "open-static",
+      "note": "Darknet absent de main mais existe dans PR7; Grafting et route complète BN4 restent sans exécuteur intégré.",
+      "evidence": [
+        {
+          "path": "manifest.json",
+          "unchangedSinceInitialAudit": false,
+          "previousLine": 12,
+          "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/manifest.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "baselineSha": "2e6977cc15d3aea05bdc2c80b9073b963c76108e",
+  "specificationFile": "MatrixOS-UI-SPECIFICATION.md",
+  "tasks": [
+    {
+      "id": "UI01",
+      "title": "Fondations et console essentielle",
+      "dependsOn": [
+        "L00",
+        "L01",
+        "L02"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Dépendances : L00, L01, L02.** Créer tokens, formatters, sélecteurs, bandeau santé, reçus, états absents/périmés et Vue d’ensemble. Brancher la console React actuelle via une façade. Mettre l’ancienne UI derrière un choix de configuration réversible, dont le nom sera figé en PR. Ajouter le mode texte de secours.\n\n**Acceptation :** les fixtures chargement, actif, déconnecté, périmé, RAM insuffisante et pause partielle sont correctement rendues ; aucun callback React ne touche `ns` ; aucune donnée simulée dans le runtime ; RAM mesurée dans 3.0.1 aux paliers prévus. **Retour :** restaurer l’ancienne UI sans migration de l’état métier."
+    },
+    {
+      "id": "UI02",
+      "title": "Réseau, services et décisions",
+      "dependsOn": [
+        "UI01",
+        "L03",
+        "L07"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Dépendances : UI01, L03, L07.** Livrer les listes et panneaux de détails, preuves des décisions et raisons d’admission. Afficher owners/leases lorsque présents ; ne pas déduire un nombre de workers depuis une division approximative de la RAM.\n\n**Acceptation :** allocation fragmentée, processus étranger, budget refusé, service sans progrès, capacité absente et pause en charge ont des raisons compréhensibles ; toutes les actions affichées correspondent à un adaptateur existant. **Retour :** désactiver les nouveaux écrans, conserver Vue d’ensemble et l’ancien diagnostic."
+    },
+    {
+      "id": "UI03",
+      "title": "Client navigateur et commandes",
+      "dependsOn": [
+        "UI01",
+        "L08",
+        "L09"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Dépendances : UI01, L08, L09.** Servir le client et sa session distincte, consommer les contrats existants, connecter pause/reprise/objectif/boost, suivre les reçus et le rapprochement après panne. Réutiliser les sélecteurs ; garder les composants Netscript sans dépendance Web.\n\n**Acceptation :** authentification, session expirée, CSRF, double clic, réponse perdue après acceptation, rejeu de même identifiant et changement d’epoch testés ; aucun appel RFA direct ; aucune clé Actions dans le navigateur. Essai réel prouvant qu’une pause demandée puis confirmée correspond aux processus de jeu. **Retour :** retirer le client navigateur ; la console et l’autopilot continuent localement."
+    },
+    {
+      "id": "UI04",
+      "title": "Progression, campagne et finition",
+      "dependsOn": [
+        "UI01",
+        "UI03",
+        "L10",
+        "L11"
+      ],
+      "status": "planned-not-implemented",
+      "specification": "**Dépendances MVP : UI01, UI03, L10, L11.** Livrer Progression en lecture, Campagne et Journal corrélés, choix publiés et accusés de scène. Ajouter les contrôles d’augmentations seulement après L12 et contrats associés. L02 fournit les états nécessaires au journal initial ; ne pas attendre tous les domaines tardifs pour rendre la chronologie utile.\n\n**Acceptation :** BN1 ne déclenche pas l’ouverture BN4 ; aucun secret GM dans payload, bundle, erreur ou journal joueur ; étapes manuelles encore visibles si exécuteur absent ; prix/achats en file correctement distingués ; clavier, zoom, modes clair/sombre et faibles RAM contrôlés. **Retour :** lecture seule et masquage des vues avancées, conservation des événements déjà validés."
+    }
+  ]
+}

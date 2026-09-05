@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "releaseTarget": "rp-bn4-v1.0.0",
+  "currentStage": "audited-integration-foundation",
+  "rpReady": false,
+  "gameDeploymentPerformed": false,
+  "allControlAdaptersImplemented": false,
+  "dashboardNativeProof": "evidence/native-checks.json",
+  "releaseGates": [
+    {
+      "id": "G1",
+      "requirement": "Tous les P0/P1 des chemins activés clos avec preuves",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G2",
+      "requirement": "Catalogue obligatoire installé, autorisé et testé dans BN4",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G3",
+      "requirement": "Tous les scénarios S01-S20 passés sur SHA final",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G4",
+      "requirement": "Parcours complet BN4, au moins un reset augmentation, sans édition de scripts",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G5",
+      "requirement": "8 heures de stabilité en charge, trois reprises contrôlées et aucun incident non réconcilié",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G6",
+      "requirement": "100 tours de dialogue/choix, zéro chiffre inventé, option inexécutable ou fuite de révélation",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G7",
+      "requirement": "Installation, palier, canal, mise à jour et rollback vérifiés",
+      "status": "not-run",
+      "evidence": []
+    },
+    {
+      "id": "G8",
+      "requirement": "GPT réel connecté : ordre jusqu'à postcondition avec journal",
+      "status": "not-run",
+      "evidence": []
+    }
+  ]
+}

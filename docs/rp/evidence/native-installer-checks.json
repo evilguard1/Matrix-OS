@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "scope": "Install and restore executed by real Netscript in isolated Bitburner 3.0.1; no user save access",
+  "installerSha256": "5c58f1f0bf02f8cdc52fe6c9dee935d2a2b026f4bba3db76deb3f1d77a3d3548",
+  "dashboardSha256": "18885fb73e61940ced4305a1669c70b2a67b40539cd23ee7c9edb5a13c2d107a",
+  "originalLease": {
+    "service": "dashboard",
+    "updated": 1788606562825,
+    "pid": 1,
+    "phase": "alive",
+    "ticks": 1
+  },
+  "installedLease": {
+    "service": "dashboard",
+    "updated": 1788606564459,
+    "pid": 3,
+    "phase": "alive",
+    "ticks": 1
+  },
+  "installed": {
+    "fingerprint": "90990:c9060d0b",
+    "installerRam": 4.25,
+    "dashboardRam": 1.7,
+    "candidateGone": true,
+    "backup": true,
+    "config": {
+      "masterEnabled": true,
+      "automation": {
+        "hacking": true
+      },
+      "ui": {
+        "matrixRain": false,
+        "refreshMs": 750
+      }
+    },
+    "pids": [
+      {
+        "filename": "matrix/dashboard.jsx",
+        "threads": 1,
+        "args": [],
+        "pid": 3,
+        "temporary": false
+      }
+    ]
+  },
+  "restored": {
+    "fingerprint": "52512:9e9fcbfe",
+    "installerRam": 4.25,
+    "dashboardRam": 1.7,
+    "candidateGone": true,
+    "backup": true,
+    "config": {
+      "masterEnabled": true,
+      "automation": {
+        "hacking": true
+      },
+      "ui": {
+        "matrixRain": false,
+        "refreshMs": 750
+      }
+    },
+    "pids": [
+      {
+        "filename": "matrix/dashboard.jsx",
+        "threads": 1,
+        "args": [],
+        "pid": 6,
+        "temporary": false
+      }
+    ]
+  }
+}
