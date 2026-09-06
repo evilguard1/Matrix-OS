@@ -46,6 +46,7 @@ const MATRIX_PROGRAMS = new Set([
     "matrix/services/bladeburner.js",
     "matrix/services/corporation.js",
     "matrix/workers/early.js",
+    "matrix/workers/backdoor-install.js",
     "matrix/workers/hack.js",
     "matrix/workers/grow.js",
     "matrix/workers/weaken.js",

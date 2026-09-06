@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.3",
+  "version": "1.11.0-rp.4",
   "masterEnabled": true,
   "mode": "balanced",
   "ui": {
@@ -83,7 +83,9 @@
       13,
       13,
       13
-    ]
+    ],
+    "autoBackdoors": true,
+    "maxBackdoorTimeMs": 120000
   },
   "earlyAutomation": {
     "enabled": true,

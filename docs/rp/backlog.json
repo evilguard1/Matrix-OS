@@ -88,7 +88,7 @@
         "L03",
         "L07"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "files": [
         "matrix/start.js",
         "matrix/lib/capabilities.js",
@@ -98,7 +98,13 @@
       ],
       "implementation": "Registre unique : API permise, fichier installé, RAM mesurée, service vivant, progrès et test de postcondition. Leases exclusives pour activité joueur, faction sleeve et backdoor. Drainage H/G/W, partage, Go, worm, Stanek et tâches persistantes sous protocole commun.",
       "acceptance": "Pause pendant charge : aucune nouvelle admission après acquittement; tâches possédées finissent/cessent selon policy; processus étranger intact; reprendre ne crée pas de doublons. Singularity disponible sans exécuteur n'est jamais READY.",
-      "rollback": "Lecture seule possible; expiration des leases sans voler une activité manuelle inconnue."
+      "rollback": "Lecture seule possible; expiration des leases sans voler une activité manuelle inconnue.",
+      "candidateEvidence": [
+        "matrix/lib/terminal-lease.js",
+        "tests/rp-backdoors.mjs",
+        "docs/rp/evidence/backdoors/native.json"
+      ],
+      "remaining": "Seul le verrou de la ressource terminal est livre, avec protection des resets participants. Capacites operationnelles, pause/drainage global et arbitre de toutes les activites restent ouverts."
     },
     {
       "id": "RP04",
@@ -146,9 +152,11 @@
       "rollback": "Suspendre le plan, libérer ses leases, conserver les étapes déjà accomplies; aucune annulation fictive des achats.",
       "candidateEvidence": [
         "tests/rp-singularity.mjs",
-        "docs/rp/evidence/rp05/native.json"
+        "docs/rp/evidence/rp05/native.json",
+        "tests/rp-backdoors.mjs",
+        "docs/rp/evidence/backdoors/native.json"
       ],
-      "remaining": "Voyage, entrainement, crimes, companies, backdoors et plan durable de route avec RP03/RP04. Le decoupage et le cycle de faction BN4 64 Go sont implementes; pas de recette de campagne complete.",
+      "remaining": "Voyage, entrainement, crimes, companies et plan durable avec RP03/RP04. Routes de quatre backdoors implementees; seule CyberSec apres interruption/reprise a sa recette native. Pas de campagne complete.",
       "earlyAutonomyEvidence": [
         "matrix/early-progression.js",
         "tests/rp-early.mjs",

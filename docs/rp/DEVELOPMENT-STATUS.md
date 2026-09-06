@@ -1,4 +1,10 @@
-# Candidat 1.11.0-rp.3 — 5 septembre 2026
+# Candidat 1.11.0-rp.4 — 5 septembre 2026
+
+## Nouveau : accès aux factions de hacking
+
+Le [parcours backdoors](BACKDOOR-ROUTES.md) ajoute une neuvième étape au cycle Singularity. Le contrôleur prépare une cible admissible parmi les quatre factions de hacking, lance un worker natif isolé, rend le terminal à home et vérifie la postcondition. Les deux processus consomment ensemble 21,25 Go en BN4; le maximum de réserve de 23,1 Go ne change pas.
+
+Un verrou terminal durable protège contrôleur et worker, y compris un worker orphelin. Les resets MatrixOS attendent sa libération. La recette native interrompt l'installation de CSEC puis reprend par le superviseur : backdoor, invitation, adhésion CyberSec et travail de faction sont réellement exécutés. Les compétences et l'accès root sont synthétiques; la sauvegarde Steam reste intacte. RP03 n'est pas terminé : ce verrou ne constitue pas encore l'arbitre général d'activités ou la pause globale.
 
 ## Nouveau : départ automatique à faible RAM
 
@@ -20,7 +26,7 @@ Le test [natif RP05](evidence/rp05/native.json) exécute le superviseur, le hack
 
 La Red Pill coûte 0 $ dans 3.0.1. Le registre autorise désormais explicitement les augmentations gratuites, avec reçu et respect de la pause. Le test natif ajoute ensuite une appartenance Daedalus et 2,5 millions de réputation synthétiques pour vérifier un véritable achat gratuit : un reçu, aucun débit, augmentation en attente et non installée. Aucun reset réel n'est effectué par cette recette.
 
-La surveillance après installation reste ouverte dans RP02. Ce candidat donne priorité au déblocage de la progression à faible RAM. Les voyages, entraînements, crimes, entreprises, backdoors et plans durables de route demeurent à implémenter avec RP03–RP05.
+La surveillance après installation reste ouverte dans RP02. Ce candidat donne priorité au déblocage de la progression à faible RAM. Les voyages, entraînements, crimes, entreprises et plans durables de route demeurent à implémenter avec RP03–RP05.
 
 ## Fondations conservées depuis 1.11.0-rp.1
 

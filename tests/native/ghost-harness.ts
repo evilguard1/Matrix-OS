@@ -6,6 +6,8 @@ import { Router } from "./ui/GameRoot";
 import { Page } from "./ui/Router";
 import { Settings } from "./Settings/Settings";
 import { Factions } from "./Faction/Factions";
+import { GetServer } from "./Server/AllServers";
+import { Server } from "./Server/Server";
 Settings.RemoteFileApiPort = 0;
 Settings.RemoteFileApiReconnectionDelay = 0;
 Object.assign(globalThis, { __ghostHarness: {
@@ -19,6 +21,18 @@ Object.assign(globalThis, { __ghostHarness: {
   read: (name: string) => Player.getHomeComputer().textFiles.get(name as never)?.text ?? "",
   factions: (names: typeof Player.factions) => { Player.factions = names; },
   factionRep: (name: keyof typeof Factions, amount: number) => { Factions[name].playerReputation = amount; },
+  prepareBackdoor: () => {
+    Player.gainHackingExp(1e7);
+    const server = GetServer("CSEC");
+    if (!(server instanceof Server)) throw new Error("missing CSEC");
+    server.hasAdminRights = true;
+    server.hackDifficulty = 1;
+    return {level:Player.skills.hacking, required:server.requiredHackingSkill};
+  },
+  backdoorState: () => {
+    const server = GetServer("CSEC");
+    return {installed:server instanceof Server && server.backdoorInstalled, currentServer:Player.getCurrentServer().hostname, factions:[...Player.factions]};
+  },
   ram: () => {
     const home = Player.getHomeComputer();
     return [...home.scripts.values()].map(script => {

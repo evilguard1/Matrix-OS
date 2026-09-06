@@ -1,4 +1,4 @@
-> **Branche RP — candidat 1.11.0-rp.3.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
+> **Branche RP — candidat 1.11.0-rp.4.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
 
 # MATRIX-OS
 
@@ -48,6 +48,10 @@ run install.js --fresh
 | 256 GB+ | Advanced | Bladeburner and corporation managers, subject to API access and RAM |
 
 Stage changes are automatic. When Home crosses a boundary, the current process downloads the newly eligible manifest files and restarts into the next stage. Services also check their exact script RAM before launch, so a Source-File API with a large RAM multiplier waits until it actually fits.
+
+## Autonomous hacking faction access
+
+From 64 GB, Singularity can install the four hacking-faction backdoors, join invitations and work toward augmentations. The controller preserves manual terminal connections, journals the native result and retries interrupted work after ownership clears. See [implementation, tests and limits](docs/rp/BACKDOOR-ROUTES.md).
 
 ## BN4 start with 32 GB
 

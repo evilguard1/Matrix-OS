@@ -11,7 +11,7 @@ const driver=await load('matrix/services/singularity.js'), lib=await load('matri
 function fixture(){
  const files=new Map(),reset={currentNode:4,lastNodeReset:1,lastAugReset:2,ownedSF:new Map()},launched=[];
  const ns={pid:1,args:['cycle'],getResetInfo:()=>reset,getServerMaxRam:()=>64,getServerUsedRam:()=>39,
-  getScriptRam:()=>23,read:p=>files.get(p)??'',write:(p,v)=>files.set(p,v),ps:()=>[],
+  getScriptRam:p=>p.includes('backdoor-install')?1:p.includes('backdoors.js')?10:23,read:p=>files.get(p)??'',write:(p,v)=>files.set(p,v),ps:()=>[],
   run(file,opts,cycle){launched.push(file);const name=file.split('/').at(-1).slice(0,-3);files.set('/matrix/state/singularity-receipt.txt',JSON.stringify({cycle,task:name,resetEpoch:'4:1:2',status:'done'}));return launched.length;}};
  return {ns,files,launched,reset};
 }
@@ -19,7 +19,7 @@ function fixture(){
  const f=fixture();assert.equal(progressionRam(f.ns),23);
  f.reset.currentNode=1;assert.equal(progressionRam(f.ns),0);
  f.reset.ownedSF.set(4,1);f.ns.getScriptRam=()=>320;assert.equal(progressionRam(f.ns),0);
- f.ns.getServerMaxRam=()=>512;assert.equal(progressionRam(f.ns),320);
+ f.ns.getServerMaxRam=()=>1024;assert.equal(progressionRam(f.ns),640);
 }
 {
  const f=fixture();assert.equal((await driver.runCycle(f.ns,'cycle')).status,'online');assert.equal(f.launched.length,SINGULARITY_TASKS.length);

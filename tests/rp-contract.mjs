@@ -74,6 +74,16 @@ assert.equal(createHash('sha256').update(fs.readFileSync('install.js', 'utf8').r
 assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
 assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
 const progressionProof = read('evidence/rp05/native.json');
+const backdoorProof = read('evidence/backdoors/native.json');
+assert.equal(backdoorProof.status,'passed');
+assert.equal(backdoorProof.pending.installed,false);
+assert.equal(backdoorProof.state.installed,true);
+assert.ok(backdoorProof.state.factions.includes('CyberSec'));
+assert.equal(backdoorProof.singularity.currentWork.factionName,'CyberSec');
+assert.ok(backdoorProof.workerRam + backdoorProof.childRam < 24);
+for(const [file,hash] of Object.entries(backdoorProof.hashes)) {
+ assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,`Backdoor native proof no longer matches ${file}`);
+}
 const earlyProof=read('evidence/early/native.json');
 assert.equal(earlyProof.status,'passed');
 assert.deepEqual(earlyProof.results.map(x=>x.initialRam),[16,32]);

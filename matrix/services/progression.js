@@ -1,5 +1,6 @@
 import { config, event, plannedNextBitNode, writeState, readJson } from "/matrix/lib/common.js";
 import { resetEpoch, freshState } from "/matrix/lib/state.js";
+import { terminalLease } from "/matrix/lib/terminal-lease.js";
 
 const WORLD_DAEMON = "w0r1d_d43m0n";
 
@@ -34,8 +35,9 @@ export async function main(ns) {
                 autoDestroy: cfg.progression?.autoDestroyWorldDaemon === true,
             });
 
-            if (ready && cfg.progression?.autoDestroyWorldDaemon === true) {
+            if (ready && cfg.progression?.autoDestroyWorldDaemon === true && !terminalLease(ns)) {
                 await event(ns, "progression", `Entering BitNode ${nextNode}`, "success");
+                if (terminalLease(ns) || config(ns).masterEnabled === false) continue;
                 ns.singularity.destroyW0r1dD43m0n(nextNode, "/matrix/kernel.js");
                 return;
             }

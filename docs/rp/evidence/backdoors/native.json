@@ -1,66 +1,77 @@
 {
   "status": "passed",
-  "scope": "Official isolated Bitburner 3.0.1 engine. Synthetic BN4, CyberSec membership, 64GB and $1000. Real supervisor, hacking, Ghost and all nine Singularity tasks over two cycles. No Steam save or actual BN1-to-BN4 transition. RAM peak is sampled, not continuous.",
   "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
-  "peakObservedRam": 48.6,
-  "pollingMs": 250,
-  "completedCycles": 2,
-  "dispatcherRam": 4,
-  "workers": [
-    {
-      "file": "matrix/workers/singularity/catalog.js",
-      "ram": 23.1,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/home.js",
-      "ram": 7.3,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/infrastructure.js",
-      "ram": 14.35,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/observe.js",
-      "ram": 20.15,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/purchase.js",
-      "ram": 21.3,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/reset.js",
-      "ram": 12.8,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/valuation.js",
-      "ram": 14.7,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/work.js",
-      "ram": 7.1,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/backdoors.js",
-      "ram": 10.65,
-      "error": null
-    }
-  ],
+  "scope": "Isolated official 3.0.1. Synthetic BN4/64GB/$1000, hacking XP and CSEC root/security. Real native backdoor interrupted then restarted; CyberSec invitation/join and faction work are not injected. No player Steam save or complete node route.",
+  "preparation": {
+    "level": 315,
+    "required": 52
+  },
+  "workerRam": 10.65,
+  "childRam": 10.6,
+  "interruptedPid": 2,
+  "pending": {
+    "installed": false,
+    "currentServer": "home",
+    "factions": []
+  },
   "state": {
-    "service": "singularity",
-    "updated": 1788663911397,
+    "installed": true,
+    "currentServer": "home",
+    "factions": [
+      "CyberSec"
+    ]
+  },
+  "route": {
+    "status": "succeeded",
+    "target": "CSEC",
+    "faction": "CyberSec",
+    "routes": [
+      {
+        "target": "CSEC",
+        "faction": "CyberSec",
+        "requiredLevel": 52,
+        "level": 315,
+        "durationMs": 2157.5342465753424,
+        "status": "installed"
+      },
+      {
+        "target": "avmnite-02h",
+        "faction": "NiteSec",
+        "requiredLevel": 210,
+        "level": 315,
+        "durationMs": 3510.27397260274,
+        "status": "needs-root"
+      },
+      {
+        "target": "I.I.I.I",
+        "faction": "The Black Hand",
+        "requiredLevel": 353,
+        "level": 315,
+        "durationMs": 4734.58904109589,
+        "status": "needs-root"
+      },
+      {
+        "target": "run4theh111z",
+        "faction": "BitRunners",
+        "requiredLevel": 545,
+        "level": 315,
+        "durationMs": 6378.424657534247,
+        "status": "needs-root"
+      }
+    ],
+    "lease": "4:1788663903529:1788663903529:9:1788663908367",
     "schemaVersion": 1,
-    "resetEpoch": "4:1788663895196:1788663895196",
-    "revision": 1788663911397,
+    "resetEpoch": "4:1788663903529:1788663903529",
+    "updated": 1788663910546
+  },
+  "singularity": {
+    "service": "singularity",
+    "updated": 1788663910963,
+    "schemaVersion": 1,
+    "resetEpoch": "4:1788663903529:1788663903529",
+    "revision": 1788663910963,
     "status": "online",
-    "cycle": "4:1788663895196:1788663895196:6:1788663911010",
+    "cycle": "4:1788663903529:1788663903529:8:1788663908366",
     "queuedAugs": 0,
     "installedCount": 0,
     "daedalusAugsRequirement": 30,
@@ -70,14 +81,14 @@
     "goal": {
       "faction": "CyberSec",
       "augmentation": "Neurotrainer I",
-      "rep": 0.04348717948717946,
+      "rep": 0.041666666666666664,
       "need": 1000,
       "price": 4000000,
       "favor": 0
     },
     "currentWork": {
       "type": "FACTION",
-      "cyclesWorked": 53,
+      "cyclesWorked": 0,
       "factionWorkType": "hacking",
       "factionName": "CyberSec",
       "nextCompletion": {}
@@ -88,21 +99,58 @@
     "ramUpgradeCost": 31861958.97004852,
     "hasRedPill": false,
     "redPillQueued": false,
-    "invitations": 0,
+    "invitations": 1,
     "purchased": 0,
     "donated": 0
   },
-  "dispatch": {
-    "service": "singularity-dispatch",
-    "updated": 1788663911506,
-    "status": "online",
-    "cycle": "4:1788663895196:1788663895196:6:1788663911010"
+  "report": {
+    "homeRam": 64,
+    "usedRam": 37.95,
+    "running": [
+      {
+        "pid": 3,
+        "filename": "matrix/start.js",
+        "logEntries": 0,
+        "textLogs": []
+      },
+      {
+        "pid": 4,
+        "filename": "matrix/services/hacking.js",
+        "logEntries": 0,
+        "textLogs": []
+      },
+      {
+        "pid": 5,
+        "filename": "matrix/dashboard.jsx",
+        "logEntries": 1,
+        "textLogs": []
+      },
+      {
+        "pid": 6,
+        "filename": "matrix/services/telemetry.js",
+        "logEntries": 0,
+        "textLogs": []
+      },
+      {
+        "pid": 7,
+        "filename": "matrix/services/coordinator.js",
+        "logEntries": 0,
+        "textLogs": []
+      },
+      {
+        "pid": 8,
+        "filename": "matrix/services/singularity.js",
+        "logEntries": 0,
+        "textLogs": []
+      }
+    ],
+    "lease": "{\"service\":\"dashboard\",\"updated\":1788663909147,\"pid\":5,\"phase\":\"alive\",\"ticks\":1}"
   },
   "errors": [],
   "hashes": {
     "matrix/VERSION.txt": "7886560a2da18c734be69591021e99a776f7ef1e0d427624c6f326243fa10ebc",
     "matrix/bootstrap.js": "9fec03060e70ebf9393a0c989f6fd2ef949ca52bbc40fa7c300f524e5b3d5ce7",
-    "matrix/config.json": "c2b3159e27ee42a60ba16260895de6a891e0526d824f0fbc5fbc85292301883a",
+    "matrix/config.json": "c73c9b9b59df7463566c29f4c24a067ae72d72c442f4ed5e8c6e12d3ee376b97",
     "matrix/kernel.js": "ac0e7e34613c739524ab77e0cc7367ccdc9b583ff71b111d75bf60ace74cf9ab",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
@@ -171,54 +219,5 @@
     "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
     "matrix/workers/singularity/backdoors.js": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87",
     "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b"
-  },
-  "redPill": {
-    "scope": "Synthetic Daedalus membership and 2.5M reputation, native free purchase, augmentation installation disabled by fixture.",
-    "state": {
-      "service": "singularity",
-      "updated": 1788663921880,
-      "schemaVersion": 1,
-      "resetEpoch": "4:1788663895196:1788663895196",
-      "revision": 1788663921880,
-      "status": "online",
-      "cycle": "4:1788663895196:1788663895196:6:1788663921510",
-      "queuedAugs": 1,
-      "installedCount": 0,
-      "daedalusAugsRequirement": 30,
-      "redPillPrice": 0,
-      "redPillReqRep": 2500000,
-      "redPillRep": 2500000,
-      "goal": null,
-      "currentWork": {
-        "type": "FACTION",
-        "cyclesWorked": 106,
-        "factionWorkType": "hacking",
-        "factionName": "CyberSec",
-        "nextCompletion": {}
-      },
-      "hasTor": false,
-      "missingPrograms": [],
-      "programCosts": 0,
-      "ramUpgradeCost": 31861958.97004852,
-      "hasRedPill": false,
-      "redPillQueued": true,
-      "invitations": 0,
-      "purchased": 1,
-      "donated": 0
-    },
-    "receipt": {
-      "id": "4:1788663895196:1788663895196:1",
-      "key": null,
-      "owner": "augmentations",
-      "target": "The Red Pill",
-      "cost": 0,
-      "before": 1000,
-      "pid": 29,
-      "updated": 1788663921727,
-      "status": "spent",
-      "after": 1000,
-      "debit": 0,
-      "error": null
-    }
   }
 }

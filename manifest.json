@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.3",
+  "version": "1.11.0-rp.4",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "182f6ed0700a0daaaaa9fdf5afebd99dc272e014583e48e6b06505efb5e7082d"
+      "sha256": "7886560a2da18c734be69591021e99a776f7ef1e0d427624c6f326243fa10ebc"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,7 +40,7 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "84b9082df4cbae207a2403412815a43210672638b87b22b54def11602173fd2d"
+      "sha256": "c73c9b9b59df7463566c29f4c24a067ae72d72c442f4ed5e8c6e12d3ee376b97"
     },
     {
       "path": "matrix/kernel.js",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "8f891990d33f46008ad4304fe9aa4a41a64c3c6e10d7f74f9a68eb01cafcd528"
+      "sha256": "39eac223d556258c29d44381e795d6acaa394c4282028f72af6116871572fd4b"
     },
     {
       "path": "matrix/lib/network.js",
@@ -260,7 +260,7 @@
     {
       "path": "matrix/services/progression.js",
       "stage": "full",
-      "sha256": "62c4642a1ad291242b2918cbfc6a4ce6584dbd7facf7abae281b8c3e94ed6753"
+      "sha256": "a72ae8bd586701eb423c08092aa6d144cce5bc6f4a42149479892ec3a8853005"
     },
     {
       "path": "matrix/services/coordinator.js",
@@ -270,7 +270,7 @@
     {
       "path": "matrix/services/singularity.js",
       "stage": "full",
-      "sha256": "382ac01f76f7f42bcd1eacc4358ac32471a2faeb8aa8af7d14186eb4de43a90a"
+      "sha256": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d"
     },
     {
       "path": "matrix/services/gang.js",
@@ -310,7 +310,7 @@
     {
       "path": "matrix/lib/progression-ram.js",
       "stage": "full",
-      "sha256": "d9d9287a794ceff0664ba953932a87f75f5e37520d16b1f6f759979721bd59ef"
+      "sha256": "88e520e55ef7e708758740245af838041ccf6122059b927c9130067ec99ab2ac"
     },
     {
       "path": "matrix/lib/singularity-tasks.js",
@@ -345,7 +345,7 @@
     {
       "path": "matrix/workers/singularity/reset.js",
       "stage": "full",
-      "sha256": "00863062f458e289e816f95d7815deabf6fa27db228a23b45fa0079bb821c536"
+      "sha256": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d"
     },
     {
       "path": "matrix/workers/singularity/valuation.js",
@@ -361,6 +361,26 @@
       "path": "matrix/early-progression.js",
       "stage": "early",
       "sha256": "0c2a4f10a2d4038ee220555124566f712c2ad7360df826c14974d375d8c95c81"
+    },
+    {
+      "path": "matrix/lib/terminal-lease.js",
+      "stage": "full",
+      "sha256": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527"
+    },
+    {
+      "path": "matrix/lib/backdoor-route.js",
+      "stage": "full",
+      "sha256": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a"
+    },
+    {
+      "path": "matrix/workers/singularity/backdoors.js",
+      "stage": "full",
+      "sha256": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87"
+    },
+    {
+      "path": "matrix/workers/backdoor-install.js",
+      "stage": "full",
+      "sha256": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b"
     }
   ]
 }

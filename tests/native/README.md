@@ -16,3 +16,5 @@ RP02 starts with only the installer and a protected test config. It intercepts r
 The harness changes RAM, cash and node/SF fields for test purposes. Those synthetic configurations do not simulate completing a node, applying every node multiplier or acquiring Source-Files. No end-to-end campaign certification follows from these tests.
 
 7. Run `node tests/native/early.cjs` to verify 16 → 32 → 64 GB and 32 → 64 GB from early-only files, including native TOR/BruteSSH purchases at 32 GB and automatic pinned full-stage install/start. The harness supplies cash for speed; the scripts perform the actual purchases. This proves transitions, not time to earn money. Output: `docs/rp/evidence/early/native.json`.
+
+8. Run `node tests/native/backdoors.cjs` for native CSEC interruption/retry, terminal return, actual invitation/join and faction work. The harness supplies hacking XP and CSEC root/security, but does not supply its backdoor or membership. Output: `docs/rp/evidence/backdoors/native.json`.

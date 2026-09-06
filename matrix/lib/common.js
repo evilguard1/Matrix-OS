@@ -10,7 +10,7 @@ const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.11.0-rp.3",
+    version: "1.11.0-rp.4",
     masterEnabled: true,
     earlyAutomation: { enabled: true, buyPrograms: true },
     mode: "balanced",
@@ -43,6 +43,7 @@ const DEFAULT_CONFIG = {
         maxTargets: 1024, ramAwareBatchShapes: true, waveReserveFraction: 0.05, maxPrepTargets: 20,
     },
     progression: {
+        autoBackdoors: true, maxBackdoorTimeMs: 120000,
         autoInstallAugmentations: true, minQueuedAugsForReset: 5,
         forceResetAtQueuedAugs: 10, minMinutesBetweenResets: 35,
         autoDestroyWorldDaemon: false,

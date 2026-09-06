@@ -10,7 +10,10 @@ export async function runCycle(ns, cycle) {
     for (const name of SINGULARITY_TASKS) {
         const cfg = config(ns);
         if (cfg.masterEnabled === false || cfg.automation?.singularity === false) return { status: "paused" };
-        const file = singularityWorker(name), need = ns.getScriptRam(file, "home");
+        const file = singularityWorker(name);
+        const childRam = name === "backdoors" ? ns.getScriptRam("/matrix/workers/backdoor-install.js", "home") : 0;
+        const need = ns.getScriptRam(file, "home") + childRam;
+        if (name === "backdoors" && !(childRam > 0)) return {status:"not-installed",task:"backdoor-install"};
         if (!(need > 0)) return { status: "not-installed", task: name };
         if (ns.ps("home").some(p => normal(p.filename).startsWith("matrix/workers/singularity/"))) return { status: "waiting-worker" };
         const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
