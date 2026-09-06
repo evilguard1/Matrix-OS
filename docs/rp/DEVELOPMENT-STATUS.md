@@ -1,4 +1,8 @@
-# Candidat 1.11.0-rp.2 — 5 septembre 2026
+# Candidat 1.11.0-rp.3 — 5 septembre 2026
+
+## Nouveau : départ automatique à faible RAM
+
+Le [contrôleur early](EARLY-AUTOMATION.md) prend le relais après le déploiement du botnet, dès 16 Go en BN4. Il achète les programmes bon marché, protège l’épargne destinée à home et double la RAM jusqu’au seuil de 64 Go. Le passage au moteur complet reprend le SHA installé et conserve les préférences. Les tests natifs couvrent 16 → 32 → 64 Go, 32 → 64 Go, TOR, BruteSSH et le lancement effectif de Ghost. Les fonds sont synthétiques : aucun délai de revenus ni fonctionnement sur la sauvegarde Steam n’est certifié.
 
 ## Nouvelle étape : progression BN4 à 64 Go
 

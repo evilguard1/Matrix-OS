@@ -14,3 +14,5 @@ RP01 loads the distributed code, overrides only the economy config for a determi
 RP02 starts with only the installer and a protected test config. It intercepts repository requests with the current checkout's LF content under a synthetic immutable SHA. Five isolated contexts verify native downloads, hashing, file writes, preserved config and compiled payloads. It uses `--no-start`; subsequent service health is outside this proof.
 
 The harness changes RAM, cash and node/SF fields for test purposes. Those synthetic configurations do not simulate completing a node, applying every node multiplier or acquiring Source-Files. No end-to-end campaign certification follows from these tests.
+
+7. Run `node tests/native/early.cjs` to verify 16 → 32 → 64 GB and 32 → 64 GB from early-only files, including native TOR/BruteSSH purchases at 32 GB and automatic pinned full-stage install/start. The harness supplies cash for speed; the scripts perform the actual purchases. This proves transitions, not time to earn money. Output: `docs/rp/evidence/early/native.json`.

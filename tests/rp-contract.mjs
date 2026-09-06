@@ -74,6 +74,14 @@ assert.equal(createHash('sha256').update(fs.readFileSync('install.js', 'utf8').r
 assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
 assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
 const progressionProof = read('evidence/rp05/native.json');
+const earlyProof=read('evidence/early/native.json');
+assert.equal(earlyProof.status,'passed');
+assert.deepEqual(earlyProof.results.map(x=>x.initialRam),[16,32]);
+assert.ok(earlyProof.results.every(x=>x.controllerRam<=16 && x.report.homeRam===64 && x.errors.length===0));
+assert.deepEqual(earlyProof.results[1].programReceipts.map(x=>x.target),['TOR','BruteSSH.exe']);
+for(const [file,hash] of Object.entries(earlyProof.hashes)){
+ assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,`Early native proof no longer matches ${file}`);
+}
 assert.equal(progressionProof.status,'passed');
 assert.ok(progressionProof.completedCycles >= 2);
 assert.ok(progressionProof.workers.every(w => w.ram < 24 && !w.error));

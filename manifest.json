@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.2",
+  "version": "1.11.0-rp.3",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "e2ced15a38248e13136181244fbcdcec1a21808f733bc3140d597a7500dff153"
+      "sha256": "182f6ed0700a0daaaaa9fdf5afebd99dc272e014583e48e6b06505efb5e7082d"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,12 +40,12 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "59e6ca09ce0cdddb9d9e7f7e4f04d3d9d64ad9d85af6b44605268b51715f6541"
+      "sha256": "84b9082df4cbae207a2403412815a43210672638b87b22b54def11602173fd2d"
     },
     {
       "path": "matrix/kernel.js",
       "stage": "bootstrap",
-      "sha256": "4902f749d7d0804972e9b9f5f158a64b24159e242311e5f34729d42d40a6d3b8"
+      "sha256": "ac0e7e34613c739524ab77e0cc7367ccdc9b583ff71b111d75bf60ace74cf9ab"
     },
     {
       "path": "matrix/lib/stages.js",
@@ -60,7 +60,7 @@
     {
       "path": "matrix/early.js",
       "stage": "early",
-      "sha256": "90cf5c252ab44df4f992f18faf0f6189cde1841d1be33f4c49cf39ce099a5dc1"
+      "sha256": "e76fca4b8e9153006ddb0456e124ec45aa1d97da95b627d0ef7dcb4bf252c040"
     },
     {
       "path": "matrix/workers/early.js",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "4958fd4281f7a827fbe9061f0e96e0539a7895ca8686fb6960b369c38b6457e7"
+      "sha256": "8f891990d33f46008ad4304fe9aa4a41a64c3c6e10d7f74f9a68eb01cafcd528"
     },
     {
       "path": "matrix/lib/network.js",
@@ -305,7 +305,7 @@
     {
       "path": "matrix/lib/budget-ledger.js",
       "stage": "early",
-      "sha256": "b1383f432031606c2d947cc89eca5167412dd0ece0c82438e4360c2fac84611b"
+      "sha256": "07c8b977a7242a295644433ae522a77df3f8b71ba5b97483e3c50b3e75b4eb45"
     },
     {
       "path": "matrix/lib/progression-ram.js",
@@ -356,6 +356,11 @@
       "path": "matrix/workers/singularity/work.js",
       "stage": "full",
       "sha256": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030"
+    },
+    {
+      "path": "matrix/early-progression.js",
+      "stage": "early",
+      "sha256": "0c2a4f10a2d4038ee220555124566f712c2ad7360df826c14974d375d8c95c81"
     }
   ]
 }

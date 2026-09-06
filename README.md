@@ -1,4 +1,4 @@
-> **Branche RP — candidat 1.11.0-rp.2.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
+> **Branche RP — candidat 1.11.0-rp.3.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
 
 # MATRIX-OS
 
@@ -42,12 +42,20 @@ run install.js --fresh
 | Home RAM | Active stage | Behavior |
 | ---: | --- | --- |
 | 8 GB | Bootstrap | One self-contained process, lite Matrix tail, network discovery/rooting, direct hack/grow/weaken, plus a self-propagating worm botnet on the wider network |
-| 16 GB | Early | Distributed early workers and lite Matrix tail |
-| 32 GB | Full | Root service, telemetry, adaptive HWGW scheduler, auto server buying, contracts, full React dashboard |
-| 64 GB | Operations | Stock trading; every Source-File manager runs as soon as it fits |
-| 128 GB+ | Advanced | Bladeburner and corporation managers |
+| 16–63 GB | Early | Botnet income; automatic home RAM and affordable port programs when Singularity and its actual RAM cost permit |
+| 64 GB | Full | Rooting, telemetry, HWGW, Ghost and sequential Singularity progression; other services wait for room |
+| 128 GB | Operations | Stock trading and additional managers as actual script RAM permits |
+| 256 GB+ | Advanced | Bladeburner and corporation managers, subject to API access and RAM |
 
 Stage changes are automatic. When Home crosses a boundary, the current process downloads the newly eligible manifest files and restarts into the next stage. Services also check their exact script RAM before launch, so a Source-File API with a large RAM multiplier waits until it actually fits.
+
+## BN4 start with 32 GB
+
+The early controller automatically seeds income workers, prioritizes the next home RAM upgrade and buys affordable TOR/port programs to open more of the network. It uses 14.15 GB in BN4. When home reaches 64 GB, it downloads the full stage from the already installed commit and starts Ghost and the supervisor. The existing cash reserve remains in force; this is not an ETA guarantee.
+
+Normal updates preserve config. Defaults `earlyAutomation.enabled` and `earlyAutomation.buyPrograms` are true. Master pause and disabled Singularity block purchases. Without Singularity access, or when its measured RAM cost cannot fit, the early worker engine remains available with manual purchase guidance. The 8 GB bootstrap does not gain this automatic buyer.
+
+See [the precise startup behavior and native proof](docs/rp/EARLY-AUTOMATION.md). The full RP campaign and custom GPT control remain under development.
 
 ## Automation coverage
 

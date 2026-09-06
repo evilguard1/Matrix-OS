@@ -1,12 +1,12 @@
 # MATRIX-OS · Ghost Node War · branche RP
 
-**État : intégration et préparation de la version jouable. La campagne complète n'est pas encore prête.** Base : MATRIX 1.10.2, `681045f8c45963e4569db1aed221e598c7cf50f6`. Audit du 5 septembre 2026; Bitburner 3.0.1, BN1 déclaré, départ RP au passage observé vers BN4.
+**État : intégration et préparation de la version jouable. La campagne complète n'est pas encore prête.** Base : MATRIX 1.10.2, `681045f8c45963e4569db1aed221e598c7cf50f6`. Audit du 5 septembre 2026; Bitburner 3.0.1, audit initial en BN1; le joueur a depuis déclaré son arrivée en BN4 avec 32 Go.
 
 La cible est une partie où le joueur donne des intentions et choisit des options déjà exécutables. Le moteur travaille entre les conversations; le GPT rend compte, propose, puis transmet les ordres autorisés. Aucun script généré pendant une scène.
 
 ## Lire dans cet ordre
 
-**Développement en cours : [candidat 1.11.0-rp.2, corrections et limites](DEVELOPMENT-STATUS.md).** Les constats de l'audit initial ci-dessous sont conservés comme historique; consulter aussi les statuts actualisés de `findings.json`.
+**Développement en cours : [candidat 1.11.0-rp.3, corrections et limites](DEVELOPMENT-STATUS.md).** Les constats de l'audit initial ci-dessous sont conservés comme historique; consulter aussi les statuts actualisés de `findings.json`.
 
 1. [Audit actuel](AUDIT.md) : code, branches, défauts et comparaison des propositions.
 2. [Contrat de jeu](PLAY-CONTRACT.md) : ce que signifie « suffisamment complet » et comment produire le briefing.
@@ -17,7 +17,7 @@ La cible est une partie où le joueur donne des intentions et choisit des option
 
 ## Ce que contient cette branche
 
-Le moteur issu de 1.10.2, le dashboard Ghost à neuf vues et le programme de sortie du développement. Le candidat 1.11.0-rp.2 ajoute le registre de dépenses, la publication canonique des réserves, des corrections boursières et de hacking, ainsi que le canal RP et l'installation avec hashes et restauration. Les deux PR expérimentales restent évaluées séparément.
+Le moteur issu de 1.10.2, le dashboard Ghost à neuf vues et le programme de sortie du développement. Le candidat 1.11.0-rp.3 ajoute le registre de dépenses, la publication canonique des réserves, des corrections boursières et de hacking, ainsi que le canal RP et l'installation avec hashes et restauration. Les deux PR expérimentales restent évaluées séparément.
 
 Le dashboard a été exécuté dans le moteur officiel 3.0.1 isolé : 1,7 Go, une fenêtre, installation et restauration testées. Ce contrôle utilise une télémétrie synthétique. Il ne prouve pas la campagne, le pont GPT ou le fonctionnement sur la sauvegarde Steam du joueur.
 
@@ -33,7 +33,7 @@ npm run preview:ghost
 
 Le dernier outil écrit `.preview/ghost.html`, une simulation locale utilisant les vrais composants Ghost. `node tools/package-ghost.mjs` génère l'installateur ciblé du dashboard dans `.preview/package`. Cloner avec l'historique : le test de restauration lit le dashboard original au SHA 1.10.2.
 
-**Cette branche n'est pas encore un canal de mise à jour du jeu.** L'installateur et l'updater standard suivent encore main. Télécharger install.js depuis cette branche ne suffit pas à installer son contenu. Le lot RP02 doit résoudre ce point avant tout déploiement complet RP. Aucun fichier de la partie Steam n'a été changé dans cet audit.
+**Cette branche dispose maintenant de son canal RP et de téléchargements liés au SHA installé.** RP02 reste ouvert pour la surveillance et la restauration après un échec de lancement. Aucun fichier de la partie Steam n’a été changé par ces tests.
 
 ## Sources d'autorité
 

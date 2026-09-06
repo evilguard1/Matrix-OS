@@ -148,7 +148,13 @@
         "tests/rp-singularity.mjs",
         "docs/rp/evidence/rp05/native.json"
       ],
-      "remaining": "Voyage, entrainement, crimes, companies, backdoors et plan durable de route avec RP03/RP04. Le decoupage et le cycle de faction BN4 64 Go sont implementes; pas de recette de campagne complete."
+      "remaining": "Voyage, entrainement, crimes, companies, backdoors et plan durable de route avec RP03/RP04. Le decoupage et le cycle de faction BN4 64 Go sont implementes; pas de recette de campagne complete.",
+      "earlyAutonomyEvidence": [
+        "matrix/early-progression.js",
+        "tests/rp-early.mjs",
+        "tests/native/early.cjs",
+        "docs/rp/evidence/early/native.json"
+      ]
     },
     {
       "id": "RP06",

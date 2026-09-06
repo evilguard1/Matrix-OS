@@ -6,7 +6,7 @@ export function stageForRam(homeRam) {
 
 // The dashboard is included: a kernel relaunch that left the old deck running
 // is how "multiple overlapping dashboard tails" comes back.
-const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/start.js", "/matrix/dashboard.jsx"];
+const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/early-progression.js", "/matrix/start.js", "/matrix/dashboard.jsx"];
 const SEED = "/matrix/worm/seed.js";
 
 export async function main(ns) {

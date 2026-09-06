@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.2",
+  "version": "1.11.0-rp.3",
   "masterEnabled": true,
   "mode": "balanced",
   "ui": {
@@ -84,5 +84,9 @@
       13,
       13
     ]
+  },
+  "earlyAutomation": {
+    "enabled": true,
+    "buyPrograms": true
   }
 }

@@ -21,6 +21,14 @@ export function spendingAllowance(ns, owner, target = null, cfg = config(ns)) {
     if (cfg.automation?.[service] === false) return 0;
     const cash = ns.getServerMoneyAvailable("home");
     if (!Number.isFinite(cash) || cash < 0) return 0;
+    if(ns.getServerMaxRam("home")<64) {
+        let early;try{early=JSON.parse(ns.read("/matrix/state/early-progression.txt"));}catch{}
+        if(early?.schemaVersion===1 && early.status==="active" && early.resetEpoch===resetEpoch(ns.getResetInfo()) &&
+            Number.isFinite(early.updated) && Date.now()>=early.updated && Date.now()-early.updated<30000) {
+            return ["homeRam","programs"].includes(owner) && early.owner===owner && early.target===target
+                ? Math.max(0,cash-baselineReserveMoney(ns,cfg)) : 0;
+        }
+    }
     const coord = getCoordinatorState(ns);
     // Before full stage no coordinator is required. At full stage, spenders
     // wait for a healthy canonical policy instead of guessing after a crash.

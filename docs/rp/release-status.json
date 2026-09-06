@@ -56,6 +56,7 @@
       "evidence": []
     }
   ],
-  "candidateVersion": "1.11.0-rp.2",
-  "implementationNotes": "Singularity decoupe en huit workers sequentiels, reserve RAM BN4 64 Go, prerequis Daedalus et Red Pill verifies. Surveillance RP02, arbitre complet RP03, commandes RP04 et reste du parcours RP05 encore ouverts."
+  "candidateVersion": "1.11.0-rp.3",
+  "implementationNotes": "Singularity decoupe en huit workers sequentiels, reserve RAM BN4 64 Go, prerequis Daedalus et Red Pill verifies. Surveillance RP02, arbitre complet RP03, commandes RP04 et reste du parcours RP05 encore ouverts. Early BN4 16-63 Go avec achats RAM/programmes et passage automatique a 64 Go; preuve native isolee avec fonds synthetiques.",
+  "earlyAutonomyProof": "evidence/early/native.json"
 }

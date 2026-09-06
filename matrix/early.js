@@ -14,6 +14,7 @@ const EARLY_FILES = [EARLY, "/matrix/lib/earlyloop.js"];
 const UPDATE_REQUEST = "/matrix/state/update-request.txt";
 const INSTALLER = "/matrix/remote-install.js";
 const INSTALLED_STAGE = "/matrix/state/installed-stage.txt";
+const EARLY_PROGRESSION = "/matrix/early-progression.js";
 
 // Contracts already dispatched, so one is never attempted twice.
 const dispatchedContracts = new Set();
@@ -211,8 +212,11 @@ export async function main(ns) {
                 if (await handoffInstaller(ns, true)) return;
             }
 
-            // Before anything else: convert spare cash into worker RAM.
-            const fleet = await expandFleet(ns, cfg);
+            // Reserve earnings for the home upgrade when an automatic buyer fits.
+            const earlyRam = ns.getScriptRam(EARLY_PROGRESSION,"home");
+            const automatedEarly = cfg.earlyAutomation?.enabled!==false && cfg.automation?.singularity!==false &&
+                singularityReady(ns.getResetInfo()) && earlyRam>0 && earlyRam<=ns.getServerMaxRam("home");
+            const fleet = automatedEarly ? {action:"save",reason:"home RAM priority"} : await expandFleet(ns, cfg);
 
             const { hosts } = scanAll(ns);
             let rooted = 0;
@@ -240,7 +244,7 @@ export async function main(ns) {
                 if (contracts.sent) await event(ns, "early", `Dispatched ${contracts.sent} contract solver(s)`, "success");
             }
 
-            const singularity = singularityReady(ns.getResetInfo());
+            const singularity = false; // This remaining path has no active purchase controller.
             const owned = PORT_PROGRAMS.filter(p => ns.fileExists(p.file, "home")).map(p => p.file);
             const hackingLevel = ns.getHackingLevel();
             const nextCracker = nextPortProgram(owned, hackingLevel);
@@ -261,6 +265,17 @@ export async function main(ns) {
             };
             await writeState(ns, "early", state);
             draw(ns, state);
+            const progressionRam = ns.getScriptRam(EARLY_PROGRESSION,"home");
+            if(ns.getServerMaxRam("home")<64 && cfg.masterEnabled!==false && cfg.automation?.singularity!==false &&
+                cfg.earlyAutomation?.enabled!==false && singularityReady(ns.getResetInfo()) && progressionRam>0 &&
+                progressionRam<=ns.getServerMaxRam("home")-ns.getServerUsedRam("home")+ns.getScriptRam("/matrix/early.js","home") && (worm || threads>0)) {
+                // Release the early orchestrator's RAM. The seeded worm keeps
+                // rooting and earning while the small progression engine saves.
+                ns.ui.closeTail();
+                ns.spawn(EARLY_PROGRESSION,{threads:1,spawnDelay:0});return;
+            }
+
+
             await ns.sleep(5000);
         } catch (error) {
             await writeState(ns, "early", { status: "error", error: String(error) });

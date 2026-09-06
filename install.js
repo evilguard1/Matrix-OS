@@ -25,6 +25,7 @@ const LEGACY_CONFIG = "/matrix/config.txt";
 const MATRIX_PROGRAMS = new Set([
     "matrix/bootstrap.js",
     "matrix/early.js",
+    "matrix/early-progression.js",
     "matrix/kernel.js",
     "matrix/start.js",
     "matrix/dashboard.jsx",
