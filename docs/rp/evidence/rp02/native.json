@@ -13,8 +13,8 @@
         "channel": "rp/ghost-node-war",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.6",
-        "installedAt": 1788710077810,
+        "version": "1.11.0-rp.7",
+        "installedAt": 1788711116510,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -23,14 +23,14 @@
     {
       "homeRam": 16,
       "installerRam": 5.3,
-      "installedScripts": 30,
+      "installedScripts": 31,
       "profile": {
         "schemaVersion": 1,
         "channel": "rp/ghost-node-war",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.6",
-        "installedAt": 1788710080398,
+        "version": "1.11.0-rp.7",
+        "installedAt": 1788711119097,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -39,14 +39,14 @@
     {
       "homeRam": 64,
       "installerRam": 5.3,
-      "installedScripts": 71,
+      "installedScripts": 74,
       "profile": {
         "schemaVersion": 1,
         "channel": "rp/ghost-node-war",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.6",
-        "installedAt": 1788710083798,
+        "version": "1.11.0-rp.7",
+        "installedAt": 1788711122577,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -55,14 +55,14 @@
     {
       "homeRam": 128,
       "installerRam": 5.3,
-      "installedScripts": 72,
+      "installedScripts": 75,
       "profile": {
         "schemaVersion": 1,
         "channel": "rp/ghost-node-war",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.6",
-        "installedAt": 1788710090012,
+        "version": "1.11.0-rp.7",
+        "installedAt": 1788711129006,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -71,14 +71,14 @@
     {
       "homeRam": 256,
       "installerRam": 5.3,
-      "installedScripts": 77,
+      "installedScripts": 80,
       "profile": {
         "schemaVersion": 1,
         "channel": "rp/ghost-node-war",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.6",
-        "installedAt": 1788710095826,
+        "version": "1.11.0-rp.7",
+        "installedAt": 1788711134876,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",

@@ -46,10 +46,12 @@ Une pause n'est présentée comme confirmée que si le reçu de pause correspond
 5. Recollecter avant de transmettre un choix. Les identifiants et commandes permis ici sont fixes : `pause` et `resume`. Leur journal et leurs reçus restent l'autorité d'exécution ; le briefing ne fait qu'une vérification préalable des fichiers, de la RAM et des propriétaires actifs.
 6. Si la collecte échoue, le script tente de remplacer le rapport précédent par un état `unavailable` immédiatement expiré, sans objectif ni option. Si le stockage échoue également, appliquer impérativement l'expiration du dernier rapport et traiter l'échec de l'appel comme indisponibilité.
 
-L'API du GPT, le curseur d'événements, les objectifs configurables, les plans durables X/Y/Z et leur validation métier restent à développer. `rpReady` et `exposedToGPT` restent faux.
+L'API du GPT, le curseur d'événements, les objectifs configurables au-delà du premier seuil de réputation, les plans durables X/Y/Z et leur validation métier restent à développer. `rpReady` et `exposedToGPT` restent faux.
 
 ## Preuves
 
 - `tests/rp-briefing.mjs` : indicateur local 40 %, données invalides/périmées, changement de reset, API verrouillée, producteur arrêté, pause vérifiée et échec d'écriture.
 - `tests/native/briefing.cjs` et [preuve native](evidence/briefing/native.json) : vrais scripts et rapports à 32/64 Go, puis arrêt du propriétaire en conservant son fichier récent pour vérifier le retrait de l'objectif. Contexte BN4, RAM, argent et appartenance CyberSec de test sont synthétiques. La sauvegarde Steam du joueur n'est jamais utilisée.
 - `npm run test:rp-contract` : la preuve doit correspondre aux hashes de tous les fichiers distribués.
+
+Depuis rp.7, un [objectif durable de réputation](OBJECTIVES.md) peut remplacer l’objectif automatique dans ce rapport. Les champs `operatorObjective.active` et `operatorObjective.lastReceipt` conservent respectivement l’intention et le dernier reçu historique, avec leur epoch.

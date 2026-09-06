@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.6",
+  "version": "1.11.0-rp.7",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036"
+      "sha256": "4b17b3108f889e17057452200cbc61af3b6fd7815429c1c581c5a109aa22e02e"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,7 +40,7 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "92c58c305fe5ecac97290db33a0021aa2da420bdc58b405915113d11b0c0b7dd"
+      "sha256": "4e4909d1a7697a1caec0fd68b5210859d4fc74f3a650c13a67f904a1676aee0d"
     },
     {
       "path": "matrix/kernel.js",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2"
+      "sha256": "2eed95fb8168f9ecf0e9d1f557aaf013cbfa2cecae26448e4cbedfec496af939"
     },
     {
       "path": "matrix/lib/network.js",
@@ -260,7 +260,7 @@
     {
       "path": "matrix/services/progression.js",
       "stage": "full",
-      "sha256": "a72ae8bd586701eb423c08092aa6d144cce5bc6f4a42149479892ec3a8853005"
+      "sha256": "ff51ba36d713685ce5aad6d6bff08ca5856a6c37d817f352b22850b687580ee4"
     },
     {
       "path": "matrix/services/coordinator.js",
@@ -345,7 +345,7 @@
     {
       "path": "matrix/workers/singularity/reset.js",
       "stage": "full",
-      "sha256": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d"
+      "sha256": "f25bb34072c9f649aba6a11153c33d0346dcb227b5f667ba23c0b9fbd74271fd"
     },
     {
       "path": "matrix/workers/singularity/valuation.js",
@@ -355,7 +355,7 @@
     {
       "path": "matrix/workers/singularity/work.js",
       "stage": "full",
-      "sha256": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030"
+      "sha256": "f60459373a6caf290755b707fdbf3e67683a50982a2212d87ef235d69cc9b8ee"
     },
     {
       "path": "matrix/early-progression.js",
@@ -410,12 +410,27 @@
     {
       "path": "matrix/briefing.js",
       "stage": "early",
-      "sha256": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503"
+      "sha256": "793d4f84e52782792d4e0ab0d02d3a2d0e961fe4b0153026593c5d2ac09cf180"
     },
     {
       "path": "matrix/lib/briefing.js",
       "stage": "early",
-      "sha256": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
+      "sha256": "ef17c20a4a7592644b860ecd7dc7d4aa489903618b201a8806624d46e285eaf6"
+    },
+    {
+      "path": "matrix/objective.js",
+      "stage": "full",
+      "sha256": "0e2277b5a1c80537fead5ad4f727ebecd0ff440c5e89465291ea41e1d5134393"
+    },
+    {
+      "path": "matrix/lib/objective-state.js",
+      "stage": "early",
+      "sha256": "0c769e7c943c05232e67f3b73c87dcf6e370958a8a9f09c7be3f595ccab98fd2"
+    },
+    {
+      "path": "matrix/lib/faction-objective.js",
+      "stage": "full",
+      "sha256": "8f626c3f557ec953fe6c1ac9a6208fe5ded74b30a5348907e0ed45ad8d567c3c"
     }
   ]
 }

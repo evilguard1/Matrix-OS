@@ -56,10 +56,11 @@
       "evidence": []
     }
   ],
-  "candidateVersion": "1.11.0-rp.6",
-  "implementationNotes": "Early BN4 et passage a 64 Go; neuf etapes Singularity et backdoors; pause/reprise des scripts et du travail de faction attribue, avec journal et drainage natif 8/32/64 Go. Reservation de lancement Singularity corrigee. Activites persistantes avancees, surveillance RP02, arbitre general RP03, catalogue GPT RP04 et campagne restent ouverts. Briefing operationnel francais/JSON ponctuel avec epoch, TTL, objectifs locaux et observations 32/64 Go; aucun score global de node ni routeur GPT.",
+  "candidateVersion": "1.11.0-rp.7",
+  "implementationNotes": "Early BN4 et passage a 64 Go; neuf etapes Singularity et backdoors; pause/reprise des scripts et du travail de faction attribue, avec journal et drainage natif 8/32/64 Go. Reservation de lancement Singularity corrigee. Activites persistantes avancees, surveillance RP02, arbitre general RP03, catalogue GPT RP04 et campagne restent ouverts. Briefing operationnel francais/JSON ponctuel avec epoch, TTL, objectifs locaux et observations 32/64 Go; aucun score global de node ni routeur GPT. Objectif durable de reputation pour faction rejointe, priorite au travail, blocage des resets automatiques et recu du seuil natif; planificateur general et GPT toujours ouverts.",
   "earlyAutonomyProof": "evidence/early/native.json",
   "backdoorRouteProof": "evidence/backdoors/native.json",
   "controlProof": "evidence/control/native.json",
-  "briefingProof": "evidence/briefing/native.json"
+  "briefingProof": "evidence/briefing/native.json",
+  "objectiveProof": "evidence/objective/native.json"
 }

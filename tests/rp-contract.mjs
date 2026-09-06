@@ -76,6 +76,16 @@ assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'in
 const progressionProof = read('evidence/rp05/native.json');
 const controlProof=read('evidence/control/native.json');
 const briefingProof=read('evidence/briefing/native.json');
+const objectiveProof=read('evidence/objective/native.json');
+assert.equal(objectiveProof.status,'passed');
+assert.equal(objectiveProof.commandRam,3.3);assert.equal(objectiveProof.workerRam,8.6);
+assert.equal(objectiveProof.briefing.objective.id,'native-goal');assert.equal(objectiveProof.briefing.objective.source,'operator');assert.equal(objectiveProof.briefing.nodeProgress,null);
+assert.equal(objectiveProof.working.active.id,'native-goal');assert.equal(objectiveProof.resumed.active.id,'native-goal');
+assert.equal(objectiveProof.completed.active,null);assert.equal(objectiveProof.completed.receipts[0].status,'succeeded');
+assert.ok(objectiveProof.completed.receipts[0].currentRep>=100);assert.equal(objectiveProof.replay.receipts.length,1);assert.equal(objectiveProof.replay.active,null);
+for(const [file,hash] of Object.entries(objectiveProof.hashes)) {
+ assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,`Objective native proof no longer matches ${file}`);
+}
 assert.equal(briefingProof.status,'passed');
 assert.deepEqual(briefingProof.results.map(r=>r.homeRam),[32,64]);
 for(const r of briefingProof.results) {

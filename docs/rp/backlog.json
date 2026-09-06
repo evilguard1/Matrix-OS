@@ -131,9 +131,11 @@
       "candidateEvidence": [
         "matrix/lib/control-state.js",
         "tests/rp-control.mjs",
-        "docs/rp/evidence/control/native.json"
+        "docs/rp/evidence/control/native.json",
+        "tests/rp-objective.mjs",
+        "docs/rp/evidence/objective/native.json"
       ],
-      "remaining": "Seuls pause/resume sont journalises avec rejeu et postcondition de portee explicite. Catalogue externe, plans durables, reconciliation, rotation du journal et interface GPT restent ouverts."
+      "remaining": "Pause/reprise et objectif durable de reputation livres avec identifiants et recus. Catalogue externe, composition de plans, reconciliation financiere, rotation des journaux et interface GPT restent ouverts."
     },
     {
       "id": "RP05",
@@ -162,9 +164,11 @@
         "tests/rp-singularity.mjs",
         "docs/rp/evidence/rp05/native.json",
         "tests/rp-backdoors.mjs",
-        "docs/rp/evidence/backdoors/native.json"
+        "docs/rp/evidence/backdoors/native.json",
+        "tests/rp-objective.mjs",
+        "docs/rp/evidence/objective/native.json"
       ],
-      "remaining": "Voyage, entrainement, crimes, companies et plan durable avec RP03/RP04. Routes de quatre backdoors implementees; seule CyberSec apres interruption/reprise a sa recette native. Pas de campagne complete.",
+      "remaining": "Objectif de reputation pour faction deja rejointe livre. Voyage, entrainement, crimes, companies et plan durable multi-etapes restent ouverts. Routes de quatre backdoors implementees, recette native CyberSec seulement. Pas de campagne complete.",
       "earlyAutonomyEvidence": [
         "matrix/early-progression.js",
         "tests/rp-early.mjs",
@@ -220,9 +224,11 @@
       "rollback": "Servir le dernier snapshot étiqueté périmé, aucune nouvelle option exécutable tant que l'état manque.",
       "candidateEvidence": [
         "tests/rp-briefing.mjs",
-        "docs/rp/evidence/briefing/native.json"
+        "docs/rp/evidence/briefing/native.json",
+        "tests/rp-objective.mjs",
+        "docs/rp/evidence/objective/native.json"
       ],
-      "remaining": "Rapport ponctuel livre avec faits courants, metriques locales, limites de fraicheur et options pause/reprise. Plans strategiques, objectifs configurables, curseur evenementiel et 100 tours de choix restent a implementer et certifier."
+      "remaining": "Briefing ponctuel et premier objectif configurable de reputation livres. Plans strategiques X/Y/Z, objectifs multi-etapes, curseur evenementiel et 100 tours de choix restent a implementer et certifier."
     },
     {
       "id": "RP08",

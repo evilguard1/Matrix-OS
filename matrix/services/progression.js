@@ -1,6 +1,7 @@
 import { config, event, plannedNextBitNode, writeState, readJson } from "/matrix/lib/common.js";
 import { resetEpoch, freshState } from "/matrix/lib/state.js";
 import { terminalLease } from "/matrix/lib/terminal-lease.js";
+import { objectivePending } from "/matrix/lib/objective-state.js";
 
 const WORLD_DAEMON = "w0r1d_d43m0n";
 
@@ -25,8 +26,10 @@ export async function main(ns) {
             const requiredLevel = ns.getServerRequiredHackingLevel(WORLD_DAEMON);
             const ready = daemonReady(reset, readJson(ns,"/matrix/state/singularity.txt",null),
                 ns.hasRootAccess(WORLD_DAEMON), ns.getHackingLevel(), requiredLevel);
+            const objectiveBlocked=objectivePending(ns);
             await writeState(ns, "progression", {
-                status: ready ? "ready" : "planning",
+                status: objectiveBlocked ? "objective-active" : ready ? "ready" : "planning",
+                objectiveBlocked,
                 currentNode: reset.currentNode,
                 nextNode,
                 worldDaemonRooted: ns.hasRootAccess(WORLD_DAEMON),
@@ -35,9 +38,9 @@ export async function main(ns) {
                 autoDestroy: cfg.progression?.autoDestroyWorldDaemon === true,
             });
 
-            if (ready && cfg.progression?.autoDestroyWorldDaemon === true && !terminalLease(ns)) {
+            if (ready && cfg.progression?.autoDestroyWorldDaemon === true && !objectiveBlocked && !terminalLease(ns)) {
                 await event(ns, "progression", `Entering BitNode ${nextNode}`, "success");
-                if (terminalLease(ns) || config(ns).masterEnabled === false) continue;
+                if (terminalLease(ns) || objectivePending(ns) || config(ns).masterEnabled === false) continue;
                 ns.singularity.destroyW0r1dD43m0n(nextNode, "/matrix/kernel.js");
                 return;
             }

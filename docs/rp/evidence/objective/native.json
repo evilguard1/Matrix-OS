@@ -1,108 +1,297 @@
 {
   "status": "passed",
-  "scope": "Official isolated Bitburner 3.0.1 engine. Synthetic BN4, CyberSec membership, 64GB and $1000. Real supervisor, hacking, Ghost and all nine Singularity tasks over two cycles. No Steam save or actual BN1-to-BN4 transition. RAM peak is sampled, not continuous.",
   "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
-  "peakObservedRam": 48.6,
-  "pollingMs": 250,
-  "completedCycles": 2,
-  "dispatcherRam": 4,
-  "workers": [
-    {
-      "file": "matrix/workers/singularity/catalog.js",
-      "ram": 23.1,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/home.js",
-      "ram": 7.3,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/infrastructure.js",
-      "ram": 14.35,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/observe.js",
-      "ram": 20.15,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/purchase.js",
-      "ram": 21.3,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/reset.js",
-      "ram": 12.8,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/valuation.js",
-      "ram": 14.7,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/work.js",
-      "ram": 8.6,
-      "error": null
-    },
-    {
-      "file": "matrix/workers/singularity/backdoors.js",
-      "ram": 10.65,
-      "error": null
-    }
-  ],
-  "state": {
-    "service": "singularity",
-    "updated": 1788711276087,
+  "scope": "Official isolated 3.0.1. Synthetic BN4, 64GB, CyberSec membership, XP/root and reputation set to 99 after restart. Real faction work crosses 100, native observer confirms completion; ordinary supervisor restarts interrupted dispatcher. No Steam save, full-route timing or GPT connection.",
+  "commandRam": 3.3,
+  "workerRam": 8.6,
+  "working": {
     "schemaVersion": 1,
-    "resetEpoch": "4:1788711258447:1788711258447",
-    "revision": 1788711276087,
-    "status": "online",
-    "cycle": "4:1788711258447:1788711258447:6:1788711275687",
-    "queuedAugs": 0,
-    "installedCount": 0,
-    "daedalusAugsRequirement": 30,
-    "redPillPrice": 0,
-    "redPillReqRep": 2500000,
-    "redPillRep": 0,
-    "goal": {
+    "revision": 3,
+    "active": {
+      "id": "native-goal",
+      "action": "faction",
       "faction": "CyberSec",
-      "augmentation": "Neurotrainer I",
-      "rep": 0.04348717948717946,
-      "need": 1000,
-      "price": 4000000,
-      "favor": 0
+      "targetRep": 100,
+      "resetEpoch": "4:1788711258606:1788711258606",
+      "requestedAt": 1788711264670,
+      "status": "working",
+      "type": "faction-reputation",
+      "updated": 1788711265703,
+      "currentRep": 0,
+      "reason": null
     },
-    "currentWork": {
-      "type": "FACTION",
-      "cyclesWorked": 53,
-      "factionWorkType": "hacking",
-      "factionName": "CyberSec",
-      "nextCompletion": {}
-    },
-    "hasTor": false,
-    "missingPrograms": [],
-    "programCosts": 0,
-    "ramUpgradeCost": 31861958.97004852,
-    "hasRedPill": false,
-    "redPillQueued": false,
-    "invitations": 0,
-    "purchased": 0,
-    "donated": 0
+    "receipts": [
+      {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "working",
+        "updated": 1788711265703,
+        "currentRep": 0,
+        "reason": null
+      }
+    ],
+    "updated": 1788711265703
   },
-  "dispatch": {
-    "service": "singularity-dispatch",
-    "updated": 1788711276204,
-    "status": "online",
-    "cycle": "4:1788711258447:1788711258447:6:1788711275687"
+  "briefing": {
+    "schemaVersion": 1,
+    "resetEpoch": "4:1788711258606:1788711258606",
+    "updated": 1788711265713,
+    "expiresAt": 1788711280713,
+    "status": "running",
+    "scope": "operational-observation",
+    "rpReady": false,
+    "nodeProgress": null,
+    "node": 4,
+    "home": {
+      "maxRam": 64,
+      "usedRam": 41.4,
+      "cash": 1000
+    },
+    "stage": {
+      "expected": "full",
+      "observed": "full",
+      "pids": [
+        5
+      ]
+    },
+    "objective": {
+      "id": "native-goal",
+      "title": "Atteindre 100 de réputation auprès de CyberSec",
+      "source": "operator",
+      "updated": 1788711265703,
+      "status": "working",
+      "reason": null,
+      "metric": {
+        "name": "Réputation de faction",
+        "current": 0,
+        "required": 100,
+        "percent": 0,
+        "scope": "local-milestone",
+        "source": "native-faction-reputation"
+      }
+    },
+    "capabilities": [
+      {
+        "id": "economy",
+        "state": "observed",
+        "file": "matrix/services/hacking.js",
+        "ram": 14.5,
+        "pids": [
+          11
+        ],
+        "evidence": "recent",
+        "reportedStatus": "preparing",
+        "healthCertified": false
+      },
+      {
+        "id": "progression",
+        "state": "unverified",
+        "file": "matrix/services/singularity.js",
+        "ram": 4,
+        "pids": [
+          15
+        ],
+        "evidence": "missing",
+        "reportedStatus": null,
+        "healthCertified": false
+      },
+      {
+        "id": "backdoors",
+        "state": "paused",
+        "file": "matrix/workers/singularity/backdoors.js",
+        "ram": 10.65,
+        "pids": [
+          15
+        ],
+        "evidence": "recent",
+        "reportedStatus": "paused",
+        "healthCertified": false
+      },
+      {
+        "id": "dashboard",
+        "state": "observed",
+        "file": "matrix/dashboard.jsx",
+        "ram": 1.7,
+        "pids": [
+          12
+        ],
+        "evidence": "recent",
+        "reportedStatus": "alive",
+        "healthCertified": false
+      }
+    ],
+    "sources": {
+      "bootstrap": {
+        "quality": "missing",
+        "updated": null
+      },
+      "early": {
+        "quality": "missing",
+        "updated": null
+      },
+      "hacking": {
+        "quality": "recent",
+        "updated": 1788711265701
+      },
+      "coordinator": {
+        "quality": "recent",
+        "updated": 1788711265347
+      },
+      "singularity": {
+        "quality": "missing",
+        "updated": null
+      },
+      "backdoors": {
+        "quality": "recent",
+        "updated": 1788711265429
+      },
+      "dashboard": {
+        "quality": "recent",
+        "updated": 1788711265341
+      },
+      "control": {
+        "quality": "missing",
+        "updated": null
+      },
+      "operator": {
+        "quality": "recent",
+        "updated": 1788711265703
+      }
+    },
+    "blockers": [],
+    "options": [
+      {
+        "id": "pause",
+        "command": "run /matrix/control.js pause",
+        "effect": "Demander le drainage des scripts et du travail de faction attribué."
+      }
+    ],
+    "operatorObjective": {
+      "active": {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "working",
+        "type": "faction-reputation",
+        "updated": 1788711265703,
+        "currentRep": 0,
+        "reason": null
+      },
+      "lastReceipt": {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "working",
+        "updated": 1788711265703,
+        "currentRep": 0,
+        "reason": null
+      },
+      "error": null
+    },
+    "control": {
+      "desired": "running",
+      "active": null,
+      "pauseConfirmed": false,
+      "scope": "managed-scripts-and-owned-faction-work"
+    },
+    "limitations": [
+      "Aucun pourcentage global du node n'est défini.",
+      "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+      "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+      "Les affectations persistantes avancées restent hors de la portée de la pause."
+    ]
+  },
+  "resumed": {
+    "schemaVersion": 1,
+    "revision": 5,
+    "active": {
+      "id": "native-goal",
+      "action": "faction",
+      "faction": "CyberSec",
+      "targetRep": 100,
+      "resetEpoch": "4:1788711258606:1788711258606",
+      "requestedAt": 1788711264670,
+      "status": "working",
+      "type": "faction-reputation",
+      "updated": 1788711270571,
+      "currentRep": 6.20307692307692,
+      "reason": null
+    },
+    "receipts": [
+      {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "working",
+        "updated": 1788711270571,
+        "currentRep": 6.20307692307692,
+        "reason": null
+      }
+    ],
+    "updated": 1788711270571
+  },
+  "completed": {
+    "schemaVersion": 1,
+    "revision": 6,
+    "active": null,
+    "receipts": [
+      {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "succeeded",
+        "updated": 1788711281071,
+        "currentRep": 112.69846153846119,
+        "reason": null,
+        "finishedAt": 1788711281071,
+        "scope": "faction-reputation-threshold"
+      }
+    ],
+    "updated": 1788711281071
+  },
+  "replay": {
+    "schemaVersion": 1,
+    "revision": 6,
+    "active": null,
+    "receipts": [
+      {
+        "id": "native-goal",
+        "action": "faction",
+        "faction": "CyberSec",
+        "targetRep": 100,
+        "resetEpoch": "4:1788711258606:1788711258606",
+        "requestedAt": 1788711264670,
+        "status": "succeeded",
+        "updated": 1788711281071,
+        "currentRep": 112.69846153846119,
+        "reason": null,
+        "finishedAt": 1788711281071,
+        "scope": "faction-reputation-threshold"
+      }
+    ],
+    "updated": 1788711281071
   },
   "errors": [],
   "hashes": {
     "matrix/VERSION.txt": "4b17b3108f889e17057452200cbc61af3b6fd7815429c1c581c5a109aa22e02e",
     "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
-    "matrix/config.json": "c2b3159e27ee42a60ba16260895de6a891e0526d824f0fbc5fbc85292301883a",
+    "matrix/config.json": "4e4909d1a7697a1caec0fd68b5210859d4fc74f3a650c13a67f904a1676aee0d",
     "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
@@ -181,54 +370,5 @@
     "matrix/objective.js": "0e2277b5a1c80537fead5ad4f727ebecd0ff440c5e89465291ea41e1d5134393",
     "matrix/lib/objective-state.js": "0c769e7c943c05232e67f3b73c87dcf6e370958a8a9f09c7be3f595ccab98fd2",
     "matrix/lib/faction-objective.js": "8f626c3f557ec953fe6c1ac9a6208fe5ded74b30a5348907e0ed45ad8d567c3c"
-  },
-  "redPill": {
-    "scope": "Synthetic Daedalus membership and 2.5M reputation, native free purchase, augmentation installation disabled by fixture.",
-    "state": {
-      "service": "singularity",
-      "updated": 1788711286594,
-      "schemaVersion": 1,
-      "resetEpoch": "4:1788711258447:1788711258447",
-      "revision": 1788711286594,
-      "status": "online",
-      "cycle": "4:1788711258447:1788711258447:6:1788711286204",
-      "queuedAugs": 1,
-      "installedCount": 0,
-      "daedalusAugsRequirement": 30,
-      "redPillPrice": 0,
-      "redPillReqRep": 2500000,
-      "redPillRep": 2500000,
-      "goal": null,
-      "currentWork": {
-        "type": "FACTION",
-        "cyclesWorked": 106,
-        "factionWorkType": "hacking",
-        "factionName": "CyberSec",
-        "nextCompletion": {}
-      },
-      "hasTor": false,
-      "missingPrograms": [],
-      "programCosts": 0,
-      "ramUpgradeCost": 31861958.97004852,
-      "hasRedPill": false,
-      "redPillQueued": true,
-      "invitations": 0,
-      "purchased": 1,
-      "donated": 0
-    },
-    "receipt": {
-      "id": "4:1788711258447:1788711258447:1",
-      "key": null,
-      "owner": "augmentations",
-      "target": "The Red Pill",
-      "cost": 0,
-      "before": 1000,
-      "pid": 29,
-      "updated": 1788711286437,
-      "status": "spent",
-      "after": 1000,
-      "debit": 0,
-      "error": null
-    }
   }
 }

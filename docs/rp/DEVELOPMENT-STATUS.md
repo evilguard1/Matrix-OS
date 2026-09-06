@@ -1,4 +1,15 @@
-# Candidat 1.11.0-rp.6 — 6 septembre 2026
+# Candidat 1.11.0-rp.7 — 6 septembre 2026
+
+## Nouveau : premier objectif durable
+
+La commande `run /matrix/objective.js faction CyberSec 250000 mission-cybersec-1` enregistre un seuil absolu de réputation. Le worker existant le poursuit entre les conversations, au fil des cycles Singularity. Le journal conserve l'intention, l'epoch, les observations et le reçu final. Une activité manuelle différente est préservée ; le rejeu d'un identifiant ne réarme pas un objectif terminé. `auto` retire la priorité et rend la sélection du travail à la politique automatique.
+
+Le briefing donne priorité à cet objectif, avec un indicateur de réputation local et une attribution vérifiée. Les installations automatiques d'augmentations et la sortie automatique du node attendent sa libération. Après un reset manuel, le briefing masque l'ancienne intention et le worker la termine comme interrompue dès qu'il peut de nouveau s'exécuter.
+
+Coûts natifs BN4 : commande 3,3 Go, worker 8,6 Go, maximum du cycle toujours 23,1 Go. La recette native à 64 Go interrompt le dispatcher, constate sa relance par le superviseur, vérifie l'objectif dans le briefing, puis une réussite après progression native de la réputation et un rejeu sans réactivation. Les compétences, l'appartenance et le point de départ près du seuil sont synthétiques. Lire [le contrat précis](OBJECTIVES.md) et [la preuve](evidence/objective/native.json).
+
+Cet objectif ne forme pas encore un plan complet d'acquisition de faction ou d'achats. Il donne priorité au travail ; les autres budgets conservent leurs politiques. La connexion GPT, les routes de voyage/crime/entreprise et la sélection de plans X/Y/Z restent ouvertes. Un objectif bloqué peut durer indéfiniment : l'opérateur peut choisir `auto` pour le retirer.
+
 
 ## Nouveau : briefing opérationnel
 

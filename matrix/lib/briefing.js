@@ -70,6 +70,18 @@ export function buildBriefing(input) {
             ["paused","locked"].includes(reported)?reported:"observed";
         return {id:spec.id,state,file:path,ram:cost,pids,evidence:quality,reportedStatus:text(reported),healthCertified:false};
     });
+    if(input.operatorJournal?.active) {
+        // An explicit objective supersedes the automatic one, even when its
+        // evidence is missing: never silently report a competing fallback goal.
+        objective=null;
+        const g=input.operatorJournal.active;
+        if(!admissionsClosed && stage==="full" && stage===expected && alive("matrix/services/singularity.js").length===1 &&
+            sources.operator?.quality==="recent" && g.resetEpoch===resetEpoch(reset)) {
+            objective={id:g.id,title:`Atteindre ${g.targetRep} de réputation auprès de ${text(g.faction)}`,source:"operator",updated:g.updated,
+                status:g.status,reason:text(g.reason),metric:metric("Réputation de faction",g.currentRep,g.targetRep,"native-faction-reputation")};
+        }
+    }
+    if(input.objectiveError)objective=null;
     const freeAfterExit=Math.max(0,home.maxRam-home.usedRam+(input.selfRam??0));
     const commandCost=files["matrix/control.js"]?.ram;
     const stageAvailable=stagePids.length>0 || alive("matrix/control-engine.js").length>0;
@@ -80,6 +92,8 @@ export function buildBriefing(input) {
         if(desired==="paused" && (!control.active || control.active.action==="pause"))options.push({id:"resume",command:"run /matrix/control.js resume",effect:"Demander la reprise du palier, selon les préférences enregistrées."});
     }
     const blockers=[];
+    if(input.objectiveError)blockers.push("Journal d'objectif invalide : progression et reset automatique suspendus.");
+    if(input.operatorJournal?.active?.status==="blocked")blockers.push(`Objectif opérateur bloqué : ${text(input.operatorJournal.active.reason)}.`);
     if(controlError)blockers.push("Journal de contrôle invalide : commandes suspendues.");
     if(configurationError)blockers.push("Configuration illisible : état des préférences inconnu.");
     if(!manifestValid)blockers.push("Manifeste installé absent ou invalide : propriété des processus non vérifiée.");
@@ -90,6 +104,7 @@ export function buildBriefing(input) {
     return {schemaVersion:1,resetEpoch:resetEpoch(reset),updated:now,expiresAt:now+BRIEFING_TTL,status,
         scope:"operational-observation",rpReady:false,nodeProgress:null,node:reset.currentNode,home,
         stage:{expected,observed:stage,pids:stagePids.map(p=>p.pid)},objective,capabilities,sources,blockers,options,
+        operatorObjective:{active:input.operatorJournal?.active??null,lastReceipt:input.operatorJournal?.receipts?.at(-1)??null,error:input.objectiveError??null},
         control:{desired,active:control?.active??null,pauseConfirmed:Boolean(pausedProof),scope:"managed-scripts-and-owned-faction-work"},
         limitations:["Aucun pourcentage global du node n'est défini.","Observations récentes et PID vivant ne certifient pas une progression réussie.","Options locales à revalider lors de l'exécution ; aucune connexion GPT active.","Les affectations persistantes avancées restent hors de la portée de la pause."]};
 }
@@ -100,6 +115,8 @@ export function renderBriefing(report) {
         lines.push(`Objectif local : ${report.objective.title}.`);
         if(report.objective.metric)lines.push(`Indicateur « ${report.objective.metric.name} » : ${report.objective.metric.percent.toFixed(1)} % (mesure locale, pas progression du node).`);
     }
+    const last=report.operatorObjective?.lastReceipt;
+    if(last && !report.operatorObjective.active)lines.push(`Dernier objectif opérateur : ${text(last.id)} — ${text(last.status)} (reçu historique).`);
     for(const cap of report.capabilities)lines.push(`${cap.id} : ${cap.state}${cap.reportedStatus?` (${cap.reportedStatus})`:""}.`);
     for(const blocker of report.blockers)lines.push(`À vérifier : ${blocker}`);
     for(const option of report.options)lines.push(`Option ${option.id} : ${option.command} — ${option.effect}`);

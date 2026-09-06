@@ -28,7 +28,10 @@
       "requiredForBN4": true,
       "backendStatus": "partial",
       "evidencePaths": [
-        "matrix/services/coordinator.js"
+        "matrix/services/coordinator.js",
+        "matrix/objective.js",
+        "matrix/lib/objective-state.js",
+        "docs/rp/evidence/objective/native.json"
       ],
       "inputs": {
         "objectiveId": "published id",
@@ -37,7 +40,8 @@
       "postcondition": "Plan durable engagé; objectif et révision relus.",
       "deliveryTask": "RP07",
       "consequential": false,
-      "exposedToGPT": false
+      "exposedToGPT": false,
+      "implementationNote": "Local faction reputation threshold implemented with durable intent and native postcondition. General objective catalog, external adapter and multi-step plans remain absent."
     },
     {
       "id": "strategy.set",

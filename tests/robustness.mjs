@@ -34,6 +34,8 @@ const NEEDS_NS = new Set([
     "singularity-tasks.js",
     "terminal-lease.js",
     "control-state.js",
+    "objective-state.js",
+    "faction-objective.js",
     "network.js",
     "dispatch.js",
     "hud.js",

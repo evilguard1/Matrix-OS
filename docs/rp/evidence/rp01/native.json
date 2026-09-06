@@ -10,28 +10,28 @@
       "allowance": 300000
     },
     "first": {
-      "id": "1:1788710076075:1788710076075:1",
+      "id": "1:1788711115031:1788711115031:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788710098791,
+      "updated": 1788711137682,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
       "error": null
     },
     "replay": {
-      "id": "1:1788710076075:1788710076075:1",
+      "id": "1:1788711115031:1788711115031:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788710098791,
+      "updated": 1788711137682,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
@@ -45,19 +45,19 @@
     ],
     "ledger": {
       "schemaVersion": 1,
-      "resetEpoch": "1:1788710076075:1788710076075",
+      "resetEpoch": "1:1788711115031:1788711115031",
       "revision": 1,
       "active": null,
       "receipts": [
         {
-          "id": "1:1788710076075:1788710076075:1",
+          "id": "1:1788711115031:1788711115031:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788710098791,
+          "updated": 1788711137682,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -66,14 +66,14 @@
       ],
       "keyed": [
         {
-          "id": "1:1788710076075:1788710076075:1",
+          "id": "1:1788711115031:1788711115031:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788710098791,
+          "updated": 1788711137682,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -404,7 +404,7 @@
         },
         {
           "file": "matrix/workers/singularity/work.js",
-          "ram": 74.6,
+          "ram": 91.1,
           "error": null
         },
         {
@@ -465,6 +465,21 @@
         {
           "file": "matrix/lib/briefing.js",
           "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/objective.js",
+          "ram": 3.3,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/objective-state.js",
+          "ram": 3.1,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/faction-objective.js",
+          "ram": 91.1,
           "error": null
         },
         {
@@ -795,7 +810,7 @@
         },
         {
           "file": "matrix/workers/singularity/work.js",
-          "ram": 7.1,
+          "ram": 8.6,
           "error": null
         },
         {
@@ -856,6 +871,21 @@
         {
           "file": "matrix/lib/briefing.js",
           "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/objective.js",
+          "ram": 3.3,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/objective-state.js",
+          "ram": 3.1,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/faction-objective.js",
+          "ram": 8.6,
           "error": null
         },
         {
@@ -1186,7 +1216,7 @@
         },
         {
           "file": "matrix/workers/singularity/work.js",
-          "ram": 74.6,
+          "ram": 91.1,
           "error": null
         },
         {
@@ -1247,6 +1277,21 @@
         {
           "file": "matrix/lib/briefing.js",
           "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/objective.js",
+          "ram": 3.3,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/objective-state.js",
+          "ram": 3.1,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/faction-objective.js",
+          "ram": 91.1,
           "error": null
         },
         {
@@ -1577,7 +1622,7 @@
         },
         {
           "file": "matrix/workers/singularity/work.js",
-          "ram": 20.6,
+          "ram": 25.1,
           "error": null
         },
         {
@@ -1638,6 +1683,21 @@
         {
           "file": "matrix/lib/briefing.js",
           "ram": 1.6,
+          "error": null
+        },
+        {
+          "file": "matrix/objective.js",
+          "ram": 3.3,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/objective-state.js",
+          "ram": 3.1,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/faction-objective.js",
+          "ram": 25.1,
           "error": null
         },
         {
@@ -1968,7 +2028,7 @@
         },
         {
           "file": "matrix/workers/singularity/work.js",
-          "ram": 7.1,
+          "ram": 8.6,
           "error": null
         },
         {
@@ -2032,6 +2092,21 @@
           "error": null
         },
         {
+          "file": "matrix/objective.js",
+          "ram": 3.3,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/objective-state.js",
+          "ram": 3.1,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/faction-objective.js",
+          "ram": 8.6,
+          "error": null
+        },
+        {
           "file": "native-rp01.js",
           "ram": 6.35,
           "error": null
@@ -2040,7 +2115,7 @@
     }
   ],
   "hashes": {
-    "matrix/VERSION.txt": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036",
+    "matrix/VERSION.txt": "4b17b3108f889e17057452200cbc61af3b6fd7815429c1c581c5a109aa22e02e",
     "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
     "matrix/config.json": "22826275493872b9c41bcac7f5f310f0f0260b3ba3f626a578dfd60dec5682fb",
     "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
@@ -2056,7 +2131,7 @@
     "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
     "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2",
+    "matrix/lib/common.js": "2eed95fb8168f9ecf0e9d1f557aaf013cbfa2cecae26448e4cbedfec496af939",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -2086,7 +2161,7 @@
     "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
     "matrix/services/contracts.js": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc",
     "matrix/services/stock.js": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0",
-    "matrix/services/progression.js": "a72ae8bd586701eb423c08092aa6d144cce5bc6f4a42149479892ec3a8853005",
+    "matrix/services/progression.js": "ff51ba36d713685ce5aad6d6bff08ca5856a6c37d817f352b22850b687580ee4",
     "matrix/services/coordinator.js": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27",
     "matrix/services/singularity.js": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d",
     "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
@@ -2103,9 +2178,9 @@
     "matrix/workers/singularity/infrastructure.js": "e61d81e4751fd93a575aeb59d98f5e3c9a6a3631c7f31b1d50ef9ac163d05e79",
     "matrix/workers/singularity/observe.js": "94e0c13c59f3f9bdec280ce8a4c225db963dd27fdf7c328410420254a1e38b39",
     "matrix/workers/singularity/purchase.js": "15dab4c69481b5358f0c5dfafb21e113e89abbcbf6d2cc099df3074d6036aa1d",
-    "matrix/workers/singularity/reset.js": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d",
+    "matrix/workers/singularity/reset.js": "f25bb34072c9f649aba6a11153c33d0346dcb227b5f667ba23c0b9fbd74271fd",
     "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
-    "matrix/workers/singularity/work.js": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030",
+    "matrix/workers/singularity/work.js": "f60459373a6caf290755b707fdbf3e67683a50982a2212d87ef235d69cc9b8ee",
     "matrix/early-progression.js": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4",
     "matrix/lib/terminal-lease.js": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527",
     "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
@@ -2116,8 +2191,11 @@
     "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
     "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
     "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898",
-    "matrix/briefing.js": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503",
-    "matrix/lib/briefing.js": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
+    "matrix/briefing.js": "793d4f84e52782792d4e0ab0d02d3a2d0e961fe4b0153026593c5d2ac09cf180",
+    "matrix/lib/briefing.js": "ef17c20a4a7592644b860ecd7dc7d4aa489903618b201a8806624d46e285eaf6",
+    "matrix/objective.js": "0e2277b5a1c80537fead5ad4f727ebecd0ff440c5e89465291ea41e1d5134393",
+    "matrix/lib/objective-state.js": "0c769e7c943c05232e67f3b73c87dcf6e370958a8a9f09c7be3f595ccab98fd2",
+    "matrix/lib/faction-objective.js": "8f626c3f557ec953fe6c1ac9a6208fe5ded74b30a5348907e0ed45ad8d567c3c"
   },
   "errors": []
 }
