@@ -1,3 +1,4 @@
+import { controlCheckpoint } from "/matrix/lib/control-state.js";
 import { progressionRam } from "/matrix/lib/progression-ram.js";
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
@@ -232,6 +233,7 @@ async function sweepBuild(ns, hosts, version) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(controlCheckpoint(ns,null))return;
     if (ns.getServerMaxRam("home") < FULL_ENGINE_HOME_RAM) {
         ns.spawn(ns.getServerMaxRam("home") < 16 ? "/matrix/bootstrap.js" : "/matrix/early.js", {
             threads: 1, preventDuplicates: true, spawnDelay: 0,
@@ -266,6 +268,7 @@ export async function main(ns) {
     const DECK_SPAWN_COOLDOWN = 15_000;
 
     while (true) {
+        if(controlCheckpoint(ns,"full"))return;
         if (!holdSingleton(ns, "/matrix/start.js")) {
             ns.tprint("MATRIX-OS // SUPERVISOR STANDING DOWN (another is older)");
             return;
@@ -307,7 +310,7 @@ export async function main(ns) {
         try {
             // VERSION.txt reads like "MATRIX-OS 1.4.0"; take the number itself
             // rather than splitting on a newline.
-            const version = (String(ns.read(VERSION_FILE) ?? "").match(/[0-9]+[.][0-9]+[.][0-9]+/) ?? [])[0] ?? "";
+            const version = (String(ns.read(VERSION_FILE) ?? "").match(/[0-9]+[.][0-9]+[.][0-9]+(?:-[A-Za-z0-9.-]+)?/) ?? [])[0] ?? "";
             if (version) {
                 const { hosts } = scanAll(ns);
                 sweep = await sweepBuild(ns, hosts, version);

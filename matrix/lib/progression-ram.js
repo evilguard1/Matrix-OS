@@ -2,6 +2,15 @@ export const SINGULARITY_TASKS = ["backdoors", "infrastructure", "catalog", "val
 export const singularityWorker = name => `/matrix/workers/singularity/${name}.js`;
 const cache = new WeakMap();
 
+// Hacking can start before the dispatcher. Reserve its measured launch cost as
+// well as the child slot until it is resident, or new H/G/W jobs can starve it.
+export function progressionAdmissionRam(ns) {
+    const child = progressionRam(ns);
+    if (!child) return 0;
+    const running = ns.ps("home").some(p => String(p.filename).replace(/^\/+/, "") === "matrix/services/singularity.js");
+    return child + (running ? 0 : Math.max(0, ns.getScriptRam("/matrix/services/singularity.js", "home")));
+}
+
 export function progressionRam(ns) {
     const reset = ns.getResetInfo();
     const home = ns.getServerMaxRam("home"), level = reset.ownedSF?.get?.(4) ?? 0;

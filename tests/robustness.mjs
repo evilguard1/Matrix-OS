@@ -33,6 +33,7 @@ const NEEDS_NS = new Set([
     "progression-ram.js",
     "singularity-tasks.js",
     "terminal-lease.js",
+    "control-state.js",
     "network.js",
     "dispatch.js",
     "hud.js",

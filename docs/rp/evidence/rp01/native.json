@@ -10,28 +10,28 @@
       "allowance": 300000
     },
     "first": {
-      "id": "1:1788663895179:1788663895179:1",
+      "id": "1:1788696088094:1788696088094:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788663912668,
+      "updated": 1788696109557,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
       "error": null
     },
     "replay": {
-      "id": "1:1788663895179:1788663895179:1",
+      "id": "1:1788696088094:1788696088094:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788663912668,
+      "updated": 1788696109557,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
@@ -45,19 +45,19 @@
     ],
     "ledger": {
       "schemaVersion": 1,
-      "resetEpoch": "1:1788663895179:1788663895179",
+      "resetEpoch": "1:1788696088094:1788696088094",
       "revision": 1,
       "active": null,
       "receipts": [
         {
-          "id": "1:1788663895179:1788663895179:1",
+          "id": "1:1788696088094:1788696088094:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788663912668,
+          "updated": 1788696109557,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -66,14 +66,14 @@
       ],
       "keyed": [
         {
-          "id": "1:1788663895179:1788663895179:1",
+          "id": "1:1788696088094:1788696088094:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788663912668,
+          "updated": 1788696109557,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -359,7 +359,7 @@
         },
         {
           "file": "matrix/lib/progression-ram.js",
-          "ram": 2.75,
+          "ram": 2.95,
           "error": null
         },
         {
@@ -430,6 +430,31 @@
         {
           "file": "matrix/workers/backdoor-install.js",
           "ram": 100.6,
+          "error": null
+        },
+        {
+          "file": "matrix/control.js",
+          "ram": 1.65,
+          "error": null
+        },
+        {
+          "file": "matrix/control-engine.js",
+          "ram": 4.7,
+          "error": null
+        },
+        {
+          "file": "matrix/control-player.js",
+          "ram": 4.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/control-state.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/control-stop-player.js",
+          "ram": 28.6,
           "error": null
         },
         {
@@ -715,7 +740,7 @@
         },
         {
           "file": "matrix/lib/progression-ram.js",
-          "ram": 2.75,
+          "ram": 2.95,
           "error": null
         },
         {
@@ -786,6 +811,31 @@
         {
           "file": "matrix/workers/backdoor-install.js",
           "ram": 10.6,
+          "error": null
+        },
+        {
+          "file": "matrix/control.js",
+          "ram": 1.65,
+          "error": null
+        },
+        {
+          "file": "matrix/control-engine.js",
+          "ram": 4.7,
+          "error": null
+        },
+        {
+          "file": "matrix/control-player.js",
+          "ram": 4.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/control-state.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/control-stop-player.js",
+          "ram": 6.1,
           "error": null
         },
         {
@@ -1071,7 +1121,7 @@
         },
         {
           "file": "matrix/lib/progression-ram.js",
-          "ram": 2.75,
+          "ram": 2.95,
           "error": null
         },
         {
@@ -1142,6 +1192,31 @@
         {
           "file": "matrix/workers/backdoor-install.js",
           "ram": 100.6,
+          "error": null
+        },
+        {
+          "file": "matrix/control.js",
+          "ram": 1.65,
+          "error": null
+        },
+        {
+          "file": "matrix/control-engine.js",
+          "ram": 4.7,
+          "error": null
+        },
+        {
+          "file": "matrix/control-player.js",
+          "ram": 4.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/control-state.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/control-stop-player.js",
+          "ram": 28.6,
           "error": null
         },
         {
@@ -1427,7 +1502,7 @@
         },
         {
           "file": "matrix/lib/progression-ram.js",
-          "ram": 2.75,
+          "ram": 2.95,
           "error": null
         },
         {
@@ -1498,6 +1573,31 @@
         {
           "file": "matrix/workers/backdoor-install.js",
           "ram": 28.6,
+          "error": null
+        },
+        {
+          "file": "matrix/control.js",
+          "ram": 1.65,
+          "error": null
+        },
+        {
+          "file": "matrix/control-engine.js",
+          "ram": 4.7,
+          "error": null
+        },
+        {
+          "file": "matrix/control-player.js",
+          "ram": 4.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/control-state.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/control-stop-player.js",
+          "ram": 10.6,
           "error": null
         },
         {
@@ -1783,7 +1883,7 @@
         },
         {
           "file": "matrix/lib/progression-ram.js",
-          "ram": 2.75,
+          "ram": 2.95,
           "error": null
         },
         {
@@ -1857,6 +1957,31 @@
           "error": null
         },
         {
+          "file": "matrix/control.js",
+          "ram": 1.65,
+          "error": null
+        },
+        {
+          "file": "matrix/control-engine.js",
+          "ram": 4.7,
+          "error": null
+        },
+        {
+          "file": "matrix/control-player.js",
+          "ram": 4.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/control-state.js",
+          "ram": 3.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/control-stop-player.js",
+          "ram": 6.1,
+          "error": null
+        },
+        {
           "file": "native-rp01.js",
           "ram": 6.35,
           "error": null
@@ -1865,23 +1990,23 @@
     }
   ],
   "hashes": {
-    "matrix/VERSION.txt": "7886560a2da18c734be69591021e99a776f7ef1e0d427624c6f326243fa10ebc",
-    "matrix/bootstrap.js": "9fec03060e70ebf9393a0c989f6fd2ef949ca52bbc40fa7c300f524e5b3d5ce7",
+    "matrix/VERSION.txt": "613d923377c0795da33bc994ee7ef59e1cfa77bc6bf5d78573f13ea5c89c0e2f",
+    "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
     "matrix/config.json": "22826275493872b9c41bcac7f5f310f0f0260b3ba3f626a578dfd60dec5682fb",
-    "matrix/kernel.js": "ac0e7e34613c739524ab77e0cc7367ccdc9b583ff71b111d75bf60ace74cf9ab",
+    "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
-    "matrix/early.js": "e76fca4b8e9153006ddb0456e124ec45aa1d97da95b627d0ef7dcb4bf252c040",
-    "matrix/workers/early.js": "91e03a775db620f0ff92c0c4b00b6f2cdbb4dec481367f4fc88eaf14a71068cd",
+    "matrix/early.js": "04cfcab031816b6d44d85f886d30458c3f25f6c70921096d081b69a67955de95",
+    "matrix/workers/early.js": "b2469d615b41f9bfe30a1b50ab4e4d1940807f1f12a0036ea46d0b347387c631",
     "matrix/lib/earlyloop.js": "d486ad608bded9ac853674496c233d1e205224af811343abd33fc8958a715302",
     "matrix/lib/batch.js": "53c887aad901d3f0de91746774bafd0288b763aadf6f0806f96eacf242932eb9",
     "matrix/lib/propagate.js": "3cd73085806d8ab9cd517a367e032c388b986c0a20f0a6952f05004189688f9c",
-    "matrix/worm/seed.js": "e2ced207e14d8c102410b95d656ccdd897c387a08920904fd87abc38b105a270",
-    "matrix/worm/spread.js": "6d4c5aafa3b954995ff8869c24d9035c00cfbb9c5f7983bfff2aeafe13b3323f",
-    "matrix/worm/drone.js": "d92b5e0f3a9b7d5a4b14d1db326de8e38edff436fead17bb7e7ba8621e42d0b9",
-    "matrix/start.js": "9abe97f1f3dee23d7201177ee18a24e335d7eae2eb64072eb43148345334254d",
+    "matrix/worm/seed.js": "06974d1ede3e91dd5d00c644f6072f83fa90b950a40f4e3ea54ffdf4d4f398fb",
+    "matrix/worm/spread.js": "61495043ae9877c552b1c66928abdf40162dbdf221b12b5a81c31127e3c5ca26",
+    "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
+    "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "39eac223d556258c29d44381e795d6acaa394c4282028f72af6116871572fd4b",
+    "matrix/lib/common.js": "f0836161549e33a8316f015f19d49492dce2a88d49ac14801bc4cef0c1e85878",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -1892,7 +2017,7 @@
     "matrix/lib/voice.js": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23",
     "matrix/lib/hashes.js": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf",
     "matrix/lib/gift.js": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd",
-    "matrix/workers/stanek-charge.js": "594f17d3721623770a912168af479a6ccc75e0c23f6f49853a454c5aaa0d67dc",
+    "matrix/workers/stanek-charge.js": "496f63ddf6ca37515f34a5a75425ae7b9f46274876f0528a43c5c151989e0ca1",
     "matrix/lib/solvers.js": "ad41d60264def9ba5f5d21297b5143e44313a1607fb7dbf1c621b87036ee403b",
     "matrix/lib/dispatch.js": "74f83083af0547a626937ee53bc3b98a50f5cc88560b2a272257b35c930d12ac",
     "matrix/workers/contract.js": "f19e9317fd813209df63b2734835ec5476ca5e9a06180159dc6b11fb9f70c6b5",
@@ -1900,12 +2025,12 @@
     "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
     "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
     "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
-    "matrix/services/hacking.js": "a7b61c51cbc6affe0719c5554f95770c43ad070b2ee10d0db84dedd38143e96f",
+    "matrix/services/hacking.js": "05ab371f03d3a1521d21a84cbcf94d5d89dc4f0d66e9a1e5e9512f99415cd873",
     "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
-    "matrix/workers/hack.js": "75ca796dd3d41c4e780ad32bb1c91a3d4b24eadb42ecc4b59786569b01757a8f",
-    "matrix/workers/grow.js": "c7b7cc731b653db81470e6f4f8886586306ab7a823187f27eaf22cecf12b93dd",
-    "matrix/workers/weaken.js": "b45336bd61ebaabd016c6c20de918fc6d4384519a87e18b77fe2dbb01bf24ad7",
-    "matrix/workers/share.js": "7d898ca5e21a514b84b326aa5a66dbea4315fce925136de53360e2805b0774d9",
+    "matrix/workers/hack.js": "6534e0b5d6af33701d9bec2f813d86ac0cd57f84e5cdaf05f475eaac3a59a2f7",
+    "matrix/workers/grow.js": "9087c083af0b6201b27460a31689fcf5b2af4c886a21e45f98babfc7a1557665",
+    "matrix/workers/weaken.js": "5e84487b4621ae19141ab9514187fd6c2d790cadbadfa7d8ebce7046da2d581a",
+    "matrix/workers/share.js": "04ff39dd615ccbb9aa2bd2381ae93ef511361efd24a460d5a7675a840c96e6d9",
     "matrix/services/cloud.js": "34a3175565002b62c1e77ea1a2b066c7167b54c41e171580347ff94627ac8382",
     "matrix/services/hacknet.js": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd",
     "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
@@ -1921,7 +2046,7 @@
     "matrix/services/corporation.js": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184",
     "matrix/lib/state.js": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6",
     "matrix/lib/budget-ledger.js": "07c8b977a7242a295644433ae522a77df3f8b71ba5b97483e3c50b3e75b4eb45",
-    "matrix/lib/progression-ram.js": "88e520e55ef7e708758740245af838041ccf6122059b927c9130067ec99ab2ac",
+    "matrix/lib/progression-ram.js": "87efa9d978f8cdd445e7a25e2902eda45f787acaf6cb2c4eeabba502a2ae1615",
     "matrix/lib/singularity-tasks.js": "1ac64db81711eca2ba619cb26eea3bb377750e20bb84935b3e2457110dfebf25",
     "matrix/workers/singularity/catalog.js": "8b8460bb0399b4e8b930c0504fa72bab907360223aef1826fbfa9a6b58b7e942",
     "matrix/workers/singularity/home.js": "169143bbdf9bff823577a6acafc7e32fd35db176da37cdc5539dc33a8138c899",
@@ -1931,11 +2056,16 @@
     "matrix/workers/singularity/reset.js": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d",
     "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
     "matrix/workers/singularity/work.js": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030",
-    "matrix/early-progression.js": "0c2a4f10a2d4038ee220555124566f712c2ad7360df826c14974d375d8c95c81",
+    "matrix/early-progression.js": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4",
     "matrix/lib/terminal-lease.js": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527",
     "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
     "matrix/workers/singularity/backdoors.js": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87",
-    "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b"
+    "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b",
+    "matrix/control.js": "ce3cf1c2f189c80c17cfe8edb11af2e5935c3ecec4eed224c9eaf74ddfe0a7a0",
+    "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
+    "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
+    "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
+    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898"
   },
   "errors": []
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {progressionRam,SINGULARITY_TASKS} from '../matrix/lib/progression-ram.js';
+import {progressionRam,progressionAdmissionRam,SINGULARITY_TASKS} from '../matrix/lib/progression-ram.js';
 const load=async file=>{
  const s=fs.readFileSync(file,'utf8').replace(/from\s*["'](\/matrix\/[^"']+)["']/g,(_,p)=>`from "${pathToFileURL(path.resolve(p.slice(1))).href}"`);
  return import(`data:text/javascript;base64,${Buffer.from(s).toString('base64')}`);
@@ -20,6 +20,13 @@ function fixture(){
  f.reset.currentNode=1;assert.equal(progressionRam(f.ns),0);
  f.reset.ownedSF.set(4,1);f.ns.getScriptRam=()=>320;assert.equal(progressionRam(f.ns),0);
  f.ns.getServerMaxRam=()=>1024;assert.equal(progressionRam(f.ns),640);
+}
+{
+ const f=fixture();const cost=f.ns.getScriptRam;f.ns.getScriptRam=p=>p==='/matrix/services/singularity.js'?4:cost(p);
+ assert.equal(progressionAdmissionRam(f.ns),27,'absent dispatcher needs a launch slot');
+ f.ns.ps=()=>[{pid:2,filename:'matrix/services/singularity.js'}];
+ assert.equal(progressionAdmissionRam(f.ns),23,'resident dispatcher is already charged in used RAM');
+ f.reset.currentNode=1;assert.equal(progressionAdmissionRam(f.ns),0);
 }
 {
  const f=fixture();assert.equal((await driver.runCycle(f.ns,'cycle')).status,'online');assert.equal(f.launched.length,SINGULARITY_TASKS.length);

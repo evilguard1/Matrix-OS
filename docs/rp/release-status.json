@@ -56,8 +56,9 @@
       "evidence": []
     }
   ],
-  "candidateVersion": "1.11.0-rp.4",
-  "implementationNotes": "Early BN4 16-63 Go et passage a 64 Go; neuf etapes Singularity, backdoors de factions et verrou terminal avec worker natif. CyberSec apres interruption/reprise verifie dans le moteur isole. Surveillance RP02, arbitre general RP03, commandes RP04, autres routes RP05 et campagne encore ouverts.",
+  "candidateVersion": "1.11.0-rp.5",
+  "implementationNotes": "Early BN4 et passage a 64 Go; neuf etapes Singularity et backdoors; pause/reprise des scripts et du travail de faction attribue, avec journal et drainage natif 8/32/64 Go. Reservation de lancement Singularity corrigee. Activites persistantes avancees, surveillance RP02, arbitre general RP03, catalogue GPT RP04 et campagne restent ouverts.",
   "earlyAutonomyProof": "evidence/early/native.json",
-  "backdoorRouteProof": "evidence/backdoors/native.json"
+  "backdoorRouteProof": "evidence/backdoors/native.json",
+  "controlProof": "evidence/control/native.json"
 }

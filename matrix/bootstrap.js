@@ -266,8 +266,27 @@ async function handoffInstaller(ns, requested) {
     return true;
 }
 
+// Standalone counterpart of controlCheckpoint; no imported recovery dependency.
+function bootstrapControl(ns, acknowledge=true) {
+    const raw=ns.read("/matrix/state/control-journal.txt");
+    if(!raw)return false;
+    let state;try{state=JSON.parse(raw);}catch{}
+    if(!state || state.schemaVersion!==1 || state.desired!=="running") {
+        ns.ui.closeTail();ns.spawn("/matrix/control-engine.js",{threads:1,spawnDelay:0});return true;
+    }
+    if(acknowledge && state.active?.action==="resume" && state.active.phase==="starting") {
+        if(!Array.isArray(state.receipts) || !Number.isSafeInteger(state.revision))throw new Error("invalid-control-journal");
+        state.receipts.push({...state.active,status:"succeeded",scope:"stage-started",stage:"bootstrap",pid:ns.pid,finishedAt:Date.now()});
+        state.active=null;state.revision++;state.updated=Date.now();
+        const text=JSON.stringify(state);ns.write("/matrix/state/control-journal.txt",text,"w");
+        if(ns.read("/matrix/state/control-journal.txt")!==text)throw new Error("control-write-failed");
+    }
+    return false;
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(bootstrapControl(ns,false))return;
     // Validate the lock PID is actually running THIS script, not just any process
     const lockPid = Number(ns.read(LOCK));
     if (lockPid && lockPid !== ns.pid) {
@@ -281,6 +300,7 @@ export async function main(ns) {
     try { ns.ui.openTail(); } catch {}
 
     while (true) {
+        if(bootstrapControl(ns))return;
         try {
             if (await handoffInstaller(ns, ns.fileExists(UPDATE_REQUEST, "home"))) return;
             if (ns.getServerMaxRam("home") < 16 && ns.read(INSTALLED_STAGE) !== "bootstrap") {

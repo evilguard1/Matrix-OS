@@ -49,6 +49,7 @@ function tryRoot(ns, host) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(ns.peek?.(20)==="MATRIX:PAUSED"){ns.spawn("/matrix/control-engine.js",{threads:1,spawnDelay:0});return;}
     const stage = String(ns.args[0] ?? "/matrix/bootstrap.js");
 
     const rooted = [];

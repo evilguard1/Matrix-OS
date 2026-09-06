@@ -92,11 +92,13 @@ function chooseTarget(ns, hosts) {
 }
 
 export async function main(ns) {
+    if(ns.peek?.(20)==="MATRIX:PAUSED")return;
     ns.disableLog("ALL");
     const me = ns.getHostname();
     let lastTarget = "";
 
     while (true) {
+        if(ns.peek?.(20)==="MATRIX:PAUSED")return;
         const hosts = scanAll(ns);
         const rooted = [];
         for (const host of hosts) {

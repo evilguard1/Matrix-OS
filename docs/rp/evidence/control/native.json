@@ -1,0 +1,974 @@
+{
+  "status": "passed",
+  "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "scope": "Official isolated 3.0.1, synthetic RAM/node/skills and CyberSec membership at 64GB. Real scripts, network drainage, owned faction-work stop, foreign process preservation, replay and stage resume. No Steam save; excludes persistent sleeve/gang/Bladeburner/corporation activities.",
+  "results": [
+    {
+      "homeRam": 8,
+      "node": 1,
+      "commandRam": 1.65,
+      "engineRam": 4.7,
+      "pauseDurationMs": 29722,
+      "before": {
+        "processes": [
+          {
+            "host": "home",
+            "pid": 4,
+            "filename": "matrix/bootstrap.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 50,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 3,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 51,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 7,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 52,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 9,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 53,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 16,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 57,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 11,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 54,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 13,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 55,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 56,
+            "filename": "matrix/worm/drone.js"
+          }
+        ],
+        "work": null
+      },
+      "paused": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 2,
+          "desired": "paused",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696093976,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "locked",
+                "updated": 1788696122894
+              },
+              "finishedAt": 1788696122895
+            }
+          ],
+          "updated": 1788696122895
+        },
+        "status": {
+          "status": "paused",
+          "id": "native-pause",
+          "remaining": [],
+          "foreign": [],
+          "player": {
+            "id": "native-pause",
+            "status": "locked",
+            "updated": 1788696122894
+          },
+          "scope": "managed-scripts-and-owned-faction-work",
+          "excluded": [
+            "manual-activities",
+            "sleeve-assignments",
+            "gang-assignments",
+            "bladeburner-action",
+            "corporation-simulation"
+          ],
+          "updated": 1788696122895
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 61,
+            "filename": "matrix/control-engine.js"
+          }
+        ],
+        "work": null
+      },
+      "resumed": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 5,
+          "desired": "running",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696093976,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "locked",
+                "updated": 1788696122894
+              },
+              "finishedAt": 1788696122895
+            },
+            {
+              "id": "native-resume",
+              "action": "resume",
+              "requestedAt": 1788696123219,
+              "status": "succeeded",
+              "phase": "starting",
+              "scope": "stage-started",
+              "stage": "bootstrap",
+              "pid": 67,
+              "finishedAt": 1788696123616
+            }
+          ],
+          "updated": 1788696123616
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 67,
+            "filename": "matrix/bootstrap.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 113,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 66,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 114,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 70,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 115,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 72,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 116,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 79,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 120,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 74,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 117,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 76,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 118,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 119,
+            "filename": "matrix/worm/drone.js"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "homeRam": 32,
+      "node": 4,
+      "commandRam": 1.65,
+      "engineRam": 4.7,
+      "pauseDurationMs": 29518,
+      "before": {
+        "processes": [
+          {
+            "host": "home",
+            "pid": 1,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "home",
+            "pid": 59,
+            "filename": "matrix/early-progression.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 51,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 4,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 52,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 8,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 53,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 10,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 54,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 16,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 57,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 12,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 55,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 14,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 56,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 58,
+            "filename": "matrix/worm/drone.js"
+          }
+        ],
+        "work": null
+      },
+      "paused": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 2,
+          "desired": "paused",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696129602,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "idle",
+                "work": null,
+                "updated": 1788696158380
+              },
+              "finishedAt": 1788696158381
+            }
+          ],
+          "updated": 1788696158381
+        },
+        "status": {
+          "status": "paused",
+          "id": "native-pause",
+          "remaining": [],
+          "foreign": [
+            {
+              "host": "home",
+              "pid": 1,
+              "file": "foreign-loop.js"
+            }
+          ],
+          "player": {
+            "id": "native-pause",
+            "status": "idle",
+            "work": null,
+            "updated": 1788696158380
+          },
+          "scope": "managed-scripts-and-owned-faction-work",
+          "excluded": [
+            "manual-activities",
+            "sleeve-assignments",
+            "gang-assignments",
+            "bladeburner-action",
+            "corporation-simulation"
+          ],
+          "updated": 1788696158381
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 1,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "home",
+            "pid": 64,
+            "filename": "matrix/control-engine.js"
+          }
+        ],
+        "work": null
+      },
+      "resumed": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 5,
+          "desired": "running",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696129602,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "idle",
+                "work": null,
+                "updated": 1788696158380
+              },
+              "finishedAt": 1788696158381
+            },
+            {
+              "id": "native-resume",
+              "action": "resume",
+              "requestedAt": 1788696158711,
+              "status": "succeeded",
+              "phase": "starting",
+              "scope": "stage-started",
+              "stage": "early",
+              "pid": 70,
+              "finishedAt": 1788696159103
+            }
+          ],
+          "updated": 1788696159103
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 1,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "home",
+            "pid": 124,
+            "filename": "matrix/early-progression.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 116,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 69,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 117,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 73,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 118,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 75,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 119,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 81,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 122,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 77,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 120,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 79,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 121,
+            "filename": "matrix/worm/drone.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 123,
+            "filename": "matrix/worm/drone.js"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "homeRam": 64,
+      "node": 4,
+      "commandRam": 1.65,
+      "engineRam": 4.7,
+      "pauseDurationMs": 29577,
+      "before": {
+        "processes": [
+          {
+            "host": "home",
+            "pid": 4,
+            "filename": "matrix/start.js"
+          },
+          {
+            "host": "home",
+            "pid": 10,
+            "filename": "matrix/services/hacking.js"
+          },
+          {
+            "host": "home",
+            "pid": 11,
+            "filename": "matrix/dashboard.jsx"
+          },
+          {
+            "host": "home",
+            "pid": 12,
+            "filename": "matrix/services/telemetry.js"
+          },
+          {
+            "host": "home",
+            "pid": 13,
+            "filename": "matrix/services/coordinator.js"
+          },
+          {
+            "host": "home",
+            "pid": 14,
+            "filename": "matrix/services/singularity.js"
+          },
+          {
+            "host": "home",
+            "pid": 29,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 22,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 3,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 15,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 5,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 16,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 6,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 17,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 9,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 20,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 7,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 18,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 8,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 19,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 21,
+            "filename": "matrix/workers/weaken.js"
+          }
+        ],
+        "work": {
+          "type": "FACTION",
+          "cyclesWorked": 0,
+          "factionWorkType": "hacking",
+          "factionName": "CyberSec",
+          "nextCompletion": {}
+        }
+      },
+      "paused": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 2,
+          "desired": "paused",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696165592,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "stopped",
+                "work": {
+                  "type": "FACTION",
+                  "cyclesWorked": 145,
+                  "factionWorkType": "hacking",
+                  "factionName": "CyberSec",
+                  "nextCompletion": {}
+                },
+                "updated": 1788696194442
+              },
+              "finishedAt": 1788696194443
+            }
+          ],
+          "updated": 1788696194443
+        },
+        "status": {
+          "status": "paused",
+          "id": "native-pause",
+          "remaining": [],
+          "foreign": [
+            {
+              "host": "home",
+              "pid": 29,
+              "file": "foreign-loop.js"
+            }
+          ],
+          "player": {
+            "id": "native-pause",
+            "status": "stopped",
+            "work": {
+              "type": "FACTION",
+              "cyclesWorked": 145,
+              "factionWorkType": "hacking",
+              "factionName": "CyberSec",
+              "nextCompletion": {}
+            },
+            "updated": 1788696194442
+          },
+          "scope": "managed-scripts-and-owned-faction-work",
+          "excluded": [
+            "manual-activities",
+            "sleeve-assignments",
+            "gang-assignments",
+            "bladeburner-action",
+            "corporation-simulation"
+          ],
+          "updated": 1788696194443
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 11,
+            "filename": "matrix/dashboard.jsx"
+          },
+          {
+            "host": "home",
+            "pid": 12,
+            "filename": "matrix/services/telemetry.js"
+          },
+          {
+            "host": "home",
+            "pid": 29,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "home",
+            "pid": 34,
+            "filename": "matrix/control-engine.js"
+          }
+        ],
+        "work": null
+      },
+      "resumed": {
+        "journal": {
+          "schemaVersion": 1,
+          "revision": 5,
+          "desired": "running",
+          "active": null,
+          "receipts": [
+            {
+              "id": "native-pause",
+              "action": "pause",
+              "requestedAt": 1788696165592,
+              "status": "succeeded",
+              "phase": "queued",
+              "scope": "managed-scripts-and-owned-faction-work",
+              "player": {
+                "id": "native-pause",
+                "status": "stopped",
+                "work": {
+                  "type": "FACTION",
+                  "cyclesWorked": 145,
+                  "factionWorkType": "hacking",
+                  "factionName": "CyberSec",
+                  "nextCompletion": {}
+                },
+                "updated": 1788696194442
+              },
+              "finishedAt": 1788696194443
+            },
+            {
+              "id": "native-resume",
+              "action": "resume",
+              "requestedAt": 1788696194764,
+              "status": "succeeded",
+              "phase": "starting",
+              "scope": "stage-started",
+              "stage": "full",
+              "pid": 40,
+              "finishedAt": 1788696195153
+            }
+          ],
+          "updated": 1788696195153
+        },
+        "processes": [
+          {
+            "host": "home",
+            "pid": 12,
+            "filename": "matrix/services/telemetry.js"
+          },
+          {
+            "host": "home",
+            "pid": 29,
+            "filename": "foreign-loop.js"
+          },
+          {
+            "host": "home",
+            "pid": 40,
+            "filename": "matrix/start.js"
+          },
+          {
+            "host": "home",
+            "pid": 46,
+            "filename": "matrix/services/hacking.js"
+          },
+          {
+            "host": "home",
+            "pid": 47,
+            "filename": "matrix/services/coordinator.js"
+          },
+          {
+            "host": "home",
+            "pid": 48,
+            "filename": "matrix/services/singularity.js"
+          },
+          {
+            "host": "n00dles",
+            "pid": 57,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 39,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "foodnstuff",
+            "pid": 50,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 41,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "sigma-cosmetics",
+            "pid": 51,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 42,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "joesguns",
+            "pid": 52,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 45,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "nectar-net",
+            "pid": 55,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 43,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "hong-fang-tea",
+            "pid": 53,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 44,
+            "filename": "matrix/worm/spread.js"
+          },
+          {
+            "host": "harakiri-sushi",
+            "pid": 54,
+            "filename": "matrix/workers/weaken.js"
+          },
+          {
+            "host": "CSEC",
+            "pid": 56,
+            "filename": "matrix/workers/weaken.js"
+          }
+        ]
+      },
+      "errors": []
+    }
+  ],
+  "hashes": {
+    "matrix/VERSION.txt": "613d923377c0795da33bc994ee7ef59e1cfa77bc6bf5d78573f13ea5c89c0e2f",
+    "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
+    "matrix/config.json": "c23ca41c0cc718e8818f83b74afe4c64072f8091b7efbf10ebb953adfe208211",
+    "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
+    "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
+    "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
+    "matrix/early.js": "04cfcab031816b6d44d85f886d30458c3f25f6c70921096d081b69a67955de95",
+    "matrix/workers/early.js": "b2469d615b41f9bfe30a1b50ab4e4d1940807f1f12a0036ea46d0b347387c631",
+    "matrix/lib/earlyloop.js": "d486ad608bded9ac853674496c233d1e205224af811343abd33fc8958a715302",
+    "matrix/lib/batch.js": "53c887aad901d3f0de91746774bafd0288b763aadf6f0806f96eacf242932eb9",
+    "matrix/lib/propagate.js": "3cd73085806d8ab9cd517a367e032c388b986c0a20f0a6952f05004189688f9c",
+    "matrix/worm/seed.js": "06974d1ede3e91dd5d00c644f6072f83fa90b950a40f4e3ea54ffdf4d4f398fb",
+    "matrix/worm/spread.js": "61495043ae9877c552b1c66928abdf40162dbdf221b12b5a81c31127e3c5ca26",
+    "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
+    "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
+    "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
+    "matrix/lib/common.js": "f0836161549e33a8316f015f19d49492dce2a88d49ac14801bc4cef0c1e85878",
+    "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
+    "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
+    "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
+    "matrix/lib/singleton.js": "862e27a4f6b6e28617010b0f51597189ee39604bafb750985058346b668759dc",
+    "matrix/lib/factions.js": "f85d89801e74be7726af8e6338da9366bf8ac998285fcda7ef773630e56c8cb3",
+    "matrix/lib/augmentations.js": "8cdc4262e4db6c4393b7e3ff35e263344eb065cac56cfcbef9fbaf068dd819a8",
+    "matrix/lib/goban.js": "082ca50dd71a925609d720c70817f15ecbdc77f8f5fbdc30036e5baab5eda5ec",
+    "matrix/lib/voice.js": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23",
+    "matrix/lib/hashes.js": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf",
+    "matrix/lib/gift.js": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd",
+    "matrix/workers/stanek-charge.js": "496f63ddf6ca37515f34a5a75425ae7b9f46274876f0528a43c5c151989e0ca1",
+    "matrix/lib/solvers.js": "ad41d60264def9ba5f5d21297b5143e44313a1607fb7dbf1c621b87036ee403b",
+    "matrix/lib/dispatch.js": "74f83083af0547a626937ee53bc3b98a50f5cc88560b2a272257b35c930d12ac",
+    "matrix/workers/contract.js": "f19e9317fd813209df63b2734835ec5476ca5e9a06180159dc6b11fb9f70c6b5",
+    "matrix/lib/hacking-planner.js": "e454c3401d160ea16c206037c3a54c99266fb409d97349bbeb39be3cb1a2be8c",
+    "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
+    "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
+    "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
+    "matrix/services/hacking.js": "05ab371f03d3a1521d21a84cbcf94d5d89dc4f0d66e9a1e5e9512f99415cd873",
+    "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
+    "matrix/workers/hack.js": "6534e0b5d6af33701d9bec2f813d86ac0cd57f84e5cdaf05f475eaac3a59a2f7",
+    "matrix/workers/grow.js": "9087c083af0b6201b27460a31689fcf5b2af4c886a21e45f98babfc7a1557665",
+    "matrix/workers/weaken.js": "5e84487b4621ae19141ab9514187fd6c2d790cadbadfa7d8ebce7046da2d581a",
+    "matrix/workers/share.js": "04ff39dd615ccbb9aa2bd2381ae93ef511361efd24a460d5a7675a840c96e6d9",
+    "matrix/services/cloud.js": "34a3175565002b62c1e77ea1a2b066c7167b54c41e171580347ff94627ac8382",
+    "matrix/services/hacknet.js": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd",
+    "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
+    "matrix/services/contracts.js": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc",
+    "matrix/services/stock.js": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0",
+    "matrix/services/progression.js": "a72ae8bd586701eb423c08092aa6d144cce5bc6f4a42149479892ec3a8853005",
+    "matrix/services/coordinator.js": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27",
+    "matrix/services/singularity.js": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d",
+    "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
+    "matrix/services/sleeves.js": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9",
+    "matrix/services/stanek.js": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695",
+    "matrix/services/bladeburner.js": "acf8b9bd1aebe0970f5b8b79ed8697bd2c684fb43e1c6e7939cffc103c241b4d",
+    "matrix/services/corporation.js": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184",
+    "matrix/lib/state.js": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6",
+    "matrix/lib/budget-ledger.js": "07c8b977a7242a295644433ae522a77df3f8b71ba5b97483e3c50b3e75b4eb45",
+    "matrix/lib/progression-ram.js": "87efa9d978f8cdd445e7a25e2902eda45f787acaf6cb2c4eeabba502a2ae1615",
+    "matrix/lib/singularity-tasks.js": "1ac64db81711eca2ba619cb26eea3bb377750e20bb84935b3e2457110dfebf25",
+    "matrix/workers/singularity/catalog.js": "8b8460bb0399b4e8b930c0504fa72bab907360223aef1826fbfa9a6b58b7e942",
+    "matrix/workers/singularity/home.js": "169143bbdf9bff823577a6acafc7e32fd35db176da37cdc5539dc33a8138c899",
+    "matrix/workers/singularity/infrastructure.js": "e61d81e4751fd93a575aeb59d98f5e3c9a6a3631c7f31b1d50ef9ac163d05e79",
+    "matrix/workers/singularity/observe.js": "94e0c13c59f3f9bdec280ce8a4c225db963dd27fdf7c328410420254a1e38b39",
+    "matrix/workers/singularity/purchase.js": "15dab4c69481b5358f0c5dfafb21e113e89abbcbf6d2cc099df3074d6036aa1d",
+    "matrix/workers/singularity/reset.js": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d",
+    "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
+    "matrix/workers/singularity/work.js": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030",
+    "matrix/early-progression.js": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4",
+    "matrix/lib/terminal-lease.js": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527",
+    "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
+    "matrix/workers/singularity/backdoors.js": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87",
+    "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b",
+    "matrix/control.js": "ce3cf1c2f189c80c17cfe8edb11af2e5935c3ecec4eed224c9eaf74ddfe0a7a0",
+    "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
+    "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
+    "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
+    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898"
+  }
+}

@@ -1,4 +1,4 @@
-> **Branche RP — candidat 1.11.0-rp.4.** Ghost, registre de dépenses et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
+> **Branche RP — candidat 1.11.0-rp.5.** Ghost, progression early, pause/reprise avec reçus et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
 
 # MATRIX-OS
 
@@ -36,6 +36,16 @@ To deliberately replace the saved configuration with repository defaults:
 ```text
 run install.js --fresh
 ```
+
+## Pause and resume (RP candidate)
+
+```text
+run /matrix/control.js pause
+run /matrix/control.js status
+run /matrix/control.js resume
+```
+
+These commands drain managed scripts and stop attributed faction work. Persistent gang/sleeve assignments, Bladeburner, corporation simulation and manual activities are outside this scope. Wait for the receipt: acceptance alone is not completion. See [the command contract and limits](docs/rp/CONTROL.md).
 
 ## RAM stages
 

@@ -1,3 +1,4 @@
+import { controlCheckpoint } from "/matrix/lib/control-state.js";
 import { config, baselineReserveMoney, writeState } from "/matrix/lib/common.js";
 import { spendMoney } from "/matrix/lib/budget-ledger.js";
 import { stateEnvelope } from "/matrix/lib/state.js";
@@ -48,12 +49,14 @@ export async function step(ns) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(controlCheckpoint(ns,null))return;
     const owns=()=>!ns.ps("home").some(p=>String(p.filename).replace(/^\/+/,"")==="matrix/early-progression.js" && p.pid<ns.pid);
     if(!owns())return;
     let expectWorm=false;
     try{expectWorm=Boolean(JSON.parse(ns.read("/matrix/state/early.txt")).worm);}catch{}
     try{ns.ui.openTail();ns.ui.setTailTitle("MATRIX // EARLY PROGRESSION");}catch{}
     while(true) {
+        if(controlCheckpoint(ns,"early"))return;
         if(!owns()){ns.ui.closeTail();return;}
         if(ns.read("/matrix/state/update-request.txt")) {
             ns.ui.closeTail();ns.spawn("/matrix/early.js",{threads:1,spawnDelay:0});return;

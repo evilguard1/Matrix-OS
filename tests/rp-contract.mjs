@@ -74,6 +74,28 @@ assert.equal(createHash('sha256').update(fs.readFileSync('install.js', 'utf8').r
 assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
 assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
 const progressionProof = read('evidence/rp05/native.json');
+const controlProof=read('evidence/control/native.json');
+assert.equal(controlProof.status,'passed');
+assert.deepEqual(controlProof.results.map(r=>r.homeRam),[8,32,64]);
+for(const result of controlProof.results) {
+ assert.equal(result.paused.status.status,'paused');
+ assert.equal(result.paused.status.remaining.length,0);
+ assert.equal(result.resumed.journal.desired,'running');
+ assert.equal(result.resumed.journal.receipts.find(r=>r.id==='native-resume').scope,'stage-started');
+ assert.equal(result.resumed.journal.receipts.filter(r=>r.id==='native-pause').length,1);
+ assert.equal(result.errors.length,0);
+ assert.equal(result.commandRam,1.65);
+ if(result.homeRam>8) {
+  const foreign=result.before.processes.find(p=>p.filename==='foreign-loop.js');assert.ok(foreign);
+  assert.ok(result.paused.processes.some(p=>p.pid===foreign.pid));
+  assert.ok(result.resumed.processes.some(p=>p.pid===foreign.pid));
+ }
+}
+assert.equal(controlProof.results[2].paused.work,null);
+assert.equal(controlProof.results[2].paused.status.player.status,'stopped');
+for(const [file,hash] of Object.entries(controlProof.hashes)) {
+ assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,`Control native proof no longer matches ${file}`);
+}
 const backdoorProof = read('evidence/backdoors/native.json');
 assert.equal(backdoorProof.status,'passed');
 assert.equal(backdoorProof.pending.installed,false);

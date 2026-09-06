@@ -102,9 +102,11 @@
       "candidateEvidence": [
         "matrix/lib/terminal-lease.js",
         "tests/rp-backdoors.mjs",
-        "docs/rp/evidence/backdoors/native.json"
+        "docs/rp/evidence/backdoors/native.json",
+        "tests/rp-control.mjs",
+        "docs/rp/evidence/control/native.json"
       ],
-      "remaining": "Seul le verrou de la ressource terminal est livre, avec protection des resets participants. Capacites operationnelles, pause/drainage global et arbitre de toutes les activites restent ouverts."
+      "remaining": "Verrou terminal et pause des scripts/travail de faction attribue livres. Capacites operationnelles, pause des affectations persistantes avancees et arbitre general restent ouverts."
     },
     {
       "id": "RP04",
@@ -116,7 +118,7 @@
       "legacyLots": [
         "L08"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "files": [
         "matrix/control",
         "matrix/lib/commands.js",
@@ -125,7 +127,13 @@
       ],
       "implementation": "Définir schemas stricts, plans persistants, version et préconditions. Rejet du code libre. Dispatcher par exécuteurs installés à RAM mesurée, enveloppes de dépense, TTL, idempotence et acquittement métier. Annulation et planification longue hors GPT.",
       "acceptance": "Doublon, conflit de payload, deux clients, requête périmée, changement d'epoch et crash avant/après effet : aucun double achat/reset. Reçu succeeded seulement si postcondition vérifiée.",
-      "rollback": "Désactiver admissions externes, conserver le journal, réconcilier les travaux; ne pas purger les reçus."
+      "rollback": "Désactiver admissions externes, conserver le journal, réconcilier les travaux; ne pas purger les reçus.",
+      "candidateEvidence": [
+        "matrix/lib/control-state.js",
+        "tests/rp-control.mjs",
+        "docs/rp/evidence/control/native.json"
+      ],
+      "remaining": "Seuls pause/resume sont journalises avec rejeu et postcondition de portee explicite. Catalogue externe, plans durables, reconciliation, rotation du journal et interface GPT restent ouverts."
     },
     {
       "id": "RP05",

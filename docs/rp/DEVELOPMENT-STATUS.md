@@ -1,4 +1,15 @@
-# Candidat 1.11.0-rp.4 — 5 septembre 2026
+# Candidat 1.11.0-rp.5 — 6 septembre 2026
+
+## Nouveau : commandes de pause et reprise
+
+Le [protocole de contrôle](CONTROL.md) ajoute `run /matrix/control.js pause`, `status` et `resume`, dès 8 Go avec une commande de 1,65 Go. Le journal vérifie les écritures et conserve les identifiants pour empêcher les rejeux. La pause arrête les producteurs du manifeste, attend la fin des workers sur le réseau et vérifie l'arrêt du travail de faction attribué à MatrixOS. Les scripts étrangers sont conservés. La reprise sélectionne le palier adapté à la RAM et confirme le démarrage de son propriétaire après vérification du singleton.
+
+Les preuves natives couvrent 8 Go sans Singularity et 32/64 Go en BN4, avec drainage, rejeu, reprise et scripts étrangers ; à 64 Go, le travail de faction est lancé et arrêté par les vrais scripts. Les champs de départ sont synthétiques et la sauvegarde Steam n'est pas utilisée. Ghost reste disponible pendant la pause. Son bouton historique de configuration ne remplace pas encore ces commandes.
+
+Les essais ont aussi révélé une famine de RAM : le hacking pouvait consommer la place du dispatcher Singularity avant son lancement. Il réserve désormais le coût mesuré du dispatcher absent en plus du worker. Les copies distantes sont rafraîchies par instance de service, et les marqueurs de version distinguent les suffixes RP. Des scripts tiers peuvent toujours réduire la RAM réellement disponible : leur présence ne garantit pas que tous les services tiennent à 64 Go.
+
+Cette pause porte sur les scripts et le travail de faction attribué. Les affectations persistantes de sleeves/gang, l'action Bladeburner, la simulation de corporation et les activités manuelles restent exclues. Une reprise confirmée signifie `stage-started`, sans certification de santé de tous les services. RP03 et RP04 restent ouverts, ainsi que le contrôle GPT et la campagne complète.
+
 
 ## Nouveau : accès aux factions de hacking
 

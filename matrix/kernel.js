@@ -1,3 +1,4 @@
+import { controlCheckpoint } from "/matrix/lib/control-state.js";
 import { stageScriptForRam } from "/matrix/lib/stages.js";
 
 export function stageForRam(homeRam) {
@@ -11,6 +12,7 @@ const SEED = "/matrix/worm/seed.js";
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(controlCheckpoint(ns,null))return;
     const next = stageForRam(ns.getServerMaxRam("home"));
 
     // Kill ALL stale stage processes so preventDuplicates can't silently no-op

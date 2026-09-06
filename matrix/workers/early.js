@@ -5,8 +5,10 @@ import { nextAction } from "/matrix/lib/earlyloop.js";
  * every rooted box, so the policy lives in a tested library rather than here.
  */
 export async function main(ns) {
+    if(ns.peek?.(20)==="MATRIX:PAUSED")return;
     const target = String(ns.args[0] ?? "n00dles");
     while (true) {
+        if(ns.peek?.(20)==="MATRIX:PAUSED")return;
         const action = nextAction({
             security: ns.getServerSecurityLevel(target),
             minSecurity: ns.getServerMinSecurityLevel(target),

@@ -12,11 +12,13 @@
  * args: [target]
  */
 export async function main(ns) {
+    if(ns.peek?.(20)==="MATRIX:PAUSED")return;
     const target = String(ns.args[0] ?? "n00dles");
     const maxMoney = ns.getServerMaxMoney(target);
     const minSecurity = ns.getServerMinSecurityLevel(target);
 
     while (true) {
+        if(ns.peek?.(20)==="MATRIX:PAUSED")return;
         const security = ns.getServerSecurityLevel(target);
         const money = ns.getServerMoneyAvailable(target);
 

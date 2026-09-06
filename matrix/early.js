@@ -1,3 +1,4 @@
+import { controlCheckpoint } from "/matrix/lib/control-state.js";
 import { config, event, fetchLatestInstaller, writeState, getDirectives, managerBudget } from "/matrix/lib/common.js";
 import { scanAll, tryRoot } from "/matrix/lib/network.js";
 import { top, bottom, rule, row, center, bar, readWorm } from "/matrix/lib/hud.js";
@@ -185,6 +186,7 @@ export async function expandFleet(ns, cfg) {
 
 export async function main(ns) {
     ns.disableLog("ALL");
+    if(controlCheckpoint(ns,null))return;
     // Same fragile pattern the dashboard suffered from - ns.ps liveness. Kept
     // here because early.js is spawned once by the kernel rather than polled
     // every 5s by a supervisor, so a missed detection cannot compound.
@@ -202,6 +204,7 @@ export async function main(ns) {
     await event(ns, "early", "Distributed early engine online", "success");
 
     while (true) {
+        if(controlCheckpoint(ns,"early"))return;
         try {
             if (await handoffInstaller(ns, ns.fileExists(UPDATE_REQUEST, "home"))) return;
             const cfg = config(ns);

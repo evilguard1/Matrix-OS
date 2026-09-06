@@ -1,4 +1,5 @@
 import { resetEpoch, freshState } from "./state.js";
+import { controlPaused } from "./control-state.js";
 
 export const ROOT = "/matrix";
 export const CONFIG = `${ROOT}/config.json`;
@@ -10,7 +11,7 @@ const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.11.0-rp.4",
+    version: "1.11.0-rp.5",
     masterEnabled: true,
     earlyAutomation: { enabled: true, buyPrograms: true },
     mode: "balanced",
@@ -148,7 +149,8 @@ export function config(ns) {
     const saved = readJson(ns, CONFIG, readJson(ns, `${ROOT}/config.txt`, {}));
     // Stale defaults in a protected file would otherwise override every later
     // improvement; a value the player actually changed is left untouched.
-    return merge(DEFAULT_CONFIG, migrateConfig(saved).config);
+    const merged=merge(DEFAULT_CONFIG, migrateConfig(saved).config);
+    return controlPaused(ns)?{...merged,masterEnabled:false}:merged;
 }
 
 const RELEASE_PROFILE = "/matrix/release.json";

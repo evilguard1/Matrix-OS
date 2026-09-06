@@ -1,5 +1,6 @@
 /** Charges one Stanek fragment. charge() scales with threads, so this runs wide. */
 export async function main(ns) {
+    if(ns.peek?.(20)==="MATRIX:PAUSED")return;
     const x = Number(ns.args[0]);
     const y = Number(ns.args[1]);
     if (!Number.isFinite(x) || !Number.isFinite(y)) return;
