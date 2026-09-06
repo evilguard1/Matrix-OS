@@ -208,7 +208,7 @@
         "L11",
         "UI03"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "files": [
         "matrix/lib/objectives.js",
         "matrix/lib/briefing.js",
@@ -217,7 +217,12 @@
       ],
       "implementation": "Calculer métriques et blocages explicites, comparer le curseur aux événements, produire 2–3 plans utiles seulement si admissibles, ou moins si aucune alternative réelle. Progression versionnée par objectif, coûts bornés, ETA nullable, stale interdit. Un objectif long compose des primitives installées.",
       "acceptance": "100000/250000→40% de réputation, jamais 40% natif BN. Une inconnue conserve null. Trois choix obsolètes ne sont pas réofferts. Simulation de pénurie, API verrouillée, lease occupée : blocage correct et voie viable ou report.",
-      "rollback": "Servir le dernier snapshot étiqueté périmé, aucune nouvelle option exécutable tant que l'état manque."
+      "rollback": "Servir le dernier snapshot étiqueté périmé, aucune nouvelle option exécutable tant que l'état manque.",
+      "candidateEvidence": [
+        "tests/rp-briefing.mjs",
+        "docs/rp/evidence/briefing/native.json"
+      ],
+      "remaining": "Rapport ponctuel livre avec faits courants, metriques locales, limites de fraicheur et options pause/reprise. Plans strategiques, objectifs configurables, curseur evenementiel et 100 tours de choix restent a implementer et certifier."
     },
     {
       "id": "RP08",

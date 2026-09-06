@@ -8,7 +8,7 @@
       "node": 1,
       "commandRam": 1.65,
       "engineRam": 4.7,
-      "pauseDurationMs": 29722,
+      "pauseDurationMs": 29686,
       "before": {
         "processes": [
           {
@@ -53,12 +53,12 @@
           },
           {
             "host": "nectar-net",
-            "pid": 16,
+            "pid": 15,
             "filename": "matrix/worm/spread.js"
           },
           {
             "host": "nectar-net",
-            "pid": 57,
+            "pid": 56,
             "filename": "matrix/worm/drone.js"
           },
           {
@@ -83,7 +83,7 @@
           },
           {
             "host": "CSEC",
-            "pid": 56,
+            "pid": 57,
             "filename": "matrix/worm/drone.js"
           }
         ],
@@ -99,19 +99,19 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696093976,
+              "requestedAt": 1788710241016,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
               "player": {
                 "id": "native-pause",
                 "status": "locked",
-                "updated": 1788696122894
+                "updated": 1788710269922
               },
-              "finishedAt": 1788696122895
+              "finishedAt": 1788710269923
             }
           ],
-          "updated": 1788696122895
+          "updated": 1788710269923
         },
         "status": {
           "status": "paused",
@@ -121,7 +121,7 @@
           "player": {
             "id": "native-pause",
             "status": "locked",
-            "updated": 1788696122894
+            "updated": 1788710269922
           },
           "scope": "managed-scripts-and-owned-faction-work",
           "excluded": [
@@ -131,7 +131,7 @@
             "bladeburner-action",
             "corporation-simulation"
           ],
-          "updated": 1788696122895
+          "updated": 1788710269923
         },
         "processes": [
           {
@@ -152,30 +152,30 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696093976,
+              "requestedAt": 1788710241016,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
               "player": {
                 "id": "native-pause",
                 "status": "locked",
-                "updated": 1788696122894
+                "updated": 1788710269922
               },
-              "finishedAt": 1788696122895
+              "finishedAt": 1788710269923
             },
             {
               "id": "native-resume",
               "action": "resume",
-              "requestedAt": 1788696123219,
+              "requestedAt": 1788710270253,
               "status": "succeeded",
               "phase": "starting",
               "scope": "stage-started",
               "stage": "bootstrap",
               "pid": 67,
-              "finishedAt": 1788696123616
+              "finishedAt": 1788710270644
             }
           ],
-          "updated": 1788696123616
+          "updated": 1788710270644
         },
         "processes": [
           {
@@ -220,12 +220,12 @@
           },
           {
             "host": "nectar-net",
-            "pid": 79,
+            "pid": 78,
             "filename": "matrix/worm/spread.js"
           },
           {
             "host": "nectar-net",
-            "pid": 120,
+            "pid": 119,
             "filename": "matrix/worm/drone.js"
           },
           {
@@ -250,7 +250,7 @@
           },
           {
             "host": "CSEC",
-            "pid": 119,
+            "pid": 120,
             "filename": "matrix/worm/drone.js"
           }
         ]
@@ -262,7 +262,7 @@
       "node": 4,
       "commandRam": 1.65,
       "engineRam": 4.7,
-      "pauseDurationMs": 29518,
+      "pauseDurationMs": 29509,
       "before": {
         "processes": [
           {
@@ -312,12 +312,12 @@
           },
           {
             "host": "nectar-net",
-            "pid": 16,
+            "pid": 17,
             "filename": "matrix/worm/spread.js"
           },
           {
             "host": "nectar-net",
-            "pid": 57,
+            "pid": 58,
             "filename": "matrix/worm/drone.js"
           },
           {
@@ -342,7 +342,7 @@
           },
           {
             "host": "CSEC",
-            "pid": 58,
+            "pid": 57,
             "filename": "matrix/worm/drone.js"
           }
         ],
@@ -358,7 +358,7 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696129602,
+              "requestedAt": 1788710276890,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
@@ -366,12 +366,12 @@
                 "id": "native-pause",
                 "status": "idle",
                 "work": null,
-                "updated": 1788696158380
+                "updated": 1788710305663
               },
-              "finishedAt": 1788696158381
+              "finishedAt": 1788710305664
             }
           ],
-          "updated": 1788696158381
+          "updated": 1788710305664
         },
         "status": {
           "status": "paused",
@@ -388,7 +388,7 @@
             "id": "native-pause",
             "status": "idle",
             "work": null,
-            "updated": 1788696158380
+            "updated": 1788710305663
           },
           "scope": "managed-scripts-and-owned-faction-work",
           "excluded": [
@@ -398,7 +398,7 @@
             "bladeburner-action",
             "corporation-simulation"
           ],
-          "updated": 1788696158381
+          "updated": 1788710305663
         },
         "processes": [
           {
@@ -424,7 +424,7 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696129602,
+              "requestedAt": 1788710276890,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
@@ -432,23 +432,23 @@
                 "id": "native-pause",
                 "status": "idle",
                 "work": null,
-                "updated": 1788696158380
+                "updated": 1788710305663
               },
-              "finishedAt": 1788696158381
+              "finishedAt": 1788710305664
             },
             {
               "id": "native-resume",
               "action": "resume",
-              "requestedAt": 1788696158711,
+              "requestedAt": 1788710305987,
               "status": "succeeded",
               "phase": "starting",
               "scope": "stage-started",
               "stage": "early",
               "pid": 70,
-              "finishedAt": 1788696159103
+              "finishedAt": 1788710306382
             }
           ],
-          "updated": 1788696159103
+          "updated": 1788710306382
         },
         "processes": [
           {
@@ -498,12 +498,12 @@
           },
           {
             "host": "nectar-net",
-            "pid": 81,
+            "pid": 82,
             "filename": "matrix/worm/spread.js"
           },
           {
             "host": "nectar-net",
-            "pid": 122,
+            "pid": 123,
             "filename": "matrix/worm/drone.js"
           },
           {
@@ -528,7 +528,7 @@
           },
           {
             "host": "CSEC",
-            "pid": 123,
+            "pid": 122,
             "filename": "matrix/worm/drone.js"
           }
         ]
@@ -540,7 +540,7 @@
       "node": 4,
       "commandRam": 1.65,
       "engineRam": 4.7,
-      "pauseDurationMs": 29577,
+      "pauseDurationMs": 29615,
       "before": {
         "processes": [
           {
@@ -667,7 +667,7 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696165592,
+              "requestedAt": 1788710312880,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
@@ -676,17 +676,17 @@
                 "status": "stopped",
                 "work": {
                   "type": "FACTION",
-                  "cyclesWorked": 145,
+                  "cyclesWorked": 144,
                   "factionWorkType": "hacking",
                   "factionName": "CyberSec",
                   "nextCompletion": {}
                 },
-                "updated": 1788696194442
+                "updated": 1788710341765
               },
-              "finishedAt": 1788696194443
+              "finishedAt": 1788710341766
             }
           ],
-          "updated": 1788696194443
+          "updated": 1788710341766
         },
         "status": {
           "status": "paused",
@@ -704,12 +704,12 @@
             "status": "stopped",
             "work": {
               "type": "FACTION",
-              "cyclesWorked": 145,
+              "cyclesWorked": 144,
               "factionWorkType": "hacking",
               "factionName": "CyberSec",
               "nextCompletion": {}
             },
-            "updated": 1788696194442
+            "updated": 1788710341765
           },
           "scope": "managed-scripts-and-owned-faction-work",
           "excluded": [
@@ -719,7 +719,7 @@
             "bladeburner-action",
             "corporation-simulation"
           ],
-          "updated": 1788696194443
+          "updated": 1788710341766
         },
         "processes": [
           {
@@ -755,7 +755,7 @@
             {
               "id": "native-pause",
               "action": "pause",
-              "requestedAt": 1788696165592,
+              "requestedAt": 1788710312880,
               "status": "succeeded",
               "phase": "queued",
               "scope": "managed-scripts-and-owned-faction-work",
@@ -764,28 +764,28 @@
                 "status": "stopped",
                 "work": {
                   "type": "FACTION",
-                  "cyclesWorked": 145,
+                  "cyclesWorked": 144,
                   "factionWorkType": "hacking",
                   "factionName": "CyberSec",
                   "nextCompletion": {}
                 },
-                "updated": 1788696194442
+                "updated": 1788710341765
               },
-              "finishedAt": 1788696194443
+              "finishedAt": 1788710341766
             },
             {
               "id": "native-resume",
               "action": "resume",
-              "requestedAt": 1788696194764,
+              "requestedAt": 1788710342086,
               "status": "succeeded",
               "phase": "starting",
               "scope": "stage-started",
               "stage": "full",
               "pid": 40,
-              "finishedAt": 1788696195153
+              "finishedAt": 1788710342478
             }
           ],
-          "updated": 1788696195153
+          "updated": 1788710342478
         },
         "processes": [
           {
@@ -894,9 +894,9 @@
     }
   ],
   "hashes": {
-    "matrix/VERSION.txt": "613d923377c0795da33bc994ee7ef59e1cfa77bc6bf5d78573f13ea5c89c0e2f",
+    "matrix/VERSION.txt": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036",
     "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
-    "matrix/config.json": "c23ca41c0cc718e8818f83b74afe4c64072f8091b7efbf10ebb953adfe208211",
+    "matrix/config.json": "92c58c305fe5ecac97290db33a0021aa2da420bdc58b405915113d11b0c0b7dd",
     "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
@@ -910,7 +910,7 @@
     "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
     "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "f0836161549e33a8316f015f19d49492dce2a88d49ac14801bc4cef0c1e85878",
+    "matrix/lib/common.js": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -969,6 +969,8 @@
     "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
     "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
     "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
-    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898"
+    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898",
+    "matrix/briefing.js": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503",
+    "matrix/lib/briefing.js": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
   }
 }

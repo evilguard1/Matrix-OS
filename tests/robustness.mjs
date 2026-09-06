@@ -41,6 +41,8 @@ const NEEDS_NS = new Set([
     "solvers.js",
     "hacking-planner.js",
 ]);
+// Deliberately reject malformed snapshots; covered by dedicated contract tests.
+const STRICT_INPUT = new Set(["briefing.js"]);
 
 const HOSTILE = [
     [], [null], [undefined], [{}], [null, null], [{}, {}],
@@ -49,7 +51,7 @@ const HOSTILE = [
 ];
 
 let checked = 0;
-const files = fs.readdirSync(libDir).filter(f => f.endsWith(".js") && !NEEDS_NS.has(f));
+const files = fs.readdirSync(libDir).filter(f => f.endsWith(".js") && !NEEDS_NS.has(f) && !STRICT_INPUT.has(f));
 assert.ok(files.length >= 5, `expected several pure libs, found ${files.length}`);
 
 for (const file of files) {

@@ -20,3 +20,5 @@ The harness changes RAM, cash and node/SF fields for test purposes. Those synthe
 8. Run `node tests/native/backdoors.cjs` for native CSEC interruption/retry, terminal return, actual invitation/join and faction work. The harness supplies hacking XP and CSEC root/security, but does not supply its backdoor or membership. Output: `docs/rp/evidence/backdoors/native.json`.
 
 9. Run `node tests/native/control.cjs` for native pause/replay/resume at 8 GB BN1 and 32/64 GB BN4. The fixture supplies hacking XP/root and CyberSec membership only at 64 GB, then verifies actual faction work, native drainage and foreign process preservation. The foreign loop is started after faction work at 64 GB because its extra RAM is outside the core admission budget. Output: `docs/rp/evidence/control/native.json`. `CONTROL_RAM` can select one diagnostic case; remove it for the three-case release proof.
+
+10. Run `node tests/native/briefing.cjs` for native French/JSON report collection at 32/64 GB, measured RAM and rejection of an objective whose stage owner was stopped without removing the recent state. Output: `docs/rp/evidence/briefing/native.json`.

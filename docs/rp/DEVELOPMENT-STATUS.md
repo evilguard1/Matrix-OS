@@ -1,4 +1,13 @@
-# Candidat 1.11.0-rp.5 — 6 septembre 2026
+# Candidat 1.11.0-rp.6 — 6 septembre 2026
+
+## Nouveau : briefing opérationnel
+
+`run /matrix/briefing.js` imprime un rapport en français ; `--json` expose le même paquet pour un futur client. Le script consomme ponctuellement 3,45 Go et écrit un snapshot vérifié, expirant après 15 secondes. Le rapport distingue disponibilité de l'API, présence du fichier, coût RAM, PID vivant et observation récente. Il conserve `nodeProgress: null` et nomme chaque indicateur local.
+
+Les essais natifs à 32/64 Go vérifient les vrais propriétaires et producteurs d'objectifs, puis arrêtent le propriétaire sans effacer son état récent : l'objectif est alors retiré. Les données de départ sont synthétiques. Aucune connexion GPT ni sauvegarde Steam n'est utilisée. Lire [le contrat du briefing](BRIEFING.md) et [ses preuves natives](evidence/briefing/native.json).
+
+Les options de cette première version sont les demandes de pause/reprise déjà implémentées. Leurs préconditions doivent être revalidées à l'exécution. Les plans stratégiques X/Y/Z, le curseur d'événements, les objectifs configurables et le récit restent ouverts dans RP07. Le dashboard conserve pour le moment ses sources historiques ; cette version ne prétend pas avoir migré toutes ses vues.
+
 
 ## Nouveau : commandes de pause et reprise
 
@@ -73,6 +82,6 @@ Les manifestes anciens sans hashes sont refusés par cet installateur. Le choix 
 
 ## Travail encore nécessaire avant une campagne
 
-RP02 doit surveiller le lancement. RP03 doit fournir capacités vérifiées, pause complète et arbitrage des activités. RP04 doit fournir commandes et tâches persistantes, annulation, reprise et réconciliation. RP05 doit terminer les routes autonomes au-delà du cycle de faction livré ici. RP06 doit préparer et constater les resets. Les modules avancés, l'API du GPT, les briefings fondés sur des objectifs nommés et la recette de campagne restent dans RP07–RP12.
+RP02 doit surveiller le lancement. RP03 doit fournir capacités vérifiées, pause complète et arbitrage des activités. RP04 doit fournir commandes et tâches persistantes, annulation, reprise et réconciliation. RP05 doit terminer les routes autonomes au-delà du cycle de faction livré ici. RP06 doit préparer et constater les resets. Les modules avancés, l'API du GPT, les plans stratégiques du briefing, le récit et la recette de campagne restent dans RP07–RP12.
 
 L'objectif final demeure une partie pilotée par intentions et options exécutables. Cette livraison corrige des fondations indispensables; elle ne garantit pas encore une partie entière sans développement.

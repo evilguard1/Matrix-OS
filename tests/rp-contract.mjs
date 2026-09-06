@@ -75,6 +75,18 @@ assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
 assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
 const progressionProof = read('evidence/rp05/native.json');
 const controlProof=read('evidence/control/native.json');
+const briefingProof=read('evidence/briefing/native.json');
+assert.equal(briefingProof.status,'passed');
+assert.deepEqual(briefingProof.results.map(r=>r.homeRam),[32,64]);
+for(const r of briefingProof.results) {
+ assert.equal(r.ram,3.45);assert.equal(r.active.status,'running');assert.ok(r.active.objective);
+ assert.equal(r.active.nodeProgress,null);assert.equal(r.active.expiresAt-r.active.updated,15000);
+ assert.equal(r.stopped.objective,null);assert.equal(r.stopped.status,'offline-or-transitioning');
+ assert.deepEqual(r.stopped.options,[]);assert.deepEqual(r.errors,[]);
+}
+for(const [file,hash] of Object.entries(briefingProof.hashes)) {
+ assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,`Briefing native proof no longer matches ${file}`);
+}
 assert.equal(controlProof.status,'passed');
 assert.deepEqual(controlProof.results.map(r=>r.homeRam),[8,32,64]);
 for(const result of controlProof.results) {

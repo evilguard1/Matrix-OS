@@ -7,15 +7,21 @@
     {
       "id": "briefing.read",
       "requiredForBN4": true,
-      "backendStatus": "missing",
-      "evidencePaths": [],
+      "backendStatus": "partial",
+      "evidencePaths": [
+        "matrix/briefing.js",
+        "matrix/lib/briefing.js",
+        "tests/rp-briefing.mjs",
+        "docs/rp/evidence/briefing/native.json"
+      ],
       "inputs": {
         "cursor": "optional event cursor"
       },
       "postcondition": "Paquet cohérent frais ou état déconnecté explicite.",
       "deliveryTask": "RP07",
       "consequential": false,
-      "exposedToGPT": false
+      "exposedToGPT": false,
+      "implementationNote": "Local one-shot report delivered; external adapter and event cursor absent. Snapshot expires after 15 seconds; nodeProgress remains null."
     },
     {
       "id": "objective.set",

@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.5",
+  "version": "1.11.0-rp.6",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "613d923377c0795da33bc994ee7ef59e1cfa77bc6bf5d78573f13ea5c89c0e2f"
+      "sha256": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,7 +40,7 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "c23ca41c0cc718e8818f83b74afe4c64072f8091b7efbf10ebb953adfe208211"
+      "sha256": "92c58c305fe5ecac97290db33a0021aa2da420bdc58b405915113d11b0c0b7dd"
     },
     {
       "path": "matrix/kernel.js",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "f0836161549e33a8316f015f19d49492dce2a88d49ac14801bc4cef0c1e85878"
+      "sha256": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2"
     },
     {
       "path": "matrix/lib/network.js",
@@ -406,6 +406,16 @@
       "path": "matrix/workers/control-stop-player.js",
       "stage": "bootstrap",
       "sha256": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898"
+    },
+    {
+      "path": "matrix/briefing.js",
+      "stage": "early",
+      "sha256": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503"
+    },
+    {
+      "path": "matrix/lib/briefing.js",
+      "stage": "early",
+      "sha256": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
     }
   ]
 }

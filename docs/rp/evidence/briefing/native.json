@@ -1,0 +1,613 @@
+{
+  "status": "passed",
+  "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
+  "scope": "Official isolated Bitburner 3.0.1, synthetic BN4 RAM/cash and CyberSec membership at 64GB. Real stage/goal writers, live observations, report file and dead-owner rejection. No Steam save, GPT connection or full-node score.",
+  "results": [
+    {
+      "homeRam": 32,
+      "ram": 3.45,
+      "active": {
+        "schemaVersion": 1,
+        "resetEpoch": "4:1788710277426:1788710277426",
+        "updated": 1788710282401,
+        "expiresAt": 1788710297401,
+        "status": "running",
+        "scope": "operational-observation",
+        "rpReady": false,
+        "nodeProgress": null,
+        "node": 4,
+        "home": {
+          "maxRam": 32,
+          "usedRam": 17.6,
+          "cash": 1000
+        },
+        "stage": {
+          "expected": "early",
+          "observed": "early",
+          "pids": [
+            52
+          ]
+        },
+        "objective": {
+          "id": "EARLY_HOME_RAM",
+          "title": "Passer home de 32 à 64 Go",
+          "source": "early",
+          "updated": 1788710282386,
+          "metric": {
+            "name": "Épargne disponible pour la prochaine amélioration RAM",
+            "current": 750,
+            "required": 10082898.408243202,
+            "percent": 0.007438337367228086,
+            "scope": "local-milestone",
+            "source": "early+live-cash"
+          }
+        },
+        "capabilities": [
+          {
+            "id": "economy",
+            "state": "observed",
+            "file": "matrix/early-progression.js",
+            "ram": 14.15,
+            "pids": [
+              52
+            ],
+            "evidence": "recent",
+            "reportedStatus": "active",
+            "healthCertified": false
+          },
+          {
+            "id": "progression",
+            "state": "observed",
+            "file": "matrix/early-progression.js",
+            "ram": 14.15,
+            "pids": [
+              52
+            ],
+            "evidence": "recent",
+            "reportedStatus": "active",
+            "healthCertified": false
+          },
+          {
+            "id": "backdoors",
+            "state": "needs-home-ram",
+            "file": "matrix/workers/singularity/backdoors.js",
+            "ram": 10.65,
+            "pids": [],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          },
+          {
+            "id": "dashboard",
+            "state": "needs-home-ram",
+            "file": "matrix/dashboard.jsx",
+            "ram": 1.7,
+            "pids": [],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          }
+        ],
+        "sources": {
+          "bootstrap": {
+            "quality": "missing",
+            "updated": null
+          },
+          "early": {
+            "quality": "recent",
+            "updated": 1788710282386
+          },
+          "hacking": {
+            "quality": "missing",
+            "updated": null
+          },
+          "coordinator": {
+            "quality": "missing",
+            "updated": null
+          },
+          "singularity": {
+            "quality": "missing",
+            "updated": null
+          },
+          "backdoors": {
+            "quality": "missing",
+            "updated": null
+          },
+          "dashboard": {
+            "quality": "missing",
+            "updated": null
+          },
+          "control": {
+            "quality": "missing",
+            "updated": null
+          }
+        },
+        "blockers": [],
+        "options": [
+          {
+            "id": "pause",
+            "command": "run /matrix/control.js pause",
+            "effect": "Demander le drainage des scripts et du travail de faction attribué."
+          }
+        ],
+        "control": {
+          "desired": "running",
+          "active": null,
+          "pauseConfirmed": false,
+          "scope": "managed-scripts-and-owned-faction-work"
+        },
+        "limitations": [
+          "Aucun pourcentage global du node n'est défini.",
+          "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+          "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+          "Les affectations persistantes avancées restent hors de la portée de la pause."
+        ]
+      },
+      "stopped": {
+        "schemaVersion": 1,
+        "resetEpoch": "4:1788710277426:1788710277426",
+        "updated": 1788710282410,
+        "expiresAt": 1788710297410,
+        "status": "offline-or-transitioning",
+        "scope": "operational-observation",
+        "rpReady": false,
+        "nodeProgress": null,
+        "node": 4,
+        "home": {
+          "maxRam": 32,
+          "usedRam": 3.45,
+          "cash": 1000
+        },
+        "stage": {
+          "expected": "early",
+          "observed": null,
+          "pids": []
+        },
+        "objective": null,
+        "capabilities": [
+          {
+            "id": "economy",
+            "state": "not-running",
+            "file": "matrix/services/hacking.js",
+            "ram": 14.5,
+            "pids": [],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          },
+          {
+            "id": "progression",
+            "state": "not-running",
+            "file": "matrix/early-progression.js",
+            "ram": 14.15,
+            "pids": [],
+            "evidence": "recent",
+            "reportedStatus": "active",
+            "healthCertified": false
+          },
+          {
+            "id": "backdoors",
+            "state": "needs-home-ram",
+            "file": "matrix/workers/singularity/backdoors.js",
+            "ram": 10.65,
+            "pids": [],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          },
+          {
+            "id": "dashboard",
+            "state": "needs-home-ram",
+            "file": "matrix/dashboard.jsx",
+            "ram": 1.7,
+            "pids": [],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          }
+        ],
+        "sources": {
+          "bootstrap": {
+            "quality": "missing",
+            "updated": null
+          },
+          "early": {
+            "quality": "recent",
+            "updated": 1788710282386
+          },
+          "hacking": {
+            "quality": "missing",
+            "updated": null
+          },
+          "coordinator": {
+            "quality": "missing",
+            "updated": null
+          },
+          "singularity": {
+            "quality": "missing",
+            "updated": null
+          },
+          "backdoors": {
+            "quality": "missing",
+            "updated": null
+          },
+          "dashboard": {
+            "quality": "missing",
+            "updated": null
+          },
+          "control": {
+            "quality": "missing",
+            "updated": null
+          }
+        },
+        "blockers": [
+          "Aucun propriétaire actif : démarrage ou récupération nécessaire.",
+          "Aucun objectif local frais et attribuable au palier actif."
+        ],
+        "options": [],
+        "control": {
+          "desired": "running",
+          "active": null,
+          "pauseConfirmed": false,
+          "scope": "managed-scripts-and-owned-faction-work"
+        },
+        "limitations": [
+          "Aucun pourcentage global du node n'est défini.",
+          "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+          "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+          "Les affectations persistantes avancées restent hors de la portée de la pause."
+        ]
+      },
+      "errors": []
+    },
+    {
+      "homeRam": 64,
+      "ram": 3.45,
+      "active": {
+        "schemaVersion": 1,
+        "resetEpoch": "4:1788710283438:1788710283438",
+        "updated": 1788710288652,
+        "expiresAt": 1788710303652,
+        "status": "running",
+        "scope": "operational-observation",
+        "rpReady": false,
+        "nodeProgress": null,
+        "node": 4,
+        "home": {
+          "maxRam": 64,
+          "usedRam": 41.4,
+          "cash": 1000
+        },
+        "stage": {
+          "expected": "full",
+          "observed": "full",
+          "pids": [
+            4
+          ]
+        },
+        "objective": {
+          "id": "BOOTSTRAP_INCOME",
+          "title": "Network Expansion & Hacking Income",
+          "source": "coordinator",
+          "updated": 1788710288573,
+          "metric": {
+            "name": "Capital Target",
+            "current": 1000,
+            "required": 500000,
+            "percent": 0.2,
+            "scope": "local-milestone",
+            "source": "coordinator"
+          }
+        },
+        "capabilities": [
+          {
+            "id": "economy",
+            "state": "observed",
+            "file": "matrix/services/hacking.js",
+            "ram": 14.5,
+            "pids": [
+              10
+            ],
+            "evidence": "recent",
+            "reportedStatus": "preparing",
+            "healthCertified": false
+          },
+          {
+            "id": "progression",
+            "state": "unverified",
+            "file": "matrix/services/singularity.js",
+            "ram": 4,
+            "pids": [
+              14
+            ],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          },
+          {
+            "id": "backdoors",
+            "state": "paused",
+            "file": "matrix/workers/singularity/backdoors.js",
+            "ram": 10.65,
+            "pids": [
+              14
+            ],
+            "evidence": "recent",
+            "reportedStatus": "paused",
+            "healthCertified": false
+          },
+          {
+            "id": "dashboard",
+            "state": "observed",
+            "file": "matrix/dashboard.jsx",
+            "ram": 1.7,
+            "pids": [
+              11
+            ],
+            "evidence": "recent",
+            "reportedStatus": "alive",
+            "healthCertified": false
+          }
+        ],
+        "sources": {
+          "bootstrap": {
+            "quality": "missing",
+            "updated": null
+          },
+          "early": {
+            "quality": "missing",
+            "updated": null
+          },
+          "hacking": {
+            "quality": "recent",
+            "updated": 1788710288551
+          },
+          "coordinator": {
+            "quality": "recent",
+            "updated": 1788710288573
+          },
+          "singularity": {
+            "quality": "missing",
+            "updated": null
+          },
+          "backdoors": {
+            "quality": "recent",
+            "updated": 1788710288646
+          },
+          "dashboard": {
+            "quality": "recent",
+            "updated": 1788710288568
+          },
+          "control": {
+            "quality": "missing",
+            "updated": null
+          }
+        },
+        "blockers": [],
+        "options": [
+          {
+            "id": "pause",
+            "command": "run /matrix/control.js pause",
+            "effect": "Demander le drainage des scripts et du travail de faction attribué."
+          }
+        ],
+        "control": {
+          "desired": "running",
+          "active": null,
+          "pauseConfirmed": false,
+          "scope": "managed-scripts-and-owned-faction-work"
+        },
+        "limitations": [
+          "Aucun pourcentage global du node n'est défini.",
+          "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+          "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+          "Les affectations persistantes avancées restent hors de la portée de la pause."
+        ]
+      },
+      "stopped": {
+        "schemaVersion": 1,
+        "resetEpoch": "4:1788710283438:1788710283438",
+        "updated": 1788710288661,
+        "expiresAt": 1788710303661,
+        "status": "offline-or-transitioning",
+        "scope": "operational-observation",
+        "rpReady": false,
+        "nodeProgress": null,
+        "node": 4,
+        "home": {
+          "maxRam": 64,
+          "usedRam": 32.15,
+          "cash": 1000
+        },
+        "stage": {
+          "expected": "full",
+          "observed": null,
+          "pids": []
+        },
+        "objective": null,
+        "capabilities": [
+          {
+            "id": "economy",
+            "state": "observed",
+            "file": "matrix/services/hacking.js",
+            "ram": 14.5,
+            "pids": [
+              10
+            ],
+            "evidence": "recent",
+            "reportedStatus": "preparing",
+            "healthCertified": false
+          },
+          {
+            "id": "progression",
+            "state": "unverified",
+            "file": "matrix/services/singularity.js",
+            "ram": 4,
+            "pids": [
+              14
+            ],
+            "evidence": "missing",
+            "reportedStatus": null,
+            "healthCertified": false
+          },
+          {
+            "id": "backdoors",
+            "state": "paused",
+            "file": "matrix/workers/singularity/backdoors.js",
+            "ram": 10.65,
+            "pids": [
+              14
+            ],
+            "evidence": "recent",
+            "reportedStatus": "paused",
+            "healthCertified": false
+          },
+          {
+            "id": "dashboard",
+            "state": "observed",
+            "file": "matrix/dashboard.jsx",
+            "ram": 1.7,
+            "pids": [
+              11
+            ],
+            "evidence": "recent",
+            "reportedStatus": "alive",
+            "healthCertified": false
+          }
+        ],
+        "sources": {
+          "bootstrap": {
+            "quality": "missing",
+            "updated": null
+          },
+          "early": {
+            "quality": "missing",
+            "updated": null
+          },
+          "hacking": {
+            "quality": "recent",
+            "updated": 1788710288551
+          },
+          "coordinator": {
+            "quality": "recent",
+            "updated": 1788710288573
+          },
+          "singularity": {
+            "quality": "missing",
+            "updated": null
+          },
+          "backdoors": {
+            "quality": "recent",
+            "updated": 1788710288646
+          },
+          "dashboard": {
+            "quality": "recent",
+            "updated": 1788710288568
+          },
+          "control": {
+            "quality": "missing",
+            "updated": null
+          }
+        },
+        "blockers": [
+          "Aucun propriétaire actif : démarrage ou récupération nécessaire.",
+          "Aucun objectif local frais et attribuable au palier actif."
+        ],
+        "options": [],
+        "control": {
+          "desired": "running",
+          "active": null,
+          "pauseConfirmed": false,
+          "scope": "managed-scripts-and-owned-faction-work"
+        },
+        "limitations": [
+          "Aucun pourcentage global du node n'est défini.",
+          "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+          "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+          "Les affectations persistantes avancées restent hors de la portée de la pause."
+        ]
+      },
+      "errors": []
+    }
+  ],
+  "hashes": {
+    "matrix/VERSION.txt": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036",
+    "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
+    "matrix/config.json": "92c58c305fe5ecac97290db33a0021aa2da420bdc58b405915113d11b0c0b7dd",
+    "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
+    "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
+    "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
+    "matrix/early.js": "04cfcab031816b6d44d85f886d30458c3f25f6c70921096d081b69a67955de95",
+    "matrix/workers/early.js": "b2469d615b41f9bfe30a1b50ab4e4d1940807f1f12a0036ea46d0b347387c631",
+    "matrix/lib/earlyloop.js": "d486ad608bded9ac853674496c233d1e205224af811343abd33fc8958a715302",
+    "matrix/lib/batch.js": "53c887aad901d3f0de91746774bafd0288b763aadf6f0806f96eacf242932eb9",
+    "matrix/lib/propagate.js": "3cd73085806d8ab9cd517a367e032c388b986c0a20f0a6952f05004189688f9c",
+    "matrix/worm/seed.js": "06974d1ede3e91dd5d00c644f6072f83fa90b950a40f4e3ea54ffdf4d4f398fb",
+    "matrix/worm/spread.js": "61495043ae9877c552b1c66928abdf40162dbdf221b12b5a81c31127e3c5ca26",
+    "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
+    "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
+    "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
+    "matrix/lib/common.js": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2",
+    "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
+    "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
+    "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
+    "matrix/lib/singleton.js": "862e27a4f6b6e28617010b0f51597189ee39604bafb750985058346b668759dc",
+    "matrix/lib/factions.js": "f85d89801e74be7726af8e6338da9366bf8ac998285fcda7ef773630e56c8cb3",
+    "matrix/lib/augmentations.js": "8cdc4262e4db6c4393b7e3ff35e263344eb065cac56cfcbef9fbaf068dd819a8",
+    "matrix/lib/goban.js": "082ca50dd71a925609d720c70817f15ecbdc77f8f5fbdc30036e5baab5eda5ec",
+    "matrix/lib/voice.js": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23",
+    "matrix/lib/hashes.js": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf",
+    "matrix/lib/gift.js": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd",
+    "matrix/workers/stanek-charge.js": "496f63ddf6ca37515f34a5a75425ae7b9f46274876f0528a43c5c151989e0ca1",
+    "matrix/lib/solvers.js": "ad41d60264def9ba5f5d21297b5143e44313a1607fb7dbf1c621b87036ee403b",
+    "matrix/lib/dispatch.js": "74f83083af0547a626937ee53bc3b98a50f5cc88560b2a272257b35c930d12ac",
+    "matrix/workers/contract.js": "f19e9317fd813209df63b2734835ec5476ca5e9a06180159dc6b11fb9f70c6b5",
+    "matrix/lib/hacking-planner.js": "e454c3401d160ea16c206037c3a54c99266fb409d97349bbeb39be3cb1a2be8c",
+    "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
+    "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
+    "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
+    "matrix/services/hacking.js": "05ab371f03d3a1521d21a84cbcf94d5d89dc4f0d66e9a1e5e9512f99415cd873",
+    "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
+    "matrix/workers/hack.js": "6534e0b5d6af33701d9bec2f813d86ac0cd57f84e5cdaf05f475eaac3a59a2f7",
+    "matrix/workers/grow.js": "9087c083af0b6201b27460a31689fcf5b2af4c886a21e45f98babfc7a1557665",
+    "matrix/workers/weaken.js": "5e84487b4621ae19141ab9514187fd6c2d790cadbadfa7d8ebce7046da2d581a",
+    "matrix/workers/share.js": "04ff39dd615ccbb9aa2bd2381ae93ef511361efd24a460d5a7675a840c96e6d9",
+    "matrix/services/cloud.js": "34a3175565002b62c1e77ea1a2b066c7167b54c41e171580347ff94627ac8382",
+    "matrix/services/hacknet.js": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd",
+    "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
+    "matrix/services/contracts.js": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc",
+    "matrix/services/stock.js": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0",
+    "matrix/services/progression.js": "a72ae8bd586701eb423c08092aa6d144cce5bc6f4a42149479892ec3a8853005",
+    "matrix/services/coordinator.js": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27",
+    "matrix/services/singularity.js": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d",
+    "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
+    "matrix/services/sleeves.js": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9",
+    "matrix/services/stanek.js": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695",
+    "matrix/services/bladeburner.js": "acf8b9bd1aebe0970f5b8b79ed8697bd2c684fb43e1c6e7939cffc103c241b4d",
+    "matrix/services/corporation.js": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184",
+    "matrix/lib/state.js": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6",
+    "matrix/lib/budget-ledger.js": "07c8b977a7242a295644433ae522a77df3f8b71ba5b97483e3c50b3e75b4eb45",
+    "matrix/lib/progression-ram.js": "87efa9d978f8cdd445e7a25e2902eda45f787acaf6cb2c4eeabba502a2ae1615",
+    "matrix/lib/singularity-tasks.js": "1ac64db81711eca2ba619cb26eea3bb377750e20bb84935b3e2457110dfebf25",
+    "matrix/workers/singularity/catalog.js": "8b8460bb0399b4e8b930c0504fa72bab907360223aef1826fbfa9a6b58b7e942",
+    "matrix/workers/singularity/home.js": "169143bbdf9bff823577a6acafc7e32fd35db176da37cdc5539dc33a8138c899",
+    "matrix/workers/singularity/infrastructure.js": "e61d81e4751fd93a575aeb59d98f5e3c9a6a3631c7f31b1d50ef9ac163d05e79",
+    "matrix/workers/singularity/observe.js": "94e0c13c59f3f9bdec280ce8a4c225db963dd27fdf7c328410420254a1e38b39",
+    "matrix/workers/singularity/purchase.js": "15dab4c69481b5358f0c5dfafb21e113e89abbcbf6d2cc099df3074d6036aa1d",
+    "matrix/workers/singularity/reset.js": "21ce7183acc43473ce13d8eb074be87042e856bc6195470dc0bdae813e6b616d",
+    "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
+    "matrix/workers/singularity/work.js": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030",
+    "matrix/early-progression.js": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4",
+    "matrix/lib/terminal-lease.js": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527",
+    "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
+    "matrix/workers/singularity/backdoors.js": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87",
+    "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b",
+    "matrix/control.js": "ce3cf1c2f189c80c17cfe8edb11af2e5935c3ecec4eed224c9eaf74ddfe0a7a0",
+    "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
+    "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
+    "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
+    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898",
+    "matrix/briefing.js": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503",
+    "matrix/lib/briefing.js": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
+  }
+}

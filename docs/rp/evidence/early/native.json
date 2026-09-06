@@ -13,28 +13,28 @@
       ],
       "receipts": [
         {
-          "id": "4:1788696177616:1788696177616:1",
+          "id": "4:1788710233437:1788710233437:1",
           "key": null,
           "owner": "homeRam",
           "target": "home",
           "cost": 3190790.6355200005,
           "before": 3190791.6355200005,
           "pid": 52,
-          "updated": 1788696185102,
+          "updated": 1788710241308,
           "status": "spent",
           "after": 1,
           "debit": 3190790.6355200005,
           "error": null
         },
         {
-          "id": "4:1788696177616:1788696177616:2",
+          "id": "4:1788710233437:1788710233437:2",
           "key": null,
           "owner": "homeRam",
           "target": "home",
           "cost": 10082898.408243202,
           "before": 10082899.408243202,
           "pid": 52,
-          "updated": 1788696195107,
+          "updated": 1788710251320,
           "status": "spent",
           "after": 1,
           "debit": 10082898.408243202,
@@ -47,8 +47,8 @@
         "channel": "rp/ghost-node-war",
         "installedSha": "cccccccccccccccccccccccccccccccccccccccc",
         "previousSha": "cccccccccccccccccccccccccccccccccccccccc",
-        "version": "1.11.0-rp.5",
-        "installedAt": 1788696195440,
+        "version": "1.11.0-rp.6",
+        "installedAt": 1788710251619,
         "runtimeHealth": "unverified"
       },
       "report": {
@@ -164,7 +164,9 @@
         "matrix/control-engine.js",
         "matrix/control-player.js",
         "matrix/lib/control-state.js",
-        "matrix/workers/control-stop-player.js"
+        "matrix/workers/control-stop-player.js",
+        "matrix/briefing.js",
+        "matrix/lib/briefing.js"
       ],
       "errors": []
     },
@@ -177,14 +179,14 @@
       ],
       "receipts": [
         {
-          "id": "4:1788696198590:1788696198590:3",
+          "id": "4:1788710254696:1788710254696:3",
           "key": null,
           "owner": "homeRam",
           "target": "home",
           "cost": 10082898.408243202,
           "before": 10082899.408243202,
           "pid": 238,
-          "updated": 1788696216150,
+          "updated": 1788710272349,
           "status": "spent",
           "after": 1,
           "debit": 10082898.408243202,
@@ -193,28 +195,28 @@
       ],
       "programReceipts": [
         {
-          "id": "4:1788696198590:1788696198590:1",
+          "id": "4:1788710254696:1788710254696:1",
           "key": null,
           "owner": "programs",
           "target": "TOR",
           "cost": 200000,
           "before": 200001,
           "pid": 52,
-          "updated": 1788696205551,
+          "updated": 1788710261756,
           "status": "spent",
           "after": 1,
           "debit": 200000,
           "error": null
         },
         {
-          "id": "4:1788696198590:1788696198590:2",
+          "id": "4:1788710254696:1788710254696:2",
           "key": null,
           "owner": "programs",
           "target": "BruteSSH.exe",
           "cost": 500000,
           "before": 500001,
           "pid": 104,
-          "updated": 1788696210782,
+          "updated": 1788710266989,
           "status": "spent",
           "after": 1,
           "debit": 500000,
@@ -226,8 +228,8 @@
         "channel": "rp/ghost-node-war",
         "installedSha": "cccccccccccccccccccccccccccccccccccccccc",
         "previousSha": "cccccccccccccccccccccccccccccccccccccccc",
-        "version": "1.11.0-rp.5",
-        "installedAt": 1788696216423,
+        "version": "1.11.0-rp.6",
+        "installedAt": 1788710272649,
         "runtimeHealth": "unverified"
       },
       "report": {
@@ -343,15 +345,17 @@
         "matrix/control-engine.js",
         "matrix/control-player.js",
         "matrix/lib/control-state.js",
-        "matrix/workers/control-stop-player.js"
+        "matrix/workers/control-stop-player.js",
+        "matrix/briefing.js",
+        "matrix/lib/briefing.js"
       ],
       "errors": []
     }
   ],
   "hashes": {
-    "matrix/VERSION.txt": "613d923377c0795da33bc994ee7ef59e1cfa77bc6bf5d78573f13ea5c89c0e2f",
+    "matrix/VERSION.txt": "f6d3e3d7dc4d8cc13a635ed8c82173bd6dadad2fb8f4340df4a3566bffdfb036",
     "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
-    "matrix/config.json": "c23ca41c0cc718e8818f83b74afe4c64072f8091b7efbf10ebb953adfe208211",
+    "matrix/config.json": "92c58c305fe5ecac97290db33a0021aa2da420bdc58b405915113d11b0c0b7dd",
     "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
@@ -365,7 +369,7 @@
     "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
     "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "f0836161549e33a8316f015f19d49492dce2a88d49ac14801bc4cef0c1e85878",
+    "matrix/lib/common.js": "d9ef35b82f4ecb23fb43f86aad227276c668a1e8d01c07d23e7d8a8588e6e5a2",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -424,6 +428,8 @@
     "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
     "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
     "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
-    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898"
+    "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898",
+    "matrix/briefing.js": "907c4fe2f4ada60247f092f1904b6fcaf6aa1bfd8050ef1bb8c06d98981f9503",
+    "matrix/lib/briefing.js": "c135cc8267757f54275f65c6fe8065bf727e33adf4de8e846a3125cab3faf6dd"
   }
 }

@@ -1,4 +1,4 @@
-> **Branche RP — candidat 1.11.0-rp.5.** Ghost, progression early, pause/reprise avec reçus et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
+> **Branche RP — candidat 1.11.0-rp.6.** Ghost, progression early, pause/reprise avec reçus et installation avec hashes et restauration. Lire [les corrections, preuves et limites](docs/rp/DEVELOPMENT-STATUS.md). La campagne et le contrôle GPT ne sont pas encore certifiés; les sections historiques ci-dessous décrivent aussi la base 1.10.2.
 
 # MATRIX-OS
 
@@ -36,6 +36,15 @@ To deliberately replace the saved configuration with repository defaults:
 ```text
 run install.js --fresh
 ```
+
+## Operational briefing (RP candidate)
+
+```text
+run /matrix/briefing.js
+run /matrix/briefing.js --json
+```
+
+A French report and expiring JSON snapshot expose the current local goal, observed services and blockers. Native cost: 3.45 GB; tested alongside the active system at 32/64 GB. No global node percentage or GPT connection is claimed. See [the briefing contract](docs/rp/BRIEFING.md).
 
 ## Pause and resume (RP candidate)
 
