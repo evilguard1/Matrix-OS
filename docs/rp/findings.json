@@ -165,7 +165,7 @@
     {
       "id": "A12",
       "title": "Capacités trop optimistes",
-      "status": "partially-addressed",
+      "status": "partially-fixed",
       "note": "Ghost retire le masquage dans son composant ManualActions, mais lib/capabilities.js retourne encore [] avec Singularity; le producteur et les exécuteurs restent à corriger.",
       "evidence": [
         {
@@ -174,12 +174,13 @@
           "previousLine": 139,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/lib/capabilities.js#L139"
         }
-      ]
+      ],
+      "candidateNote": "Voir DEVELOPMENT-STATUS.md section 1.11.0-rp.2 et tests/rp-singularity.mjs; ne constitue pas une certification de tous les modules."
     },
     {
       "id": "A13",
       "title": "État installé / acheté confondu",
-      "status": "open-static",
+      "status": "partially-fixed",
       "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
       "evidence": [
         {
@@ -188,12 +189,13 @@
           "previousLine": 206,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/singularity.js#L206"
         }
-      ]
+      ],
+      "candidateNote": "Voir DEVELOPMENT-STATUS.md section 1.11.0-rp.2 et tests/rp-singularity.mjs; ne constitue pas une certification de tous les modules."
     },
     {
       "id": "A14",
       "title": "Readiness World Daemon",
-      "status": "open-static",
+      "status": "partially-fixed",
       "note": "Chemin porteur du constat inchangé depuis le premier audit; validité mécanique avancée à confirmer par les tests du lot.",
       "evidence": [
         {
@@ -202,7 +204,8 @@
           "previousLine": 19,
           "url": "https://github.com/evilguard1/Matrix-OS/blob/681045f8c45963e4569db1aed221e598c7cf50f6/matrix/services/progression.js#L19"
         }
-      ]
+      ],
+      "candidateNote": "Voir DEVELOPMENT-STATUS.md section 1.11.0-rp.2 et tests/rp-singularity.mjs; ne constitue pas une certification de tous les modules."
     },
     {
       "id": "A15",

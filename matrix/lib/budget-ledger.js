@@ -39,7 +39,7 @@ export function spendingAllowance(ns, owner, target = null, cfg = config(ns)) {
  * An unresolved interrupted intent blocks spending until explicit recovery.
  */
 export function spendMoney(ns, options) {
-    const { owner, target = null, quote, execute, limit = Infinity, key = null } = options ?? {};
+    const { owner, target = null, quote, execute, limit = Infinity, key = null, allowFree = false } = options ?? {};
     if (!ns || !OWNERS.has(owner) || typeof quote !== "function" || typeof execute !== "function" ||
         quote.constructor.name === "AsyncFunction" || execute.constructor.name === "AsyncFunction") return { status: "rejected", reason: "invalid-purchase" };
     if (ns.getHostname() !== "home") return { status: "rejected", reason: "home-only" };
@@ -62,7 +62,13 @@ export function spendMoney(ns, options) {
     if (ledger.active) return { status: "blocked", reason: "outcome-unknown", grant: ledger.active };
     let cost;
     try { cost = quote(); } catch (error) { return { status: "rejected", reason: "quote-failed", error: String(error) }; }
-    if (!Number.isFinite(cost) || cost <= 0 || !(limit >= 0) || cost > limit) return { status: "rejected", reason: "invalid-or-over-limit-price" };
+    if (!Number.isFinite(cost) || cost < 0 || !(limit >= 0) || cost > limit) return { status: "rejected", reason: "invalid-or-over-limit-price" };
+    if (cost === 0) {
+        const cfg = config(ns), coord = getCoordinatorState(ns);
+        if (!allowFree || owner !== "augmentations" || cfg.masterEnabled === false || cfg.automation?.singularity === false ||
+            (ns.getServerMaxRam("home") >= 64 && (!coord || coord.status !== "online" || !coord.budgets)))
+            return { status: "rejected", reason: "free-purchase-not-authorized" };
+    }
     const allowance = spendingAllowance(ns, owner, target);
     if (cost > allowance) return { status: "deferred", reason: "budget", cost, allowance };
     const before = ns.getServerMoneyAvailable("home");

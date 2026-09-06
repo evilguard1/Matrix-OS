@@ -73,4 +73,17 @@ for (const [file, hash] of Object.entries(purchaseProof.hashes)) {
 assert.equal(createHash('sha256').update(fs.readFileSync('install.js', 'utf8').replace(/\r\n/g,'\n')).digest('hex'), installProof.installerSha256);
 assert.deepEqual(installProof.results.map(x => x.homeRam), [8,16,64,128,256]);
 assert.ok(installProof.results.every(x => x.installerRam <= 8 && x.phase === 'installed' && x.errors.length === 0));
+const progressionProof = read('evidence/rp05/native.json');
+assert.equal(progressionProof.status,'passed');
+assert.ok(progressionProof.completedCycles >= 2);
+assert.ok(progressionProof.workers.every(w => w.ram < 24 && !w.error));
+assert.equal(progressionProof.redPill.receipt.cost,0);
+assert.equal(progressionProof.redPill.receipt.status,'spent');
+assert.equal(progressionProof.redPill.state.hasRedPill,false);
+assert.equal(progressionProof.redPill.state.redPillQueued,true);
+for (const [file, hash] of Object.entries(progressionProof.hashes)) {
+  if(file === 'matrix/config.json')continue; // Native fixture disables augmentation installation.
+  assert.equal(createHash('sha256').update(fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex'),hash,
+    `Native BN4 proof no longer matches ${file}`);
+}
 console.log(`RP delivery contract passed: ${tasks.length} tasks, ${capabilities.length} capabilities, ${scenarios.length} scenarios; rpReady=${release.rpReady}. This is not a runtime certification.`);

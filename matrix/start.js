@@ -1,3 +1,4 @@
+import { progressionRam } from "/matrix/lib/progression-ram.js";
 import { config, sfLevel, event, fetchLatestInstaller, writeState } from "/matrix/lib/common.js";
 import { top, bottom, rule, row, center, readWorm } from "/matrix/lib/hud.js";
 import { holdSingleton } from "/matrix/lib/singleton.js";
@@ -52,6 +53,7 @@ export const SERVICES = [
 
     // 64 GB priority set. With the measured 1.8.1 costs these coexist with the
     // rolling core and updater reserve. Rooting is already supplied by the worm.
+    { file: "/matrix/services/singularity.js", key: "singularity", minRam: 64, sf: 4 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
     // IPvGO needs no Source-File and grants permanent global multipliers.
@@ -69,7 +71,6 @@ export const SERVICES = [
     { file: "/matrix/services/gang.js", key: "gang", minRam: 256, sf: 2 },
     { file: "/matrix/services/stanek.js", key: "stanek", minRam: 256, sf: 13 },
     { file: "/matrix/services/bladeburner.js", key: "bladeburner", minRam: 512, sf: [6, 7] },
-    { file: "/matrix/services/singularity.js", key: "singularity", minRam: 512, sf: 4, sf4Level3: true },
     { file: "/matrix/services/corporation.js", key: "corporation", minRam: 1024, sf: 3 },
 ];
 
@@ -109,7 +110,7 @@ function ensureOne(ns, file, report, { kill = true } = {}) {
     }
     const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
     const updateReserve = ns.fileExists(UPDATE_SCRIPT, "home") ? ns.getScriptRam(UPDATE_SCRIPT, "home") : 1.6;
-    const need = ns.getScriptRam(file, "home") + updateReserve;
+    const need = ns.getScriptRam(file, "home") + updateReserve + progressionRam(ns);
     if (free + 1e-9 < need) {
         report?.push({ file, state: "ram-blocked", need: Math.round(need * 100) / 100, free: Math.round(free * 100) / 100 });
         return 0;
@@ -318,7 +319,14 @@ export async function main(ns) {
 
         const reset = ns.getResetInfo();
         const report = [];
+        const transientRam = progressionRam(ns);
+        if (transientRam && homeRam < 128) {
+            for (const optional of ["cloud", "hacknet", "go"]) for (const p of processes(ns, `/matrix/services/${optional}.js`)) ns.kill(p.pid);
+        }
         for (const service of SERVICES) {
+            if (transientRam && homeRam < 128 && ["cloud", "hacknet", "go"].includes(service.key)) {
+                report.push({file:service.file,state:"reserved-for-progression",reservedRam:transientRam});continue;
+            }
             if (service.key && cfg.automation?.[service.key] === false) {
                 report.push({ file: service.file, state: "disabled" });
                 continue;
@@ -363,7 +371,7 @@ export async function main(ns) {
         else if (deckEntry?.state === "running") deckRestarts = 0;
 
         await writeState(ns, "supervisor", {
-            status: "online", homeRam, services: report, deckRestarts,
+            status: "online", homeRam, transientRam, services: report, deckRestarts,
             stage: haveStage, expectedStage: wantStage, stageStuck,
         });
 

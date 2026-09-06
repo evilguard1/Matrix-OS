@@ -1,6 +1,12 @@
-import { config, event, plannedNextBitNode, writeState } from "/matrix/lib/common.js";
+import { config, event, plannedNextBitNode, writeState, readJson } from "/matrix/lib/common.js";
+import { resetEpoch, freshState } from "/matrix/lib/state.js";
 
 const WORLD_DAEMON = "w0r1d_d43m0n";
+
+export function daemonReady(reset, state, rooted, level, required, now = Date.now()) {
+    return Boolean(state?.schemaVersion === 1 && freshState(state, {epoch:resetEpoch(reset),now}) &&
+        state.hasRedPill === true && rooted && Number.isFinite(required) && required > 0 && level >= required);
+}
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -16,7 +22,8 @@ export async function main(ns) {
             const reset = ns.getResetInfo();
             const nextNode = plannedNextBitNode(reset, cfg.progression?.bitNodePlan);
             const requiredLevel = ns.getServerRequiredHackingLevel(WORLD_DAEMON);
-            const ready = ns.hasRootAccess(WORLD_DAEMON) && ns.getHackingLevel() >= requiredLevel;
+            const ready = daemonReady(reset, readJson(ns,"/matrix/state/singularity.txt",null),
+                ns.hasRootAccess(WORLD_DAEMON), ns.getHackingLevel(), requiredLevel);
             await writeState(ns, "progression", {
                 status: ready ? "ready" : "planning",
                 currentNode: reset.currentNode,

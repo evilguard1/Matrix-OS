@@ -5,6 +5,7 @@ import { ITutorial } from "./InteractiveTutorial";
 import { Router } from "./ui/GameRoot";
 import { Page } from "./ui/Router";
 import { Settings } from "./Settings/Settings";
+import { Factions } from "./Faction/Factions";
 Settings.RemoteFileApiPort = 0;
 Settings.RemoteFileApiReconnectionDelay = 0;
 Object.assign(globalThis, { __ghostHarness: {
@@ -16,6 +17,8 @@ Object.assign(globalThis, { __ghostHarness: {
     Player.sourceFiles.set(4, sf4);
   },
   read: (name: string) => Player.getHomeComputer().textFiles.get(name as never)?.text ?? "",
+  factions: (names: typeof Player.factions) => { Player.factions = names; },
+  factionRep: (name: keyof typeof Factions, amount: number) => { Factions[name].playerReputation = amount; },
   ram: () => {
     const home = Player.getHomeComputer();
     return [...home.scripts.values()].map(script => {
@@ -35,7 +38,7 @@ Object.assign(globalThis, { __ghostHarness: {
   run: (command: string) => Terminal.executeCommand(command),
   report: () => {
     const home = Player.getHomeComputer();
-    return { running: [...home.runningScriptMap.values()].flatMap(byPid => [...byPid.values()]).map(s => ({pid:s.pid, filename:s.filename, logEntries:s.logs.length, textLogs:s.logs.filter(x=>typeof x === "string")})),
+    return { homeRam: home.maxRam, usedRam: home.ramUsed, running: [...home.runningScriptMap.values()].flatMap(byPid => [...byPid.values()]).map(s => ({pid:s.pid, filename:s.filename, logEntries:s.logs.length, textLogs:s.logs.filter(x=>typeof x === "string")})),
       lease:home.textFiles.get("matrix/state/dashboard.txt" as never)?.text };
   },
 }});

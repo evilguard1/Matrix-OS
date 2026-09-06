@@ -74,7 +74,7 @@ function stopMatrix(ns) {
     let stopped = 0;
     for (const host of allHosts(ns)) {
         for (const process of ns.ps(host)) {
-            if (!MATRIX_PROGRAMS.has(normalize(process.filename))) continue;
+            if (!MATRIX_PROGRAMS.has(normalize(process.filename)) && !normalize(process.filename).startsWith("matrix/workers/singularity/")) continue;
             if (host === "home") {
                 try { ns.ui.closeTail(process.pid); } catch {}
             }

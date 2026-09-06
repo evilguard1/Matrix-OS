@@ -30,6 +30,8 @@ const libDir = path.join(root, "matrix/lib");
 const NEEDS_NS = new Set([
     "common.js",
     "budget-ledger.js",
+    "progression-ram.js",
+    "singularity-tasks.js",
     "network.js",
     "dispatch.js",
     "hud.js",

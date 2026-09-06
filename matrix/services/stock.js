@@ -2,6 +2,16 @@ import { config, managerBudget, writeState, event, getCoordinatorState, getDirec
 import { spendMoney } from "/matrix/lib/budget-ledger.js";
 import { stateEnvelope } from "/matrix/lib/state.js";
 
+export function fourSApiPrice(ns, constants) {
+    try { return constants.MarketDataTixApi4SCost * ns.getBitNodeMultipliers().FourSigmaMarketDataApiCost; }
+    catch (error) {
+        // 3.0.1 BN1/BN4 both have the default 1x multiplier. SF5 is not required
+        // to purchase 4S in those nodes; other unknown contexts stay blocked.
+        if ([1,4].includes(ns.getResetInfo().currentNode)) return constants.MarketDataTixApi4SCost;
+        throw error;
+    }
+}
+
 /** Positions and sale proceeds are observable with TIX, independently of 4S. */
 export function portfolio(ns) {
     const holdings = [];
@@ -84,7 +94,7 @@ export async function main(ns) {
                 await ns.stock.nextUpdate(); continue;
             }
             if (!hold && !ns.stock.has4SDataTixApi()) spendMoney(ns, { owner: "stock", target: "4S-TIX",
-                quote: () => constants.MarketDataTixApi4SCost * ns.getBitNodeMultipliers().FourSigmaMarketDataApiCost,
+                quote: () => fourSApiPrice(ns, constants),
                 execute: () => ns.stock.purchase4SMarketDataTixApi() });
             const fourS = ns.stock.has4SDataTixApi();
             if (!fourS || hold) {

@@ -1,4 +1,24 @@
-# Candidat 1.11.0-rp.1 — 5 septembre 2026
+# Candidat 1.11.0-rp.2 — 5 septembre 2026
+
+## Nouvelle étape : progression BN4 à 64 Go
+
+Singularity est désormais un contrôleur de 4 Go et huit tâches courtes : infrastructure/invitations, catalogue, valorisation, achats/dons, travail de faction, RAM home, observations et installation des augmentations. La tâche la plus coûteuse consomme 23,1 Go en BN4, contre 65,35 Go pour l'ancien service complet. Les chemins Netscript restent des appels statiques ordinaires; le découpage ne contourne pas leur facturation RAM.
+
+Le superviseur réserve une place pour une tâche à la fois. À 64 Go, avec Singularity disponible, les services cloud/Hacknet/Go cèdent leur place à la progression. Le hacking respecte cette réserve, y compris le partage de RAM. Sans SF4 dans BN1, le jeu de services précédent conserve sa priorité. Hors BN4, la décision utilise les coûts réellement facturés selon le niveau de SF4.
+
+Chaque étape produit un reçu lié au cycle et au reset. Le contrôleur attend la fin du PID puis vérifie le reçu; il signale les tâches manquantes, bloquées par la RAM ou interrompues. Il attend les tâches orphelines plutôt que d'en lancer une deuxième. Ces reçus internes ne constituent pas encore le journal durable des futurs ordres GPT.
+
+Le travail de faction en cours n'est plus relancé à chaque redémarrage. Une activité manuelle différente est conservée. Une activité démarrée par MatrixOS porte une attribution incluant faction, type de travail et reset. La pause globale complète et l'arbitrage de tous les autres services restent à livrer dans RP03.
+
+Daedalus ne bloque les dépenses pour ses 100 milliards qu'après vérification du nombre d'augmentations **installées** et du seuil de compétence. Le nombre requis vient de l'API d'invitation disponible en BN4, sans dépendance à SF5. La corporation ne réserve plus des fonds quand son service n'est pas disponible. Le prix et la réputation de la Red Pill viennent du jeu; une Red Pill en attente d'installation déclenche l'objectif de reset. La sortie du node exige une observation récente de la Red Pill installée et un niveau requis du World Daemon strictement positif.
+
+Le test [natif RP05](evidence/rp05/native.json) exécute le superviseur, le hacking, Ghost et deux cycles complets dans un home de 64 Go. CyberSec et le contexte BN4 sont initialisés par le harnais de test; l'activité de faction est ensuite démarrée par les vrais scripts et conservée au second cycle. Ce n'est pas une preuve du trajet complet depuis une partie neuve ni d'un reset réel. Le pic de RAM indiqué est échantillonné toutes les 250 ms.
+
+La Red Pill coûte 0 $ dans 3.0.1. Le registre autorise désormais explicitement les augmentations gratuites, avec reçu et respect de la pause. Le test natif ajoute ensuite une appartenance Daedalus et 2,5 millions de réputation synthétiques pour vérifier un véritable achat gratuit : un reçu, aucun débit, augmentation en attente et non installée. Aucun reset réel n'est effectué par cette recette.
+
+La surveillance après installation reste ouverte dans RP02. Ce candidat donne priorité au déblocage de la progression à faible RAM. Les voyages, entraînements, crimes, entreprises, backdoors et plans durables de route demeurent à implémenter avec RP03–RP05.
+
+## Fondations conservées depuis 1.11.0-rp.1
 
 La branche `rp/ghost-node-war` contient maintenant des changements exécutables du moteur. La campagne complète n'est pas certifiée et les commandes GPT ne sont pas encore activées. `main` demeure la base 1.10.2. Les preuves initiales de l'audit sont historiques; les preuves ci-dessous concernent ce candidat.
 
@@ -32,6 +52,6 @@ Les manifestes anciens sans hashes sont refusés par cet installateur. Le choix 
 
 ## Travail encore nécessaire avant une campagne
 
-RP02 doit surveiller le lancement. RP03 doit fournir capacités vérifiées, pause complète et arbitrage des activités. RP04 doit fournir commandes et tâches persistantes, annulation, reprise et réconciliation. RP05 doit découper Singularity : sa RAM mesurée est 65,35 Go en BN4, ce qui empêche son lancement dans un home de 64 Go. RP06 doit préparer et constater les resets. Les modules avancés, l'API du GPT, les briefings fondés sur des objectifs nommés et la recette de campagne restent dans RP07–RP12.
+RP02 doit surveiller le lancement. RP03 doit fournir capacités vérifiées, pause complète et arbitrage des activités. RP04 doit fournir commandes et tâches persistantes, annulation, reprise et réconciliation. RP05 doit terminer les routes autonomes au-delà du cycle de faction livré ici. RP06 doit préparer et constater les resets. Les modules avancés, l'API du GPT, les briefings fondés sur des objectifs nommés et la recette de campagne restent dans RP07–RP12.
 
 L'objectif final demeure une partie pilotée par intentions et options exécutables. Cette livraison corrige des fondations indispensables; elle ne garantit pas encore une partie entière sans développement.

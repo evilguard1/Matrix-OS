@@ -85,7 +85,7 @@ assert.doesNotMatch(updateSource, /\bns\.(?:spawn|run|exec|wget|ps)\b/, "the 8 G
 assert.doesNotMatch(read("matrix/bootstrap.js"), /from\s+["']\/matrix\//, "bootstrap must remain standalone");
 assert.match(read("install.js"), /api\.github\.com\/repos\/evilguard1\/Matrix-OS\/commits\//);
 assert.match(read("install.js"), /\$\{release\}\//, "installer downloads must be pinned to the resolved commit");
-const singularitySource = read("matrix/services/singularity.js");
+const singularitySource = read("matrix/lib/singularity-tasks.js") + read("matrix/workers/singularity/catalog.js");
 assert.match(singularitySource, /spending-reserve\.txt/, "Singularity must publish its augmentation funding reserve");
 assert.match(singularitySource, /donateToFaction/, "Singularity must use unlocked faction donations");
 assert.match(singularitySource, /getAugmentationPrereq/, "Singularity must respect augmentation dependencies");
@@ -170,10 +170,10 @@ const objGang = evaluateObjective({ karma: -100, resetInfo: { currentNode: 4, ow
 assert.equal(objGang.id, "GANG_KARMA");
 assert.notEqual(evaluateObjective({ karma: -10, resetInfo: { currentNode: 2 } }).id, "GANG_KARMA", "BN2 does not require karma grinding");
 assert.equal(objGang.liquidateStocks, false);
-const objDaedalus = evaluateObjective({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
+const objDaedalus = evaluateObjective({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2500, installedCount:30, daedalusAugsRequirement:30 });
 assert.equal(objDaedalus.id, "RESERVE_MILESTONE");
 assert.equal(objDaedalus.liquidateStocks, true);
-const objDaemon = evaluateObjective({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
+const objDaemon = evaluateObjective({ hasRedPill:true, worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
 assert.equal(objDaemon.id, "W0R1D_D43M0N");
 assert.equal(objDaemon.liquidateStocks, true);
 const objAugs = evaluateObjective({ queuedAugs: 12 });
@@ -206,11 +206,11 @@ assert.equal(dirReset.directives.singularity, "augs", "reset phase stops faction
 assert.equal(dirReset.budgets.hacknet, 0);
 assert.equal(dirReset.budgets.cloud, 0);
 assert.equal(dirReset.budgets.sleeveAugs, 0.001);
-const dirMilestone = planDirectives({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2000 });
+const dirMilestone = planDirectives({ cash: 10_000_000_000, stockPortfolioValue: 95_000_000_000, hackingLevel: 2500,installedCount:30,daedalusAugsRequirement:30 });
 assert.equal(dirMilestone.phase, "MILESTONE");
 assert.equal(dirMilestone.budgets.cloud, 0);
 assert.equal(dirMilestone.directives.stock, "liquidate");
-const dirEndgame = planDirectives({ worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
+const dirEndgame = planDirectives({ hasRedPill:true, worldDaemonRooted: true, hackingLevel: 3000, worldDaemonReqLevel: 3000 });
 assert.equal(dirEndgame.phase, "ENDGAME");
 assert.equal(dirEndgame.budgets.stock, 0);
 assert.equal(dirEndgame.directives.stock, "liquidate");
@@ -335,7 +335,7 @@ const { SERVICES } = await importRewritten("matrix/start.js");
 const UPDATE_RESERVE = scriptRam(read("matrix/update.js"), { root }).ram;
 for (const service of SERVICES) {
     const relative = service.file.replace(/^\//, "");
-    const measured = scriptRam(read(relative), { sf4: service.sf4Level3 ? 3 : 0, root });
+    const measured = scriptRam(read(relative), { sf4: service.sf4Level3 || service.sf === 4 ? 3 : 0, root });
     assert.deepEqual(measured.unknown, [], `${relative} uses unknown RAM APIs: ${measured.unknown.join(", ")}`);
     assert.ok(service.minRam >= measured.ram + UPDATE_RESERVE,
         `${relative} declares minRam ${service.minRam} but needs ${measured.ram} + ${UPDATE_RESERVE} reserve`);
@@ -343,7 +343,7 @@ for (const service of SERVICES) {
 
 // The selected 64-GB full tier must coexist. Root/contracts intentionally wait
 // until 128 so service ordering cannot silently choose winners at 64.
-const at64 = SERVICES.filter(s => s.minRam <= 64);
+const at64 = SERVICES.filter(s => s.minRam <= 64 && s.sf === undefined);
 const total64 = at64.reduce((sum, s) => sum + scriptRam(read(s.file.replace(/^\//, "")), { root }).ram, 0)
     + scriptRam(read("matrix/start.js"), { root }).ram + UPDATE_RESERVE;
 assert.ok(total64 <= 64, `the 64 GB full tier needs ${Math.round(total64 * 100) / 100} GB and does not fit`);
@@ -360,9 +360,15 @@ assert.ok(total128Ungated <= 128,
     `the ungated 128 GB operations tier needs ${Math.round(total128Ungated * 100) / 100} GB and does not fit`);
 
 const sing = SERVICES.find(s => s.file.includes("singularity.js"));
-assert.ok(sing.sf4Level3);
-assert.ok(scriptRam(read("matrix/services/singularity.js"), { root }).ram > 1000);
-assert.ok(scriptRam(read("matrix/services/singularity.js"), { sf4: 3, root }).ram < 100);
+assert.equal(sing.minRam, 64);
+assert.equal(sing.sf,4);
+assert.ok(scriptRam(read("matrix/services/singularity.js"), { root }).ram < 5);
+const singWorkers = fs.readdirSync(path.join(root, "matrix/workers/singularity")).map(x => `matrix/workers/singularity/${x}`);
+const biggestSingWorker = Math.max(...singWorkers.map(f => scriptRam(read(f), {sf4:3,root}).ram));
+const bn4Core = at64.filter(s => !["cloud","hacknet","go"].includes(s.key));
+const bn4Ram = bn4Core.reduce((n,s) => n + scriptRam(read(s.file.slice(1)), {sf4:3,root}).ram,0)
+    + scriptRam(read("matrix/start.js"), {sf4:3,root}).ram + scriptRam(read(sing.file.slice(1)), {sf4:3,root}).ram + biggestSingWorker + UPDATE_RESERVE;
+assert.ok(bn4Ram <= 64, `BN4 core + progression slot needs ${bn4Ram} GB`);
 
 const { solvers } = await import(pathToFileURL(path.join(root, "matrix/lib/solvers.js")));
 const solverCases = [

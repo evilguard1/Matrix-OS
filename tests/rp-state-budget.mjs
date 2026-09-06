@@ -13,6 +13,8 @@ async function load(file) {
 }
 const coordinator = await load("matrix/services/coordinator.js");
 const stock = await load("matrix/services/stock.js");
+assert.equal(stock.fourSApiPrice({getBitNodeMultipliers(){throw new Error("SF5 locked");},getResetInfo:()=>({currentNode:4})},{MarketDataTixApi4SCost:25e9}),25e9);
+assert.throws(()=>stock.fourSApiPrice({getBitNodeMultipliers(){throw new Error("SF5 locked");},getResetInfo:()=>({currentNode:12})},{MarketDataTixApi4SCost:25e9}));
 const reset = { currentNode: 4, lastNodeReset: 1, lastAugReset: 2, ownedSF: new Map([[2, 1]]) };
 function fixture(cash = 100) {
     const files = new Map([["/matrix/config.json", JSON.stringify({ economy: { cashReserve: 0, reserveFraction: 0 } })]]);
@@ -25,6 +27,14 @@ function fixture(cash = 100) {
         setRam: n => homeRam = n, setReset: r => currentReset = r };
 }
 const buy = (f, cost, more = {}) => spendMoney(f.ns, { owner: "programs", quote: () => cost, execute: () => f.purchase(cost), ...more });
+{
+    const f=fixture(0);
+    assert.equal(buy(f,0).status,"rejected");
+    assert.equal(buy(f,0,{owner:"augmentations",target:"The Red Pill",allowFree:true}).status,"spent");
+    assert.equal(f.cash(),0);
+    f.files.set("/matrix/config.json",'{"masterEnabled":false}');
+    assert.equal(buy(f,0,{owner:"augmentations",allowFree:true}).status,"rejected");
+}
 
 assert.equal(resetEpoch(reset), "4:1:2");
 for (const corrupt of [{ revision: -1 }, { keyed: [null] }, { keyed: {} }, { revision: Number.MAX_SAFE_INTEGER }]) {
@@ -114,7 +124,8 @@ assert.equal(freshState({ ...stateEnvelope(reset, 1, now) }, { now, epoch: "4:1:
 {
     const f = fixture(60e9); f.setRam(64);
     const stop = Symbol("stop");
-    Object.assign(f.ns, { disableLog() {}, getPlayer: () => ({ factions: [], karma: 0 }), getHackingLevel: () => 1600,
+    f.files.set("/matrix/state/singularity.txt",JSON.stringify({...stateEnvelope(reset,1),installedCount:30,daedalusAugsRequirement:30}));
+    Object.assign(f.ns, { disableLog() {}, getPlayer: () => ({ factions: [], karma: 0 }), getHackingLevel: () => 2500,
         hasTorRouter: () => true, fileExists: () => true, hasRootAccess: () => false, getServerRequiredHackingLevel: () => 3000,
         sleep: async () => { throw stop; } });
     try { await coordinator.main(f.ns); } catch (error) { if (error !== stop) throw error; }

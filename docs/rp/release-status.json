@@ -56,6 +56,6 @@
       "evidence": []
     }
   ],
-  "candidateVersion": "1.11.0-rp.1",
-  "implementationNotes": "Budgets et installation transactionnelle implementes et testes en moteur isole. RP02 sante apres lancement, RP03-RP12 et gates de campagne restent ouverts."
+  "candidateVersion": "1.11.0-rp.2",
+  "implementationNotes": "Singularity decoupe en huit workers sequentiels, reserve RAM BN4 64 Go, prerequis Daedalus et Red Pill verifies. Surveillance RP02, arbitre complet RP03, commandes RP04 et reste du parcours RP05 encore ouverts."
 }

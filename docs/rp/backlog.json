@@ -133,7 +133,7 @@
         "L11",
         "L12"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "files": [
         "matrix/services/singularity.js",
         "matrix/lib/factions.js",
@@ -143,7 +143,12 @@
       ],
       "implementation": "Découper les appels coûteux en workers courts. Implémenter TOR/programmes/Home, voyage, entraînement, crimes, candidature/travail company, invitations, backdoors, travail faction, dons et panier d'augmentations avec prérequis. Détecter la route réalisable selon SF/ville/faction/argent. Poursuivre un objectif sans tours GPT supplémentaires.",
       "acceptance": "Route nouvelle partie BN4 pauvre → programmes → faction de hacking → réputation → achat. RAM native de chaque worker sous BN4 puis SF4 niveaux 1/2/3 hors BN4; leases empêchent tout écrasement de tâche manuelle; interruption/reprise de backdoor testée.",
-      "rollback": "Suspendre le plan, libérer ses leases, conserver les étapes déjà accomplies; aucune annulation fictive des achats."
+      "rollback": "Suspendre le plan, libérer ses leases, conserver les étapes déjà accomplies; aucune annulation fictive des achats.",
+      "candidateEvidence": [
+        "tests/rp-singularity.mjs",
+        "docs/rp/evidence/rp05/native.json"
+      ],
+      "remaining": "Voyage, entrainement, crimes, companies, backdoors et plan durable de route avec RP03/RP04. Le decoupage et le cycle de faction BN4 64 Go sont implementes; pas de recette de campagne complete."
     },
     {
       "id": "RP06",

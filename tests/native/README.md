@@ -7,6 +7,7 @@ These tests run against the official Bitburner 3.0.1 engine in an isolated brows
 3. Build with `npx webpack --mode development`. Serve the **repository root**, which contains `index.html` and `dist`, at `http://127.0.0.1:8092/` (for example Python's HTTP server).
 4. In the MatrixOS checkout, make Playwright available through `MATRIX_PLAYWRIGHT_PATH` (absolute module directory), or install it in an external test environment. The runners use headless Microsoft Edge.
 5. Run `node tests/native/rp01.cjs`, then `node tests/native/rp02.cjs`. Results are written to `docs/rp/evidence/rp01/native.json` and `rp02/native.json`.
+6. Run `node tests/native/rp05.cjs` for the full supervisor plus two Singularity cycles on a synthetic BN4 64GB home with CyberSec membership. This writes `docs/rp/evidence/rp05/native.json`. Its economy config disables augmentation installation for this fixture, and RAM peaks are sampled every 250ms.
 
 RP01 loads the distributed code, overrides only the economy config for a deterministic purchase, measures native script RAM in five node/SF contexts and verifies actual cash, one purchased server and a replayed receipt. Its config hash belongs to that synthetic config.
 

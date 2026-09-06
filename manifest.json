@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.1",
+  "version": "1.11.0-rp.2",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "730d7ee00d380f4a0e40f760f91218a0bcbbe8438c20ff3d5e1da782d5caa758"
+      "sha256": "e2ced15a38248e13136181244fbcdcec1a21808f733bc3140d597a7500dff153"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,7 +40,7 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "6d36ea2578a64574d68eccbd8eb53aa8bb80ddb2454c3a140c5a36085bdc2b8c"
+      "sha256": "59e6ca09ce0cdddb9d9e7f7e4f04d3d9d64ad9d85af6b44605268b51715f6541"
     },
     {
       "path": "matrix/kernel.js",
@@ -100,7 +100,7 @@
     {
       "path": "matrix/start.js",
       "stage": "full",
-      "sha256": "95b32c2b8ee08668ec2117b50c54fa1640a021cb997cb3fae983d2b4853d8084"
+      "sha256": "9abe97f1f3dee23d7201177ee18a24e335d7eae2eb64072eb43148345334254d"
     },
     {
       "path": "matrix/dashboard.jsx",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "3abdf69078bff7f72e5aab851bc21081b7b39226e6f09f22bcd9599362ac6b32"
+      "sha256": "4958fd4281f7a827fbe9061f0e96e0539a7895ca8686fb6960b369c38b6457e7"
     },
     {
       "path": "matrix/lib/network.js",
@@ -205,7 +205,7 @@
     {
       "path": "matrix/services/hacking.js",
       "stage": "full",
-      "sha256": "5905e940e6b2ca00ba33ce8bbcad5d6425971f490e820d78cd4c5622fe1f2b3c"
+      "sha256": "a7b61c51cbc6affe0719c5554f95770c43ad070b2ee10d0db84dedd38143e96f"
     },
     {
       "path": "matrix/services/telemetry.js",
@@ -255,22 +255,22 @@
     {
       "path": "matrix/services/stock.js",
       "stage": "operations",
-      "sha256": "e47493b55b48750d0196632358272c1470f351252460dc44235333e9b05091df"
+      "sha256": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0"
     },
     {
       "path": "matrix/services/progression.js",
       "stage": "full",
-      "sha256": "c69638d6b8ff2e8f52da8e01513e863a105c94e3cac7c613f8a9291b6a92f366"
+      "sha256": "62c4642a1ad291242b2918cbfc6a4ce6584dbd7facf7abae281b8c3e94ed6753"
     },
     {
       "path": "matrix/services/coordinator.js",
       "stage": "full",
-      "sha256": "27e072d8461e92f46dba8b2733124f60a5988fa8c0d10aec10420f4186e93cb8"
+      "sha256": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27"
     },
     {
       "path": "matrix/services/singularity.js",
       "stage": "full",
-      "sha256": "064c48c3b776b0a3ad1f8ab829fd68135de3d57d91020392e4982e221996ec84"
+      "sha256": "382ac01f76f7f42bcd1eacc4358ac32471a2faeb8aa8af7d14186eb4de43a90a"
     },
     {
       "path": "matrix/services/gang.js",
@@ -305,7 +305,57 @@
     {
       "path": "matrix/lib/budget-ledger.js",
       "stage": "early",
-      "sha256": "c46a6a808211d65da1353b652b7fd9902ccac7575c253b7afc25fdc7a44c4341"
+      "sha256": "b1383f432031606c2d947cc89eca5167412dd0ece0c82438e4360c2fac84611b"
+    },
+    {
+      "path": "matrix/lib/progression-ram.js",
+      "stage": "full",
+      "sha256": "d9d9287a794ceff0664ba953932a87f75f5e37520d16b1f6f759979721bd59ef"
+    },
+    {
+      "path": "matrix/lib/singularity-tasks.js",
+      "stage": "full",
+      "sha256": "1ac64db81711eca2ba619cb26eea3bb377750e20bb84935b3e2457110dfebf25"
+    },
+    {
+      "path": "matrix/workers/singularity/catalog.js",
+      "stage": "full",
+      "sha256": "8b8460bb0399b4e8b930c0504fa72bab907360223aef1826fbfa9a6b58b7e942"
+    },
+    {
+      "path": "matrix/workers/singularity/home.js",
+      "stage": "full",
+      "sha256": "169143bbdf9bff823577a6acafc7e32fd35db176da37cdc5539dc33a8138c899"
+    },
+    {
+      "path": "matrix/workers/singularity/infrastructure.js",
+      "stage": "full",
+      "sha256": "e61d81e4751fd93a575aeb59d98f5e3c9a6a3631c7f31b1d50ef9ac163d05e79"
+    },
+    {
+      "path": "matrix/workers/singularity/observe.js",
+      "stage": "full",
+      "sha256": "94e0c13c59f3f9bdec280ce8a4c225db963dd27fdf7c328410420254a1e38b39"
+    },
+    {
+      "path": "matrix/workers/singularity/purchase.js",
+      "stage": "full",
+      "sha256": "15dab4c69481b5358f0c5dfafb21e113e89abbcbf6d2cc099df3074d6036aa1d"
+    },
+    {
+      "path": "matrix/workers/singularity/reset.js",
+      "stage": "full",
+      "sha256": "00863062f458e289e816f95d7815deabf6fa27db228a23b45fa0079bb821c536"
+    },
+    {
+      "path": "matrix/workers/singularity/valuation.js",
+      "stage": "full",
+      "sha256": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee"
+    },
+    {
+      "path": "matrix/workers/singularity/work.js",
+      "stage": "full",
+      "sha256": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030"
     }
   ]
 }

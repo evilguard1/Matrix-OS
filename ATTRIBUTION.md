@@ -15,3 +15,8 @@ inspected at commit `7a8951a1987c0734ae3035894a25c9495e2b28d1`, particularly
 budget ledger and release transaction are original MatrixOS implementations;
 no Alain Bryden source was copied. Upcoming progression work must continue to
 check installed augmentations and actual prerequisites, not merely cash.
+
+Candidate 1.11.0-rp.2 applies that prerequisite check to Daedalus and separates
+Singularity work into short, statically charged tasks. The invitation conditions
+were checked against Bitburner 3.0.1 `FactionInfo.tsx` and the Singularity API;
+the implementation remains original, with no upstream source vendored.

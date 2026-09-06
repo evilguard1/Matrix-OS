@@ -1,3 +1,4 @@
+import { progressionRam } from "/matrix/lib/progression-ram.js";
 import { config, event, writeState, readJson, writeJson, clamp, getDirectives } from "/matrix/lib/common.js";
 import { scanAll, workerHosts } from "/matrix/lib/network.js";
 import {
@@ -96,11 +97,11 @@ function rankTargets(ns, hosts, cfg, mode = "money", planner = null) {
 }
 
 function freePool(ns, hosts, cfg) {
-    return workerHosts(ns, hosts, homeReserveFor(ns.getServerMaxRam("home"), cfg));
+    return workerHosts(ns, hosts, (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns)));
 }
 
 function liveRam(ns, hosts, cfg, boost = null) {
-    const reserveHome = homeReserveFor(ns.getServerMaxRam("home"), cfg);
+    const reserveHome = (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns));
     const shareRam = Math.max(0, ns.getScriptRam(SHARE, "home"));
     let max = 0;
     let used = 0;
@@ -335,7 +336,7 @@ async function execDistributed(ns, script, threads, args, hosts, cfg, boost = nu
         if (!(await ensureScript(ns, script, item.host))) continue;
 
         const reserve = item.host === "home"
-            ? homeReserveFor(ns.getServerMaxRam("home"), cfg)
+            ? (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns))
             : 0;
         await reclaimBoostShareForRam(ns, item.host, ram, cfg, boost);
         const nowFree = Math.max(
@@ -639,7 +640,7 @@ function boostProcessesOnHost(ns, host, boostId = null) {
 }
 
 function boostCapacities(ns, hosts, cfg, boostId) {
-    const reserveHome = homeReserveFor(ns.getServerMaxRam("home"), cfg);
+    const reserveHome = (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns));
     const scriptRam = Math.max(0, ns.getScriptRam(SHARE, "home"));
     const out = [];
     for (const host of hosts) {
@@ -736,7 +737,7 @@ async function cleanupOrphanBoostShares(ns, hosts, activeBoostId) {
 
 async function reclaimBoostShareForRam(ns, host, neededRam, cfg, boost) {
     if (boost?.mode !== BOOST_MODE_NORMAL || !boost?.boostId) return 0;
-    const reserve = host === "home" ? homeReserveFor(ns.getServerMaxRam("home"), cfg) : 0;
+    const reserve = host === "home" ? (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns)) : 0;
     const physicalFree = Math.max(
         0,
         ns.getServerMaxRam(host) - ns.getServerUsedRam(host) - reserve,
@@ -1709,7 +1710,7 @@ export async function main(ns) {
                 networkRamUsed: afterAll.used,
                 networkRamMax: afterAll.max,
                 networkRamUtilisation: afterAll.max > 0 ? afterAll.used / afterAll.max : 0,
-                homeReserveRam: homeReserveFor(ns.getServerMaxRam("home"), cfg),
+                homeReserveRam: (homeReserveFor(ns.getServerMaxRam("home"), cfg) + progressionRam(ns)),
                 lastReconcileAt: lastBoostReconcileAt || null,
                 restoreState: "pending",
                 completedAt: null,

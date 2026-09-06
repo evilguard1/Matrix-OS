@@ -10,28 +10,28 @@
       "allowance": 300000
     },
     "first": {
-      "id": "1:1788643224737:1788643224737:1",
+      "id": "1:1788661382568:1788661382568:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788643238990,
+      "updated": 1788661397277,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
       "error": null
     },
     "replay": {
-      "id": "1:1788643224737:1788643224737:1",
+      "id": "1:1788661382568:1788661382568:1",
       "key": "native-one",
       "owner": "cloud",
       "target": null,
       "cost": 440000,
       "before": 2000000,
       "pid": 1,
-      "updated": 1788643238990,
+      "updated": 1788661397277,
       "status": "spent",
       "after": 1560000,
       "debit": 440000,
@@ -45,19 +45,19 @@
     ],
     "ledger": {
       "schemaVersion": 1,
-      "resetEpoch": "1:1788643224737:1788643224737",
+      "resetEpoch": "1:1788661382568:1788661382568",
       "revision": 1,
       "active": null,
       "receipts": [
         {
-          "id": "1:1788643224737:1788643224737:1",
+          "id": "1:1788661382568:1788661382568:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788643238990,
+          "updated": 1788661397277,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -66,14 +66,14 @@
       ],
       "keyed": [
         {
-          "id": "1:1788643224737:1788643224737:1",
+          "id": "1:1788661382568:1788661382568:1",
           "key": "native-one",
           "owner": "cloud",
           "target": null,
           "cost": 440000,
           "before": 2000000,
           "pid": 1,
-          "updated": 1788643238990,
+          "updated": 1788661397277,
           "status": "spent",
           "after": 1560000,
           "debit": 440000,
@@ -319,7 +319,7 @@
         },
         {
           "file": "matrix/services/singularity.js",
-          "ram": 995.35,
+          "ram": 4,
           "error": null
         },
         {
@@ -355,6 +355,56 @@
         {
           "file": "matrix/lib/budget-ledger.js",
           "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/progression-ram.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singularity-tasks.js",
+          "ram": 547.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/catalog.js",
+          "ram": 323.1,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/home.js",
+          "ram": 74.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/infrastructure.js",
+          "ram": 179.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/observe.js",
+          "ram": 275.15,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/purchase.js",
+          "ram": 298.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/reset.js",
+          "ram": 162.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/valuation.js",
+          "ram": 194.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/work.js",
+          "ram": 74.6,
           "error": null
         },
         {
@@ -600,7 +650,7 @@
         },
         {
           "file": "matrix/services/singularity.js",
-          "ram": 65.35,
+          "ram": 4,
           "error": null
         },
         {
@@ -636,6 +686,56 @@
         {
           "file": "matrix/lib/budget-ledger.js",
           "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/progression-ram.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singularity-tasks.js",
+          "ram": 37.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/catalog.js",
+          "ram": 23.1,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/home.js",
+          "ram": 7.3,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/infrastructure.js",
+          "ram": 14.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/observe.js",
+          "ram": 20.15,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/purchase.js",
+          "ram": 21.3,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/reset.js",
+          "ram": 12.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/valuation.js",
+          "ram": 14.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/work.js",
+          "ram": 7.1,
           "error": null
         },
         {
@@ -881,7 +981,7 @@
         },
         {
           "file": "matrix/services/singularity.js",
-          "ram": 995.35,
+          "ram": 4,
           "error": null
         },
         {
@@ -917,6 +1017,56 @@
         {
           "file": "matrix/lib/budget-ledger.js",
           "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/progression-ram.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singularity-tasks.js",
+          "ram": 547.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/catalog.js",
+          "ram": 323.1,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/home.js",
+          "ram": 74.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/infrastructure.js",
+          "ram": 179.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/observe.js",
+          "ram": 275.15,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/purchase.js",
+          "ram": 298.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/reset.js",
+          "ram": 162.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/valuation.js",
+          "ram": 194.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/work.js",
+          "ram": 74.6,
           "error": null
         },
         {
@@ -1162,7 +1312,7 @@
         },
         {
           "file": "matrix/services/singularity.js",
-          "ram": 251.35,
+          "ram": 4,
           "error": null
         },
         {
@@ -1198,6 +1348,56 @@
         {
           "file": "matrix/lib/budget-ledger.js",
           "ram": 2.8,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/progression-ram.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singularity-tasks.js",
+          "ram": 139.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/catalog.js",
+          "ram": 83.1,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/home.js",
+          "ram": 20.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/infrastructure.js",
+          "ram": 47.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/observe.js",
+          "ram": 71.15,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/purchase.js",
+          "ram": 76.8,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/reset.js",
+          "ram": 42.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/valuation.js",
+          "ram": 50.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/work.js",
+          "ram": 20.6,
           "error": null
         },
         {
@@ -1443,7 +1643,7 @@
         },
         {
           "file": "matrix/services/singularity.js",
-          "ram": 65.35,
+          "ram": 4,
           "error": null
         },
         {
@@ -1482,6 +1682,56 @@
           "error": null
         },
         {
+          "file": "matrix/lib/progression-ram.js",
+          "ram": 2.75,
+          "error": null
+        },
+        {
+          "file": "matrix/lib/singularity-tasks.js",
+          "ram": 37.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/catalog.js",
+          "ram": 23.1,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/home.js",
+          "ram": 7.3,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/infrastructure.js",
+          "ram": 14.35,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/observe.js",
+          "ram": 20.15,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/purchase.js",
+          "ram": 21.3,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/reset.js",
+          "ram": 12.6,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/valuation.js",
+          "ram": 14.7,
+          "error": null
+        },
+        {
+          "file": "matrix/workers/singularity/work.js",
+          "ram": 7.1,
+          "error": null
+        },
+        {
           "file": "native-rp01.js",
           "ram": 6.35,
           "error": null
@@ -1490,7 +1740,7 @@
     }
   ],
   "hashes": {
-    "matrix/VERSION.txt": "730d7ee00d380f4a0e40f760f91218a0bcbbe8438c20ff3d5e1da782d5caa758",
+    "matrix/VERSION.txt": "e2ced15a38248e13136181244fbcdcec1a21808f733bc3140d597a7500dff153",
     "matrix/bootstrap.js": "9fec03060e70ebf9393a0c989f6fd2ef949ca52bbc40fa7c300f524e5b3d5ce7",
     "matrix/config.json": "22826275493872b9c41bcac7f5f310f0f0260b3ba3f626a578dfd60dec5682fb",
     "matrix/kernel.js": "4902f749d7d0804972e9b9f5f158a64b24159e242311e5f34729d42d40a6d3b8",
@@ -1504,9 +1754,9 @@
     "matrix/worm/seed.js": "e2ced207e14d8c102410b95d656ccdd897c387a08920904fd87abc38b105a270",
     "matrix/worm/spread.js": "6d4c5aafa3b954995ff8869c24d9035c00cfbb9c5f7983bfff2aeafe13b3323f",
     "matrix/worm/drone.js": "d92b5e0f3a9b7d5a4b14d1db326de8e38edff436fead17bb7e7ba8621e42d0b9",
-    "matrix/start.js": "95b32c2b8ee08668ec2117b50c54fa1640a021cb997cb3fae983d2b4853d8084",
+    "matrix/start.js": "9abe97f1f3dee23d7201177ee18a24e335d7eae2eb64072eb43148345334254d",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "3abdf69078bff7f72e5aab851bc21081b7b39226e6f09f22bcd9599362ac6b32",
+    "matrix/lib/common.js": "4958fd4281f7a827fbe9061f0e96e0539a7895ca8686fb6960b369c38b6457e7",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -1525,7 +1775,7 @@
     "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
     "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
     "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
-    "matrix/services/hacking.js": "5905e940e6b2ca00ba33ce8bbcad5d6425971f490e820d78cd4c5622fe1f2b3c",
+    "matrix/services/hacking.js": "a7b61c51cbc6affe0719c5554f95770c43ad070b2ee10d0db84dedd38143e96f",
     "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
     "matrix/workers/hack.js": "75ca796dd3d41c4e780ad32bb1c91a3d4b24eadb42ecc4b59786569b01757a8f",
     "matrix/workers/grow.js": "c7b7cc731b653db81470e6f4f8886586306ab7a823187f27eaf22cecf12b93dd",
@@ -1535,17 +1785,27 @@
     "matrix/services/hacknet.js": "494eda5dd552a6b3697447e827a63879eff56b4122a27e2a4ae78991234788bd",
     "matrix/services/go.js": "d18666c4ff7b35f4826430ee633eda99fc8c0558b779793a7747bd1527890dab",
     "matrix/services/contracts.js": "46e23124d321727894eb9888b6e6cac7c811c790fbede7195975488976b6c1cc",
-    "matrix/services/stock.js": "e47493b55b48750d0196632358272c1470f351252460dc44235333e9b05091df",
-    "matrix/services/progression.js": "c69638d6b8ff2e8f52da8e01513e863a105c94e3cac7c613f8a9291b6a92f366",
-    "matrix/services/coordinator.js": "27e072d8461e92f46dba8b2733124f60a5988fa8c0d10aec10420f4186e93cb8",
-    "matrix/services/singularity.js": "064c48c3b776b0a3ad1f8ab829fd68135de3d57d91020392e4982e221996ec84",
+    "matrix/services/stock.js": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0",
+    "matrix/services/progression.js": "62c4642a1ad291242b2918cbfc6a4ce6584dbd7facf7abae281b8c3e94ed6753",
+    "matrix/services/coordinator.js": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27",
+    "matrix/services/singularity.js": "382ac01f76f7f42bcd1eacc4358ac32471a2faeb8aa8af7d14186eb4de43a90a",
     "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
     "matrix/services/sleeves.js": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9",
     "matrix/services/stanek.js": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695",
     "matrix/services/bladeburner.js": "acf8b9bd1aebe0970f5b8b79ed8697bd2c684fb43e1c6e7939cffc103c241b4d",
     "matrix/services/corporation.js": "294708dcc2384b8921695db066965fe9b8889605adc697076323f4d249844184",
     "matrix/lib/state.js": "68e04b1fbccc9943f746945057f90b22a48495c630ce799d06680fc91f2374a6",
-    "matrix/lib/budget-ledger.js": "c46a6a808211d65da1353b652b7fd9902ccac7575c253b7afc25fdc7a44c4341"
+    "matrix/lib/budget-ledger.js": "b1383f432031606c2d947cc89eca5167412dd0ece0c82438e4360c2fac84611b",
+    "matrix/lib/progression-ram.js": "d9d9287a794ceff0664ba953932a87f75f5e37520d16b1f6f759979721bd59ef",
+    "matrix/lib/singularity-tasks.js": "1ac64db81711eca2ba619cb26eea3bb377750e20bb84935b3e2457110dfebf25",
+    "matrix/workers/singularity/catalog.js": "8b8460bb0399b4e8b930c0504fa72bab907360223aef1826fbfa9a6b58b7e942",
+    "matrix/workers/singularity/home.js": "169143bbdf9bff823577a6acafc7e32fd35db176da37cdc5539dc33a8138c899",
+    "matrix/workers/singularity/infrastructure.js": "e61d81e4751fd93a575aeb59d98f5e3c9a6a3631c7f31b1d50ef9ac163d05e79",
+    "matrix/workers/singularity/observe.js": "94e0c13c59f3f9bdec280ce8a4c225db963dd27fdf7c328410420254a1e38b39",
+    "matrix/workers/singularity/purchase.js": "15dab4c69481b5358f0c5dfafb21e113e89abbcbf6d2cc099df3074d6036aa1d",
+    "matrix/workers/singularity/reset.js": "00863062f458e289e816f95d7815deabf6fa27db228a23b45fa0079bb821c536",
+    "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
+    "matrix/workers/singularity/work.js": "baaef49fc08a5b0e1227925dfc3e007eadd2e9e421e1d46a9abf02cdd2295030"
   },
   "errors": []
 }

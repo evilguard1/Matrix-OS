@@ -48,6 +48,12 @@ export function evaluateObjective(data) {
         hasGang = false,
         hasCorp = false,
         hasRedPill = false,
+        redPillQueued = false,
+        redPillPrice = null,
+        installedCount = null,
+        daedalusAugsRequirement = null,
+        combatSkills = [],
+        corporationAvailable = false,
         redPillRep = 0,
         redPillReqRep = 2_500_000,
     } = data;
@@ -66,7 +72,7 @@ export function evaluateObjective(data) {
     };
 
     // 1. World Daemon / BitNode completion
-    if (worldDaemonRooted && hackingLevel >= worldDaemonReqLevel) {
+    if (hasRedPill && worldDaemonRooted && Number.isFinite(worldDaemonReqLevel) && worldDaemonReqLevel > 0 && hackingLevel >= worldDaemonReqLevel) {
         return {
             id: "W0R1D_D43M0N",
             title: "Destroy World Daemon",
@@ -80,7 +86,7 @@ export function evaluateObjective(data) {
     }
 
     // 2. Install Augmentations if queued count or target is ready
-    if (queuedAugs >= 10 || (queuedAugs >= 5 && targetAugPrice > 0 && cash < targetAugPrice)) {
+    if (redPillQueued || queuedAugs >= 10 || (queuedAugs >= 5 && targetAugPrice > 0 && cash < targetAugPrice)) {
         return {
             id: "INSTALL_AUGMENTATIONS",
             title: "Install Augmentations",
@@ -95,8 +101,8 @@ export function evaluateObjective(data) {
 
     // 3. Acquire Red Pill / Daedalus
     if (factions.includes("Daedalus") && !hasRedPill) {
-        if (redPillRep >= redPillReqRep) {
-            const redPillCost = 1_500_000_000;
+        if (redPillRep >= redPillReqRep && Number.isFinite(redPillPrice) && redPillPrice >= 0) {
+            const redPillCost = redPillPrice;
             const canAfford = totalAssets >= redPillCost;
             return {
                 id: "THE_RED_PILL",
@@ -104,15 +110,18 @@ export function evaluateObjective(data) {
                 reason: "Reputation requirement met for The Red Pill from Daedalus",
                 liquidateStocks: canAfford && cash < redPillCost,
                 budgets: { augmentationReserve: redPillCost, milestoneReserve: 0, discretionaryFraction: 0.05 },
-                milestone: { name: "Red Pill Purchase", current: totalAssets, required: redPillCost, pct: Math.min(100, (totalAssets / redPillCost) * 100) },
+                milestone: { name: "Red Pill Purchase", current: totalAssets, required: redPillCost, pct: redPillCost === 0 ? 100 : Math.min(100, (totalAssets / redPillCost) * 100) },
                 nextStep: `Accumulating ${formatMoney(redPillCost)} for The Red Pill`,
                 etaStr: calcEta(redPillCost),
             };
         }
     }
 
-    // 4. Daedalus unlock preparation (requires $100B cash & 30 Augmentations or 2500 Skill)
-    if (!factions.includes("Daedalus") && !hasRedPill && (hackingLevel >= 1500 || totalAssets >= 50_000_000_000)) {
+    // Cash is the final prerequisite, never a reason to freeze an early run.
+    const daedalusAugsReady = Number.isInteger(installedCount) && Number.isFinite(daedalusAugsRequirement) &&
+        daedalusAugsRequirement >= 0 && installedCount >= daedalusAugsRequirement;
+    const daedalusSkillsReady = hackingLevel >= 2500 || (combatSkills.length === 4 && combatSkills.every(x => x >= 1500));
+    if (!factions.includes("Daedalus") && !hasRedPill && daedalusAugsReady && daedalusSkillsReady) {
         const pct = Math.min(100, (totalAssets / DAEDALUS_CASH) * 100);
         const liquidate = totalAssets >= DAEDALUS_CASH && cash < DAEDALUS_CASH;
         return {
@@ -187,7 +196,7 @@ export function evaluateObjective(data) {
     }
 
     // 8. Corporation Bootstrap Reserve ($150B if SF3 not active)
-    if (!sf3 && !hasCorp && totalAssets >= 50_000_000_000 && totalAssets < CORP_CASH * 1.2) {
+    if (corporationAvailable && !hasCorp && totalAssets >= 50_000_000_000 && totalAssets < CORP_CASH * 1.2) {
         const pct = Math.min(100, (totalAssets / CORP_CASH) * 100);
         return {
             id: "RESERVE_MILESTONE",
@@ -401,7 +410,7 @@ export async function main(ns) {
             const targetAugName = singState.goal?.augmentation ?? "";
             const targetAugFaction = singState.goal?.faction ?? "";
             const targetAugPrice = Number(singState.goal?.price ?? 0);
-            const redPillRep = targetAugFaction === "Daedalus" ? Number(singState.goal?.rep ?? 0) : 0;
+            const redPillRep = Number(singState.redPillRep ?? 0);
 
             const stockPortfolioValue = Number(stockState.exposure ?? 0);
             const has4S = Boolean(stockState.fourS);
@@ -424,7 +433,12 @@ export async function main(ns) {
                 queuedAugs, targetAugPrice, targetAugName, targetAugFaction,
                 stockPortfolioValue, worldDaemonRooted, worldDaemonReqLevel,
                 hasGang, hasCorp, has4S, hasRedPill,
-                redPillRep, redPillReqRep: 2_500_000,
+                redPillQueued: singState.redPillQueued === true, redPillPrice: singState.redPillPrice,
+                installedCount: singState.installedCount, daedalusAugsRequirement: singState.daedalusAugsRequirement,
+                combatSkills: [player.skills?.strength, player.skills?.defense, player.skills?.dexterity, player.skills?.agility],
+                corporationAvailable: cfg.automation?.corporation !== false && homeRam >= 1024 &&
+                    (resetInfo.currentNode === 3 || (resetInfo.ownedSF?.get?.(3) ?? 0) > 0),
+                redPillRep, redPillReqRep: singState.redPillReqRep ?? Infinity,
             };
 
             const result = evaluateObjective(data);
