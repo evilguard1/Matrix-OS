@@ -86,7 +86,8 @@ function xpScore(ns, h) {
 function rankTargets(ns, hosts, cfg, mode = "money", planner = null) {
     // Cold starts need one cheap, fast source of cash before preparing large servers.
     // Keep n00dles eligible afterwards, so background preparation cannot remove all income.
-    if (mode === "money" && ns.getServerMoneyAvailable("home") < 500000 && hosts.includes("n00dles") && ns.hasRootAccess("n00dles")) return ["n00dles"];
+    if (mode === "money" && ns.getServerMoneyAvailable("home") < 500000 && hosts.includes("n00dles") && ns.hasRootAccess("n00dles") &&
+        !candidateTargets(ns, hosts, cfg).some(host => host !== "n00dles" && isPrepped(ns, host, cfg))) return ["n00dles"];
     const formulaMoney = mode === "money" && planner?.kind === PLANNER_FORMULAS;
     const scorer = mode === "xp"
         ? xpScore

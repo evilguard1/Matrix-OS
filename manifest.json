@@ -205,7 +205,7 @@
     {
       "path": "matrix/services/hacking.js",
       "stage": "full",
-      "sha256": "24b6341ef65e4a96f772087745e5c42515047f8671625472c16ac50c90b9b7bd"
+      "sha256": "834ebaccfa5591dd2843d43720ae52e65a4e95a2bcb72fcc3c2256f78b78b7e7"
     },
     {
       "path": "matrix/services/telemetry.js",
