@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.7.1",
+  "version": "1.11.0-rp.7.2",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "892100ff46d7723b7f6b810b2cd0033136cd3db1712e84b84b3c642e08a08b2c"
+      "sha256": "35f9d7a30f303227ff280fc546b5552e88f87264c754901ac7593f172ab81c80"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,12 +40,12 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "a7bf430389b9f2fcfc9c23e296f46dd00fd4d6957da0b68c732ee129b213340f"
+      "sha256": "e3d8e41c2ac07670779afa131c42044ec6e322de6c9d7fbd928692c6b462dace"
     },
     {
       "path": "matrix/kernel.js",
       "stage": "bootstrap",
-      "sha256": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea"
+      "sha256": "cd52f390dd5cb8e4dbaa7e8484c5f54518e0c5feaa4ce2e9c2ddd1353d1dcf83"
     },
     {
       "path": "matrix/lib/stages.js",
@@ -100,7 +100,7 @@
     {
       "path": "matrix/start.js",
       "stage": "full",
-      "sha256": "863b064b68d65346796ef6a96c654b945837007c6212f9ebe9935ed6ae5e4e54"
+      "sha256": "be0f8a2bc4650289e79fece170c343cfdd6bc0e9a1ae8703cc9a6f61c56a222a"
     },
     {
       "path": "matrix/dashboard.jsx",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "6d70007a81a414dd3b744239579adfe24b24b18a78595d3c805b8dfc722c2111"
+      "sha256": "4f65cbba20784e6e0ccc3269f711d0d82401da9f8b94876643af6bc54ddfea77"
     },
     {
       "path": "matrix/lib/network.js",
@@ -270,7 +270,7 @@
     {
       "path": "matrix/services/singularity.js",
       "stage": "full",
-      "sha256": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d"
+      "sha256": "b2e21e8814a842be87da549e815f9636d2c8f2858564ceaf4ae91cc1c3c97423"
     },
     {
       "path": "matrix/services/gang.js",
@@ -360,7 +360,7 @@
     {
       "path": "matrix/early-progression.js",
       "stage": "early",
-      "sha256": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4"
+      "sha256": "a47c2b1cf9bc7c4a716d103e49bbd96a1d05bc04e6f80b7ee1f2d9269f5c36b0"
     },
     {
       "path": "matrix/lib/terminal-lease.js",

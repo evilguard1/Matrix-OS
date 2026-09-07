@@ -71,3 +71,17 @@ assert.equal(progression.daemonReady(f.reset,state,true,3000,3000),true);
 assert.equal(progression.daemonReady(f.reset,{...state,hasRedPill:false},true,3000,3000),false);
 assert.equal(progression.daemonReady(f.reset,{...state,resetEpoch:'4:1:1'},true,3000,3000),false);
 assert.equal(progression.daemonReady(f.reset,state,true,3000,0),false);
+
+{
+ const f=fixture(),killed=[];let used=50;
+ let processes=[{pid:20,filename:'matrix/services/telemetry.js'},{pid:21,filename:'/matrix/services/coordinator.js'},
+ {pid:22,filename:'cloud/agent.js'},{pid:23,filename:'foreign.js'},{pid:24,filename:'matrix/dashboard.jsx'}];
+ f.ns.ps=()=>processes;f.ns.getServerUsedRam=()=>used;
+ f.ns.kill=pid=>{killed.push(pid);processes=processes.filter(p=>p.pid!==pid);used-=6;return true;};
+ assert.equal((await driver.runCycle(f.ns,'cycle')).status,'online');
+ assert.deepEqual(killed,[20,21]);assert.deepEqual(processes.map(p=>p.pid),[22,23,24]);
+ const g=fixture();g.ns.getServerMaxRam=()=>128;g.ns.getServerUsedRam=()=>120;g.ns.ps=()=>[{pid:20,filename:'matrix/services/telemetry.js'}];
+ g.ns.kill=()=>{throw Error('must not preempt outside constrained tier');};
+ assert.equal((await driver.runCycle(g.ns,'cycle')).status,'ram-blocked');
+ console.log('64GB admission: observer reclamation preserves bridge, dashboard and foreign processes.');
+}

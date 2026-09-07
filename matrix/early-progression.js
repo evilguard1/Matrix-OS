@@ -70,7 +70,7 @@ export async function main(ns) {
             // stage. Its installation handshake preserves config and the worm.
             ns.spawn("/matrix/early.js",{threads:1,spawnDelay:0});return;
         }
-        if(result.receipt?.status==="spent" && result.plan.owner==="programs") {
+        if(result.receipt?.status==="spent" && (result.plan.owner==="programs" || result.plan.owner==="homeRam")) {
             ns.ui.closeTail();ns.spawn("/matrix/kernel.js",{threads:1,spawnDelay:0});return;
         }
         if(result.status==="active" && expectWorm && !readWorm(ns)) {

@@ -35,10 +35,14 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require(
     await page.waitForFunction(()=>{try{return JSON.parse(globalThis.__ghostHarness.read('matrix/state/control-journal.txt')).receipts.some(r=>r.id==='native-pause'&&r.status==='succeeded');}catch{return false;}},{},{timeout:90000});
     const paused=await page.evaluate(()=>({journal:JSON.parse(globalThis.__ghostHarness.read('matrix/state/control-journal.txt')),status:JSON.parse(globalThis.__ghostHarness.read('matrix/state/control-status.txt')),processes:globalThis.__ghostHarness.networkProcesses(),work:globalThis.__ghostHarness.playerWork()}));
     assert.equal(paused.status.status,'paused');assert.equal(paused.status.remaining.length,0);
-    const allowed=['matrix/control-engine.js','matrix/control.js','matrix/services/telemetry.js','matrix/dashboard.jsx'];
+    const allowed=['matrix/briefing.js','matrix/control-engine.js','matrix/control.js','matrix/services/telemetry.js','matrix/dashboard.jsx'];
     assert.ok(paused.processes.every(p=>!p.filename.startsWith('matrix/') || allowed.includes(p.filename)),JSON.stringify(paused.processes));
     if(foreignPid)assert.ok(paused.processes.some(p=>p.pid===foreignPid));
-    if(homeRam===64)assert.equal(paused.work,null);
+    if(homeRam===64) {
+     assert.equal(paused.work,null);
+     const previous=await page.evaluate(()=>globalThis.__ghostHarness.read('matrix/state/briefing.txt'));
+     await page.waitForFunction(old=>{try{const raw=globalThis.__ghostHarness.read('matrix/state/briefing.txt');return raw!==old && JSON.parse(raw).status==='paused';}catch{return false;}},previous,{timeout:10000});
+    }
     // A completed id must not create another pause or duplicate receipt.
     await page.evaluate(()=>globalThis.__ghostHarness.run('run /matrix/control.js pause native-pause'));
     await page.waitForTimeout(300);

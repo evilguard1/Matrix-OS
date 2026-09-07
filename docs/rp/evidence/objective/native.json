@@ -12,11 +12,11 @@
       "action": "faction",
       "faction": "CyberSec",
       "targetRep": 100,
-      "resetEpoch": "4:1788711258606:1788711258606",
-      "requestedAt": 1788711264670,
+      "resetEpoch": "4:1788780710851:1788780710851",
+      "requestedAt": 1788780715657,
       "status": "working",
       "type": "faction-reputation",
-      "updated": 1788711265703,
+      "updated": 1788780716668,
       "currentRep": 0,
       "reason": null
     },
@@ -26,21 +26,21 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "working",
-        "updated": 1788711265703,
+        "updated": 1788780716668,
         "currentRep": 0,
         "reason": null
       }
     ],
-    "updated": 1788711265703
+    "updated": 1788780716668
   },
   "briefing": {
     "schemaVersion": 1,
-    "resetEpoch": "4:1788711258606:1788711258606",
-    "updated": 1788711265713,
-    "expiresAt": 1788711280713,
+    "resetEpoch": "4:1788780710851:1788780710851",
+    "updated": 1788780716684,
+    "expiresAt": 1788780731684,
     "status": "running",
     "scope": "operational-observation",
     "rpReady": false,
@@ -48,7 +48,7 @@
     "node": 4,
     "home": {
       "maxRam": 64,
-      "usedRam": 41.4,
+      "usedRam": 36.85,
       "cash": 1000
     },
     "stage": {
@@ -62,7 +62,7 @@
       "id": "native-goal",
       "title": "Atteindre 100 de réputation auprès de CyberSec",
       "source": "operator",
-      "updated": 1788711265703,
+      "updated": 1788780716668,
       "status": "working",
       "reason": null,
       "metric": {
@@ -81,7 +81,7 @@
         "file": "matrix/services/hacking.js",
         "ram": 14.5,
         "pids": [
-          11
+          12
         ],
         "evidence": "recent",
         "reportedStatus": "preparing",
@@ -89,14 +89,14 @@
       },
       {
         "id": "progression",
-        "state": "unverified",
+        "state": "observed",
         "file": "matrix/services/singularity.js",
-        "ram": 4,
+        "ram": 4.5,
         "pids": [
-          15
+          14
         ],
-        "evidence": "missing",
-        "reportedStatus": null,
+        "evidence": "recent",
+        "reportedStatus": "busy",
         "healthCertified": false
       },
       {
@@ -105,7 +105,7 @@
         "file": "matrix/workers/singularity/backdoors.js",
         "ram": 10.65,
         "pids": [
-          15
+          14
         ],
         "evidence": "recent",
         "reportedStatus": "paused",
@@ -117,7 +117,7 @@
         "file": "matrix/dashboard.jsx",
         "ram": 1.7,
         "pids": [
-          12
+          13
         ],
         "evidence": "recent",
         "reportedStatus": "alive",
@@ -135,23 +135,23 @@
       },
       "hacking": {
         "quality": "recent",
-        "updated": 1788711265701
+        "updated": 1788780716664
       },
       "coordinator": {
-        "quality": "recent",
-        "updated": 1788711265347
-      },
-      "singularity": {
         "quality": "missing",
         "updated": null
       },
+      "singularity": {
+        "quality": "recent",
+        "updated": 1788780716282
+      },
       "backdoors": {
         "quality": "recent",
-        "updated": 1788711265429
+        "updated": 1788780716385
       },
       "dashboard": {
         "quality": "recent",
-        "updated": 1788711265341
+        "updated": 1788780716305
       },
       "control": {
         "quality": "missing",
@@ -159,7 +159,7 @@
       },
       "operator": {
         "quality": "recent",
-        "updated": 1788711265703
+        "updated": 1788780716668
       }
     },
     "blockers": [],
@@ -176,11 +176,11 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "working",
         "type": "faction-reputation",
-        "updated": 1788711265703,
+        "updated": 1788780716668,
         "currentRep": 0,
         "reason": null
       },
@@ -189,10 +189,10 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "working",
-        "updated": 1788711265703,
+        "updated": 1788780716668,
         "currentRep": 0,
         "reason": null
       },
@@ -219,11 +219,11 @@
       "action": "faction",
       "faction": "CyberSec",
       "targetRep": 100,
-      "resetEpoch": "4:1788711258606:1788711258606",
-      "requestedAt": 1788711264670,
+      "resetEpoch": "4:1788780710851:1788780710851",
+      "requestedAt": 1788780715657,
       "status": "working",
       "type": "faction-reputation",
-      "updated": 1788711270571,
+      "updated": 1788780721530,
       "currentRep": 6.20307692307692,
       "reason": null
     },
@@ -233,15 +233,15 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "working",
-        "updated": 1788711270571,
+        "updated": 1788780721530,
         "currentRep": 6.20307692307692,
         "reason": null
       }
     ],
-    "updated": 1788711270571
+    "updated": 1788780721530
   },
   "completed": {
     "schemaVersion": 1,
@@ -253,17 +253,17 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "succeeded",
-        "updated": 1788711281071,
-        "currentRep": 112.69846153846119,
+        "updated": 1788780732046,
+        "currentRep": 112.77235505591145,
         "reason": null,
-        "finishedAt": 1788711281071,
+        "finishedAt": 1788780732046,
         "scope": "faction-reputation-threshold"
       }
     ],
-    "updated": 1788711281071
+    "updated": 1788780732046
   },
   "replay": {
     "schemaVersion": 1,
@@ -275,24 +275,24 @@
         "action": "faction",
         "faction": "CyberSec",
         "targetRep": 100,
-        "resetEpoch": "4:1788711258606:1788711258606",
-        "requestedAt": 1788711264670,
+        "resetEpoch": "4:1788780710851:1788780710851",
+        "requestedAt": 1788780715657,
         "status": "succeeded",
-        "updated": 1788711281071,
-        "currentRep": 112.69846153846119,
+        "updated": 1788780732046,
+        "currentRep": 112.77235505591145,
         "reason": null,
-        "finishedAt": 1788711281071,
+        "finishedAt": 1788780732046,
         "scope": "faction-reputation-threshold"
       }
     ],
-    "updated": 1788711281071
+    "updated": 1788780732046
   },
   "errors": [],
   "hashes": {
-    "matrix/VERSION.txt": "4b17b3108f889e17057452200cbc61af3b6fd7815429c1c581c5a109aa22e02e",
+    "matrix/VERSION.txt": "35f9d7a30f303227ff280fc546b5552e88f87264c754901ac7593f172ab81c80",
     "matrix/bootstrap.js": "ff9d9815d13a616b31f85f5fcacbf156d503c6adfd8cf9b7c2969f9abbce912f",
-    "matrix/config.json": "4e4909d1a7697a1caec0fd68b5210859d4fc74f3a650c13a67f904a1676aee0d",
-    "matrix/kernel.js": "443a1f70b212f7c0e8f0c5651b040c880e0303269c753c756ab4b370f0cc65ea",
+    "matrix/config.json": "e3d8e41c2ac07670779afa131c42044ec6e322de6c9d7fbd928692c6b462dace",
+    "matrix/kernel.js": "cd52f390dd5cb8e4dbaa7e8484c5f54518e0c5feaa4ce2e9c2ddd1353d1dcf83",
     "matrix/lib/stages.js": "b65931eb76d259738947bd1fcc9daf77dc1ae89b34f22e7a12b609f108027ab6",
     "matrix/update.js": "8c763c895bdeb914c2e6fa59ab392964ac9111869aa3a852e74f70beb2c58e94",
     "matrix/early.js": "04cfcab031816b6d44d85f886d30458c3f25f6c70921096d081b69a67955de95",
@@ -303,9 +303,9 @@
     "matrix/worm/seed.js": "06974d1ede3e91dd5d00c644f6072f83fa90b950a40f4e3ea54ffdf4d4f398fb",
     "matrix/worm/spread.js": "61495043ae9877c552b1c66928abdf40162dbdf221b12b5a81c31127e3c5ca26",
     "matrix/worm/drone.js": "e30afee02b410af4d84f61ba8940717c05589c951341f6dbac8e8e2428a183a4",
-    "matrix/start.js": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9",
+    "matrix/start.js": "be0f8a2bc4650289e79fece170c343cfdd6bc0e9a1ae8703cc9a6f61c56a222a",
     "matrix/dashboard.jsx": "175080cda9d2022758c3ec1312f1561b872a6e9de92fb93ea598002f5a52b216",
-    "matrix/lib/common.js": "2eed95fb8168f9ecf0e9d1f557aaf013cbfa2cecae26448e4cbedfec496af939",
+    "matrix/lib/common.js": "4f65cbba20784e6e0ccc3269f711d0d82401da9f8b94876643af6bc54ddfea77",
     "matrix/lib/network.js": "0c9023b53a60d2878e84ef219e38f040bb9295aed600a0f376cb22288fbc41a7",
     "matrix/lib/capabilities.js": "75fa1126f0747aa5b699e62e1a16cc09fab3d1e7a9121e15984119679d33b10f",
     "matrix/lib/hud.js": "e9a0cbdd03078ea1b7f1b26e83f77fb5efd02d271298dee962aa7ea82aee1f87",
@@ -313,7 +313,7 @@
     "matrix/lib/factions.js": "f85d89801e74be7726af8e6338da9366bf8ac998285fcda7ef773630e56c8cb3",
     "matrix/lib/augmentations.js": "8cdc4262e4db6c4393b7e3ff35e263344eb065cac56cfcbef9fbaf068dd819a8",
     "matrix/lib/goban.js": "082ca50dd71a925609d720c70817f15ecbdc77f8f5fbdc30036e5baab5eda5ec",
-    "matrix/lib/voice.js": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23",
+    "matrix/lib/voice.js": "afd00504a2534a21b9477984e99f59eec029299bbce13e8d874f63ecbcc60cd1",
     "matrix/lib/hashes.js": "81f83892332d9ef9cdc7a1c9d37b66666d096d5a2e75cacd9ace2d60d53f85cf",
     "matrix/lib/gift.js": "425833cf5b555b130d668cfe87983e0a08fdd285ef52babb04b7bb06f00ff0dd",
     "matrix/workers/stanek-charge.js": "496f63ddf6ca37515f34a5a75425ae7b9f46274876f0528a43c5c151989e0ca1",
@@ -324,8 +324,8 @@
     "matrix/lib/reputation-boost.js": "9026de66caa8bc928987bd565a5e6c54556180656e249e62e82ca2a689222e2e",
     "matrix/boost.js": "5274dd51a5e6bfc28021a8b887ca982b4bbeb18043f345ad5c86f6e84c6986df",
     "matrix/services/root.js": "18adf04380121a21771f3a1828cf2f81adf56e35952ebdf229f660c88b9d30e8",
-    "matrix/services/hacking.js": "05ab371f03d3a1521d21a84cbcf94d5d89dc4f0d66e9a1e5e9512f99415cd873",
-    "matrix/services/telemetry.js": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b",
+    "matrix/services/hacking.js": "834ebaccfa5591dd2843d43720ae52e65a4e95a2bcb72fcc3c2256f78b78b7e7",
+    "matrix/services/telemetry.js": "8987993b891cff12aa07eb8d4d9378238dbda7b8edcb21f2d81a834533e43f3d",
     "matrix/workers/hack.js": "6534e0b5d6af33701d9bec2f813d86ac0cd57f84e5cdaf05f475eaac3a59a2f7",
     "matrix/workers/grow.js": "9087c083af0b6201b27460a31689fcf5b2af4c886a21e45f98babfc7a1557665",
     "matrix/workers/weaken.js": "5e84487b4621ae19141ab9514187fd6c2d790cadbadfa7d8ebce7046da2d581a",
@@ -337,7 +337,7 @@
     "matrix/services/stock.js": "134ae3d91df9930e69496528daee6dd4fdd6633e3c4ad808e7787a532f82a3f0",
     "matrix/services/progression.js": "ff51ba36d713685ce5aad6d6bff08ca5856a6c37d817f352b22850b687580ee4",
     "matrix/services/coordinator.js": "fc4bf0f96f825ad31adfad313c9d335b2846930ecdb06fd90401508899b37b27",
-    "matrix/services/singularity.js": "c10c663dc5b52c68efe5d3da6081b03cfe302ccd3d042c0d8c07902a96bb617d",
+    "matrix/services/singularity.js": "b2e21e8814a842be87da549e815f9636d2c8f2858564ceaf4ae91cc1c3c97423",
     "matrix/services/gang.js": "efb77b3020f8117da6eeebac96ff7e331cf759dd6a5ead2b66ad5bc4eed2e8bf",
     "matrix/services/sleeves.js": "62125d4e6ae89ec49bc51c1123d3e647481c8bf01201e84001088eec0c831ce9",
     "matrix/services/stanek.js": "eb518e3f093ca9a65048d4b475bc28c4556846cc7a0a852920d67820ba550695",
@@ -355,17 +355,17 @@
     "matrix/workers/singularity/reset.js": "f25bb34072c9f649aba6a11153c33d0346dcb227b5f667ba23c0b9fbd74271fd",
     "matrix/workers/singularity/valuation.js": "f609f4ac988eb8cf2944266ad9a7343127013ae30aee17791e35e4c3b62758ee",
     "matrix/workers/singularity/work.js": "f60459373a6caf290755b707fdbf3e67683a50982a2212d87ef235d69cc9b8ee",
-    "matrix/early-progression.js": "2a57900f67181d6261ce67ec0ebeae38556ec6edc7a2aa77b026fc44b6bc60b4",
+    "matrix/early-progression.js": "a47c2b1cf9bc7c4a716d103e49bbd96a1d05bc04e6f80b7ee1f2d9269f5c36b0",
     "matrix/lib/terminal-lease.js": "51d2dcc782363558078abcd9af5c02526a12598140af7c5da0ecbbc819f7a527",
     "matrix/lib/backdoor-route.js": "ff75cbba798fcf7f16def05f1913296849717d07eea4777f5f8ef06555091c8a",
     "matrix/workers/singularity/backdoors.js": "113e4aabd250d0c146d579efa5964e66f62cf2f91c0fa075a9c41f02715d7f87",
     "matrix/workers/backdoor-install.js": "3b69aa9037e7405b183b0432bfe2f6a8c56bc841f32c360866114d0a338a5c7b",
     "matrix/control.js": "ce3cf1c2f189c80c17cfe8edb11af2e5935c3ecec4eed224c9eaf74ddfe0a7a0",
-    "matrix/control-engine.js": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f",
+    "matrix/control-engine.js": "d28bf3a1bd98f3844ae5382e7c74d3923dc8810f9f6d2c607f65ddb12e40c20d",
     "matrix/control-player.js": "e66a78f4aa616cc45ff34767b67a6855969ac70c4e10b1c4091c82d30be373b6",
     "matrix/lib/control-state.js": "b3d008acafb0911e7bb44629361087d8c568fe2b900e70d8f8fc74f31cabf3f8",
     "matrix/workers/control-stop-player.js": "e7671f35b28a78fa812297d6299640d215a28a89a17f5754d0d4b5e7721d6898",
-    "matrix/briefing.js": "793d4f84e52782792d4e0ab0d02d3a2d0e961fe4b0153026593c5d2ac09cf180",
+    "matrix/briefing.js": "ab969c60ad032aa8ab378a4a8b149af454bac6d26f887bdb120970bff5438fa5",
     "matrix/lib/briefing.js": "ef17c20a4a7592644b860ecd7dc7d4aa489903618b201a8806624d46e285eaf6",
     "matrix/objective.js": "0e2277b5a1c80537fead5ad4f727ebecd0ff440c5e89465291ea41e1d5134393",
     "matrix/lib/objective-state.js": "0c769e7c943c05232e67f3b73c87dcf6e370958a8a9f09c7be3f595ccab98fd2",

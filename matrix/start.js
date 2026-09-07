@@ -49,12 +49,12 @@ export const SERVICES = [
     // the stage ownership boundary, not this table, prevents premature launch.
     { file: "/matrix/services/hacking.js", key: "hacking", minRam: 32 },
     { file: DASHBOARD, ui: true, minRam: 64 },
+    { file: "/matrix/services/singularity.js", key: "singularity", minRam: 64, sf: 4 },
     { file: "/matrix/services/telemetry.js", minRam: 64 },
     { file: "/matrix/services/coordinator.js", key: "progression", minRam: 32 },
 
     // 64 GB priority set. With the measured 1.8.1 costs these coexist with the
     // rolling core and updater reserve. Rooting is already supplied by the worm.
-    { file: "/matrix/services/singularity.js", key: "singularity", minRam: 64, sf: 4 },
     { file: "/matrix/services/hacknet.js", key: "hacknet", minRam: 64 },
     { file: "/matrix/services/cloud.js", key: "cloud", minRam: 64 },
     // IPvGO needs no Source-File and grants permanent global multipliers.
@@ -88,7 +88,7 @@ function processes(ns, file) {
 // just shows OFFLINE with no reason. ns.getScriptRam() is the authority on cost
 // (it knows the real Source-File multipliers a static analyser cannot), so
 // report its answer rather than discarding it.
-function ensureOne(ns, file, report, { kill = true, args = [] } = {}) {
+function ensureOne(ns, file, report, { kill = true, args = [], transientReserve = true } = {}) {
     const matches = processes(ns, file);
     // NEVER kill a script that owns a window. A killed script cannot run its own
     // closeTail(), so every kill leaves an orphaned tail behind - and ns.ps order
@@ -111,7 +111,7 @@ function ensureOne(ns, file, report, { kill = true, args = [] } = {}) {
     }
     const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
     const updateReserve = ns.fileExists(UPDATE_SCRIPT, "home") ? ns.getScriptRam(UPDATE_SCRIPT, "home") : 1.6;
-    const need = ns.getScriptRam(file, "home") + updateReserve + progressionRam(ns);
+    const need = ns.getScriptRam(file, "home") + updateReserve + (transientReserve ? progressionRam(ns) : 0);
     if (free + 1e-9 < need) {
         report?.push({ file, state: "ram-blocked", need: Math.round(need * 100) / 100, free: Math.round(free * 100) / 100 });
         return 0;
@@ -328,7 +328,13 @@ export async function main(ns) {
         if (transientRam && homeRam < 128) {
             for (const optional of ["cloud", "hacknet", "go"]) for (const p of processes(ns, `/matrix/services/${optional}.js`)) ns.kill(p.pid);
         }
+        let progressionBusy = false;
+        try { progressionBusy = JSON.parse(ns.read('/matrix/state/singularity-dispatch.txt')).status === 'busy' && processes(ns, '/matrix/services/singularity.js').length > 0; } catch {}
         for (const service of SERVICES) {
+            const observer = ['/matrix/services/telemetry.js', '/matrix/services/coordinator.js'].includes(service.file);
+            if (observer && progressionBusy && homeRam < 128) {
+                report.push({file:service.file,state:'yielding-to-progression'}); continue;
+            }
             if (transientRam && homeRam < 128 && ["cloud", "hacknet", "go"].includes(service.key)) {
                 report.push({file:service.file,state:"reserved-for-progression",reservedRam:transientRam});continue;
             }
@@ -371,7 +377,7 @@ export async function main(ns) {
                 report.push({ file: service.file, state: "needs-home-ram", minRam: service.minRam });
                 continue;
             }
-            const launched = ensureOne(ns, service.file, report, { kill: !service.ui });
+            const launched = ensureOne(ns, service.file, report, { kill: !service.ui, transientReserve: !(observer && homeRam < 128) });
             if (service.ui && launched) { lastDeckSpawn = Date.now(); deckLaunches += 1; }
         }
         const deckEntry = report.find(entry => entry.file === DASHBOARD);

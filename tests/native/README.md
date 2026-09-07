@@ -24,3 +24,5 @@ The harness changes RAM, cash and node/SF fields for test purposes. Those synthe
 10. Run `node tests/native/briefing.cjs` for native French/JSON report collection at 32/64 GB, measured RAM and rejection of an objective whose stage owner was stopped without removing the recent state. Output: `docs/rp/evidence/briefing/native.json`.
 
 11. Run `node tests/native/objective.cjs` for a persistent faction reputation goal at 64 GB BN4: real work, dispatcher interruption/restart, briefing attribution, native threshold completion and replay. Membership/XP are synthetic; reputation is set to 99 near a target of 100, then real work crosses it. Output: `docs/rp/evidence/objective/native.json`.
+
+Recovery 1.11.0-rp.7.2: RP05 includes the real companion agent and verifies its coexistence with full progression at 64 GB. Early tests include the agent and assert one live agent at 32 GB on both entry paths. Control permits the intentionally retained briefing observer, and verifies fresh paused reports before resume. RP02 and early transitions exercise the dedicated fix/rp-runtime-recovery channel.

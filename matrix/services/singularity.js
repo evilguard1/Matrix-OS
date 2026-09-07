@@ -16,7 +16,16 @@ export async function runCycle(ns, cycle) {
         if (name === "backdoors" && !(childRam > 0)) return {status:"not-installed",task:"backdoor-install"};
         if (!(need > 0)) return { status: "not-installed", task: name };
         if (ns.ps("home").some(p => normal(p.filename).startsWith("matrix/workers/singularity/"))) return { status: "waiting-worker" };
-        const free = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
+        // These two managed observers may borrow the idle worker reservation.
+        // Reclaim them only when a real task needs it; never kill foreign jobs,
+        // the bridge, the dashboard, or in-flight hacking work.
+        let free = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
+        if (free < need + 1.6 && ns.getServerMaxRam('home') < 128) {
+            for (const p of ns.ps('home')) {
+                if (['matrix/services/telemetry.js','matrix/services/coordinator.js'].includes(normal(p.filename))) ns.kill(p.pid);
+            }
+            free = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
+        }
         if (free < need + 1.6) return { status: "ram-blocked", task: name, need, free };
         const pid = ns.run(file, { threads: 1, preventDuplicates: true }, cycle);
         if (!pid) return { status: "launch-failed", task: name };
@@ -35,7 +44,10 @@ export async function main(ns) {
     while (holdSingleton(ns, "/matrix/services/singularity.js")) {
         let result;
         const cycle = `${resetEpoch(ns.getResetInfo())}:${ns.pid}:${Date.now()}`;
-        try { result = await runCycle(ns, cycle); }
+        try {
+            await writeState(ns, 'singularity-dispatch', {status:'busy', cycle});
+            result = await runCycle(ns, cycle);
+        }
         catch (error) { result = { status: "error", error: String(error) }; }
         await writeState(ns, "singularity-dispatch", { ...result, cycle });
         await ns.sleep(10000);

@@ -10,6 +10,19 @@ export function stageForRam(homeRam) {
 const STAGE_SCRIPTS = ["/matrix/bootstrap.js", "/matrix/early.js", "/matrix/early-progression.js", "/matrix/start.js", "/matrix/dashboard.jsx"];
 const SEED = "/matrix/worm/seed.js";
 
+export function startExistingBridge(ns, next) {
+    const file = '/cloud/agent.js';
+    if (ns.getServerMaxRam('home') < 32 || !ns.fileExists(file, 'home')) return;
+    if (ns.ps('home').some(p => String(p.filename).replace(/^\/+/, '') === 'cloud/agent.js')) return;
+    const cost = ns.getScriptRam(file, 'home');
+    // Leave room for the next owner and its small command entry point. The
+    // external bridge is optional and must never prevent early income startup.
+    const reserve = Math.max(ns.getScriptRam(next, 'home'), ns.getScriptRam('/matrix/early-progression.js', 'home')) + 2;
+    const free = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
+    if (cost > 0 && free >= cost && free + ns.getScriptRam('/matrix/kernel.js', 'home') >= cost + reserve)
+        ns.run(file, {threads:1, preventDuplicates:true});
+}
+
 export async function main(ns) {
     ns.disableLog("ALL");
     if(controlCheckpoint(ns,null))return;
@@ -24,6 +37,8 @@ export async function main(ns) {
             }
         }
     }
+
+    startExistingBridge(ns, next);
 
     // Also clear the lock file so bootstrap doesn't see a stale lock
     ns.rm("/matrix/state/bootstrap-lock.txt", "home");

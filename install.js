@@ -167,11 +167,11 @@ export async function main(ns) {
         if (restoreTransaction(ns)) { recover(ns, noStart); return; }
         const raw = ns.read(RELEASE_PROFILE);
         profile = raw ? JSON.parse(raw) : null;
-        if (profile && (profile.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL].includes(profile.channel) ||
+        if (profile && (profile.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL, "fix/rp-runtime-recovery"].includes(profile.channel) ||
             !/^[a-f0-9]{40}$/.test(profile.installedSha))) throw new Error("invalid-release-profile");
         const channelArg = ns.args.indexOf("--channel");
         channel = channelArg >= 0 ? ns.args[channelArg + 1] : profile?.channel ?? DEFAULT_CHANNEL;
-        if (!["main", DEFAULT_CHANNEL].includes(channel)) throw new Error("invalid-channel");
+        if (!["main", DEFAULT_CHANNEL, "fix/rp-runtime-recovery"].includes(channel)) throw new Error("invalid-channel");
         const releaseArg = ns.args.indexOf("--release");
         release = releaseArg >= 0 ? ns.args[releaseArg + 1] :
             ns.args.includes("--stage") && profile?.installedSha ? profile.installedSha : await resolveRelease(ns, stamp, channel);

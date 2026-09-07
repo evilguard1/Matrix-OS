@@ -26,3 +26,17 @@ ns.getServerMoneyAvailable=h=>h==='home'?1262:6500000;ns.getServerRequiredHackin
 assert.equal(rankTargets(ns,['n00dles','sigma'],cfg).length,2,'ready larger targets escape cold-start focus');
 assert.ok(!moduleDirectives(new Map(),{currentNode:4}).some(d=>d.id?.includes('singularity')));
 console.log('RP recovery: constrained native HWGW, complete repairs, capture and cold-start routing passed.');
+
+{
+ const bundle=await build({entryPoints:['matrix/kernel.js'],bundle:true,write:false,platform:'node',format:'esm',plugins:[{name:'game',setup(b){b.onResolve({filter:/^\/matrix\//},a=>({path:path.resolve(a.path.slice(1))}));}}]});
+ const {startExistingBridge}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
+ let ram=16,used=6,present=true,processes=[],runs=0;
+ const ns={getServerMaxRam:()=>ram,getServerUsedRam:()=>used,fileExists:()=>present,ps:()=>processes,
+ getScriptRam:p=>p==='/cloud/agent.js'?5.75:p==='/matrix/kernel.js'?6.05:14.15,run:()=>++runs};
+ startExistingBridge(ns,'/matrix/early.js');assert.equal(runs,0);
+ ram=32;startExistingBridge(ns,'/matrix/early.js');assert.equal(runs,1);
+ processes=[{filename:'cloud/agent.js'}];startExistingBridge(ns,'/matrix/early.js');assert.equal(runs,1);
+ processes=[];used=28;startExistingBridge(ns,'/matrix/early.js');assert.equal(runs,1);
+ used=6;present=false;startExistingBridge(ns,'/matrix/early.js');assert.equal(runs,1);
+ console.log('Bridge boot: 16GB deferral, 32GB startup, singleton, RAM reserve and optional file passed.');
+}

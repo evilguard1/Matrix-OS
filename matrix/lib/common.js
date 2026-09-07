@@ -11,7 +11,7 @@ const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.11.0-rp.7.1",
+    version: "1.11.0-rp.7.2",
     masterEnabled: true,
     earlyAutomation: { enabled: true, buyPrograms: true },
     mode: "balanced",
@@ -163,7 +163,7 @@ export function releaseProfile(ns) {
     if (!raw) return { schemaVersion: 1, channel: DEFAULT_CHANNEL, installedSha: null };
     try {
         const value = JSON.parse(raw);
-        if (value.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL].includes(value.channel) ||
+        if (value.schemaVersion !== 1 || !["main", DEFAULT_CHANNEL, "fix/rp-runtime-recovery"].includes(value.channel) ||
             !/^[a-f0-9]{40}$/.test(value.installedSha)) return null;
         return value;
     } catch { return null; }

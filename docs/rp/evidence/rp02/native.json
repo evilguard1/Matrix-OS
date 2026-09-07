@@ -2,7 +2,7 @@
   "status": "passed",
   "scope": "Official 3.0.1 isolated BN4 engine. Synthetic RAM. Native wget/write/hash/promotion with intercepted immutable repository payload; no real GitHub availability test, no Steam save, no post-start health certification.",
   "gameSha": "3162fd2590e221eadd0c0fbd46151913f7c4c41c",
-  "installerSha256": "617d7535730afb4c3ab050b1c870ee720b4521837f7edeee98305ef1f0e9e2b2",
+  "installerSha256": "0f82ab30af510cf26d246c986ce9645c27604c967ff134db54aa715cdd973e88",
   "results": [
     {
       "homeRam": 8,
@@ -10,11 +10,11 @@
       "installedScripts": 18,
       "profile": {
         "schemaVersion": 1,
-        "channel": "rp/ghost-node-war",
+        "channel": "fix/rp-runtime-recovery",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.7",
-        "installedAt": 1788711116510,
+        "version": "1.11.0-rp.7.2",
+        "installedAt": 1788780782059,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -26,11 +26,11 @@
       "installedScripts": 31,
       "profile": {
         "schemaVersion": 1,
-        "channel": "rp/ghost-node-war",
+        "channel": "fix/rp-runtime-recovery",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.7",
-        "installedAt": 1788711119097,
+        "version": "1.11.0-rp.7.2",
+        "installedAt": 1788780784326,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -42,11 +42,11 @@
       "installedScripts": 74,
       "profile": {
         "schemaVersion": 1,
-        "channel": "rp/ghost-node-war",
+        "channel": "fix/rp-runtime-recovery",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.7",
-        "installedAt": 1788711122577,
+        "version": "1.11.0-rp.7.2",
+        "installedAt": 1788780787350,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -58,11 +58,11 @@
       "installedScripts": 75,
       "profile": {
         "schemaVersion": 1,
-        "channel": "rp/ghost-node-war",
+        "channel": "fix/rp-runtime-recovery",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.7",
-        "installedAt": 1788711129006,
+        "version": "1.11.0-rp.7.2",
+        "installedAt": 1788780793047,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",
@@ -74,11 +74,11 @@
       "installedScripts": 80,
       "profile": {
         "schemaVersion": 1,
-        "channel": "rp/ghost-node-war",
+        "channel": "fix/rp-runtime-recovery",
         "installedSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousSha": null,
-        "version": "1.11.0-rp.7",
-        "installedAt": 1788711134876,
+        "version": "1.11.0-rp.7.2",
+        "installedAt": 1788780798830,
         "runtimeHealth": "unverified"
       },
       "phase": "installed",

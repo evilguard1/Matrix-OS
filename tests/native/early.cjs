@@ -21,9 +21,10 @@ const sha='c'.repeat(40),manifest=JSON.parse(fs.readFileSync('manifest.json','ut
    await page.waitForFunction(()=>{try{return globalThis.__ghostHarness?.ready();}catch{return false;}},{},{timeout:60000});
    const files={};
    for(const f of manifest.files.filter(f=>['bootstrap','early'].includes(f.stage)))files[f.path]=fs.readFileSync(f.path,'utf8').replace(/\r\n/g,'\n');
+   files['cloud/agent.js']=fs.readFileSync('tools/bridge-recovery/servers/home/cloud/agent.js','utf8');
    files['matrix/config.json']=JSON.stringify({masterEnabled:true,earlyAutomation:{buyPrograms:initialRam===32},progression:{autoInstallAugmentations:false},economy:{cashReserve:0,reserveFraction:0}});
    files['matrix/state/installed-stage.txt']='early';
-   files['matrix/release.json']=JSON.stringify({schemaVersion:1,channel:'rp/ghost-node-war',installedSha:sha});
+   files['matrix/release.json']=JSON.stringify({schemaVersion:1,channel:'fix/rp-runtime-recovery',installedSha:sha});
    assert.equal(files['matrix/start.js'],undefined,'full stage must not be preinstalled');
    await page.evaluate(f=>globalThis.__ghostHarness.load(f),files);
    await page.evaluate(r=>globalThis.__ghostHarness.configure(r,1000,4,0),initialRam);
@@ -48,6 +49,11 @@ const sha='c'.repeat(40),manifest=JSON.parse(fs.readFileSync('manifest.json','ut
     const quotes=[];
     for(let expected=initialRam;expected<64;expected*=2){
      await page.waitForFunction(r=>{try{const s=JSON.parse(globalThis.__ghostHarness.read('matrix/state/early-progression.txt'));return s.homeRam===r && s.nextRam===r*2;}catch{return false;}},expected,{timeout:20000});
+     if(expected===32) {
+      await page.waitForFunction(()=>globalThis.__ghostHarness.report().running.some(p=>p.filename==='cloud/agent.js'),{},{timeout:10000});
+      const processes=await page.evaluate(()=>globalThis.__ghostHarness.report().running);
+      assert.equal(processes.filter(p=>p.filename==='cloud/agent.js').length,1);
+     }
      const state=JSON.parse(await page.evaluate(()=>globalThis.__ghostHarness.read('matrix/state/early-progression.txt')));
      quotes.push(state.homeCost);
      // Synthetic funding accelerates the test; the real native upgrade must debit it.
