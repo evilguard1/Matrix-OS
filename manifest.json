@@ -100,7 +100,7 @@
     {
       "path": "matrix/start.js",
       "stage": "full",
-      "sha256": "83adad2423f890adf9a232e3b526f6765e67ac446d58b07f6a687913dfe47176"
+      "sha256": "863b064b68d65346796ef6a96c654b945837007c6212f9ebe9935ed6ae5e4e54"
     },
     {
       "path": "matrix/dashboard.jsx",

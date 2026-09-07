@@ -332,7 +332,7 @@ export async function main(ns) {
             if (transientRam && homeRam < 128 && ["cloud", "hacknet", "go"].includes(service.key)) {
                 report.push({file:service.file,state:"reserved-for-progression",reservedRam:transientRam});continue;
             }
-            if (service.key === "progression" && cfg.progression?.autoDestroyWorldDaemon !== true) {
+            if (service.file === "/matrix/services/progression.js" && cfg.progression?.autoDestroyWorldDaemon !== true) {
                 report.push({file:service.file,state:"disabled-by-policy"}); continue;
             }
             if (service.key && cfg.automation?.[service.key] === false) {
