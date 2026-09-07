@@ -1,0 +1,251 @@
+{
+  "observedAt": "2026-09-07T11:06:50.682Z",
+  "bridge": {
+    "version": "1.1.0",
+    "bitburnerConnected": true,
+    "commandAgent": "/cloud/agent.js"
+  },
+  "agent": {
+    "pid": 28284,
+    "fresh": true,
+    "error": null,
+    "receiptCount": 9,
+    "homeRam": 256
+  },
+  "briefing": {
+    "schemaVersion": 1,
+    "resetEpoch": "4:1788659363133:1788724505360",
+    "updated": 1788779208487,
+    "expiresAt": 1788779223487,
+    "status": "running",
+    "scope": "operational-observation",
+    "rpReady": false,
+    "nodeProgress": null,
+    "node": 4,
+    "home": {
+      "maxRam": 256,
+      "usedRam": 205.55,
+      "cash": 671763559.6999793
+    },
+    "stage": {
+      "expected": "full",
+      "observed": "full",
+      "pids": [
+        28493
+      ]
+    },
+    "objective": {
+      "id": "FACTION_REP",
+      "title": "Augmentation: CRTX42-AA Gene Modification",
+      "source": "coordinator",
+      "updated": 1788779203476,
+      "metric": {
+        "name": "CRTX42-AA Gene Modification",
+        "current": 669238364.1743047,
+        "required": 2932222499.9999995,
+        "percent": 22.82358737013664,
+        "scope": "local-milestone",
+        "source": "coordinator"
+      }
+    },
+    "capabilities": [
+      {
+        "id": "economy",
+        "state": "observed",
+        "file": "matrix/services/hacking.js",
+        "ram": 14.5,
+        "pids": [
+          28636
+        ],
+        "evidence": "recent",
+        "reportedStatus": "batching",
+        "healthCertified": false
+      },
+      {
+        "id": "progression",
+        "state": "observed",
+        "file": "matrix/services/singularity.js",
+        "ram": 4,
+        "pids": [
+          28439
+        ],
+        "evidence": "recent",
+        "reportedStatus": "online",
+        "healthCertified": false
+      },
+      {
+        "id": "backdoors",
+        "state": "blocked",
+        "file": "matrix/workers/singularity/backdoors.js",
+        "ram": 10.65,
+        "pids": [
+          28439
+        ],
+        "evidence": "recent",
+        "reportedStatus": "blocked",
+        "healthCertified": false
+      },
+      {
+        "id": "dashboard",
+        "state": "observed",
+        "file": "matrix/dashboard.jsx",
+        "ram": 1.7,
+        "pids": [
+          28457
+        ],
+        "evidence": "recent",
+        "reportedStatus": "alive",
+        "healthCertified": false
+      }
+    ],
+    "sources": {
+      "bootstrap": {
+        "quality": "previous-reset",
+        "updated": 1788308639080
+      },
+      "early": {
+        "quality": "previous-reset",
+        "updated": 1788681835891
+      },
+      "hacking": {
+        "quality": "recent",
+        "updated": 1788779208412
+      },
+      "coordinator": {
+        "quality": "recent",
+        "updated": 1788779203476
+      },
+      "singularity": {
+        "quality": "recent",
+        "updated": 1788779204587
+      },
+      "backdoors": {
+        "quality": "recent",
+        "updated": 1788779204039
+      },
+      "dashboard": {
+        "quality": "recent",
+        "updated": 1788779206333
+      },
+      "control": {
+        "quality": "stale",
+        "updated": 1788751547711
+      },
+      "operator": {
+        "quality": "missing",
+        "updated": null
+      }
+    },
+    "blockers": [],
+    "options": [
+      {
+        "id": "pause",
+        "command": "run /matrix/control.js pause",
+        "effect": "Demander le drainage des scripts et du travail de faction attribué."
+      }
+    ],
+    "operatorObjective": {
+      "active": null,
+      "lastReceipt": null,
+      "error": null
+    },
+    "control": {
+      "desired": "running",
+      "active": null,
+      "pauseConfirmed": false,
+      "scope": "managed-scripts-and-owned-faction-work"
+    },
+    "limitations": [
+      "Aucun pourcentage global du node n'est défini.",
+      "Observations récentes et PID vivant ne certifient pas une progression réussie.",
+      "Options locales à revalider lors de l'exécution ; aucune connexion GPT active.",
+      "Les affectations persistantes avancées restent hors de la portée de la pause."
+    ]
+  },
+  "hacking": {
+    "updated": 1788779210674,
+    "batches": 102502,
+    "failedThreads": 0,
+    "failedBatchIncidents": 0,
+    "activeBatches": 393,
+    "networkRam": 7356
+  },
+  "income": {
+    "bladeburner": 0,
+    "casino": 0,
+    "class": 0,
+    "codingcontract": 0,
+    "corporation": 0,
+    "crime": 0,
+    "darknet": 0,
+    "gang": 0,
+    "gang_expenses": 0,
+    "hacking": 2233337961.9659233,
+    "hacknet": 51302728.387817316,
+    "hacknet_expenses": -786132041.6138036,
+    "hospitalization": 0,
+    "infiltration": 0,
+    "sleeves": 0,
+    "stock": 0,
+    "total": 672469958.3945001,
+    "work": 0,
+    "servers": -512946190.34535336,
+    "other": -114200000,
+    "augmentations": -198892500
+  },
+  "backdoors": {
+    "status": "blocked",
+    "routes": [
+      {
+        "target": "CSEC",
+        "faction": "CyberSec",
+        "requiredLevel": 59,
+        "level": 332,
+        "durationMs": 1287.4341550322827,
+        "status": "installed"
+      },
+      {
+        "target": "avmnite-02h",
+        "faction": "NiteSec",
+        "requiredLevel": 212,
+        "level": 332,
+        "durationMs": 2047.9647562675693,
+        "status": "installed"
+      },
+      {
+        "target": "I.I.I.I",
+        "faction": "The Black Hand",
+        "requiredLevel": 344,
+        "level": 332,
+        "durationMs": 2704.1088043921313,
+        "status": "needs-skill"
+      },
+      {
+        "target": "run4theh111z",
+        "faction": "BitRunners",
+        "requiredLevel": 519,
+        "level": 332,
+        "durationMs": 3573.9967469815115,
+        "status": "needs-skill"
+      }
+    ],
+    "schemaVersion": 1,
+    "resetEpoch": "4:1788659363133:1788724505360",
+    "updated": 1788779204039
+  },
+  "work": {
+    "working": true,
+    "currentWork": {
+      "type": "FACTION",
+      "cyclesWorked": 7114,
+      "factionWorkType": "hacking",
+      "factionName": "NiteSec",
+      "nextCompletion": {}
+    },
+    "schemaVersion": 1,
+    "resetEpoch": "4:1788659363133:1788724505360",
+    "revision": 1788779204338,
+    "updated": 1788779204338,
+    "cycle": "4:1788659363133:1788724505360:28439:1788779204038"
+  }
+}
