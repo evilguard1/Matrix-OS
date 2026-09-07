@@ -88,7 +88,7 @@ function processes(ns, file) {
 // just shows OFFLINE with no reason. ns.getScriptRam() is the authority on cost
 // (it knows the real Source-File multipliers a static analyser cannot), so
 // report its answer rather than discarding it.
-function ensureOne(ns, file, report, { kill = true } = {}) {
+function ensureOne(ns, file, report, { kill = true, args = [] } = {}) {
     const matches = processes(ns, file);
     // NEVER kill a script that owns a window. A killed script cannot run its own
     // closeTail(), so every kill leaves an orphaned tail behind - and ns.ps order
@@ -116,7 +116,7 @@ function ensureOne(ns, file, report, { kill = true } = {}) {
         report?.push({ file, state: "ram-blocked", need: Math.round(need * 100) / 100, free: Math.round(free * 100) / 100 });
         return 0;
     }
-    const pid = ns.run(file, { threads: 1, preventDuplicates: true });
+    const pid = ns.run(file, { threads: 1, preventDuplicates: true }, ...args);
     report?.push({ file, state: pid ? "started" : "launch-failed", pid });
     return pid;
 }
@@ -322,6 +322,8 @@ export async function main(ns) {
 
         const reset = ns.getResetInfo();
         const report = [];
+        if (ns.fileExists("/cloud/agent.js", "home")) ensureOne(ns, "/cloud/agent.js", report);
+        if (ns.fileExists("/matrix/briefing.js", "home")) ensureOne(ns, "/matrix/briefing.js", report, {args:["--watch"]});
         const transientRam = progressionRam(ns);
         if (transientRam && homeRam < 128) {
             for (const optional of ["cloud", "hacknet", "go"]) for (const p of processes(ns, `/matrix/services/${optional}.js`)) ns.kill(p.pid);
@@ -329,6 +331,9 @@ export async function main(ns) {
         for (const service of SERVICES) {
             if (transientRam && homeRam < 128 && ["cloud", "hacknet", "go"].includes(service.key)) {
                 report.push({file:service.file,state:"reserved-for-progression",reservedRam:transientRam});continue;
+            }
+            if (service.key === "progression" && cfg.progression?.autoDestroyWorldDaemon !== true) {
+                report.push({file:service.file,state:"disabled-by-policy"}); continue;
             }
             if (service.key && cfg.automation?.[service.key] === false) {
                 report.push({ file: service.file, state: "disabled" });

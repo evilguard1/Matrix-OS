@@ -138,7 +138,7 @@ export const MODULE_LOCKS = {
  * whose Source-File is genuinely absent.
  */
 export function moduleDirectives(ownedSF = [], options = {}) {
-    const { limit = 3 } = options ?? {};
+    const { limit = 3, currentNode = null } = options ?? {};
     const owned = new Set();
     for (const entry of Array.isArray(ownedSF) ? ownedSF : []) {
         const n = Number(Array.isArray(entry) ? entry[0] : entry?.n ?? entry);
@@ -146,7 +146,7 @@ export function moduleDirectives(ownedSF = [], options = {}) {
     }
     const out = [];
     for (const [name, lock] of Object.entries(MODULE_LOCKS)) {
-        if (owned.has(lock.sf)) continue;
+        if (owned.has(lock.sf) || currentNode === lock.sf) continue;
         out.push({
             id: `MODULE_${name}`,
             tag: "MODULE",

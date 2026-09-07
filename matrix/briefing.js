@@ -32,16 +32,20 @@ export function collectBriefing(ns,now=Date.now()) {
 
 export async function main(ns) {
     if(ns.getHostname()!=="home"){ns.tprint("MATRIX // BRIEFING MUST RUN ON HOME");return;}
-    if(ns.args.length>1 || (ns.args.length===1 && ns.args[0]!=="--json")){ns.tprint("Usage: run /matrix/briefing.js [--json]");return;}
+    if(ns.args.length>1 || (ns.args.length===1 && !["--json","--watch"].includes(ns.args[0]))){ns.tprint("Usage: run /matrix/briefing.js [--json|--watch]");return;}
+    const watch=ns.args[0]==="--watch";
+    do {
     try {
         const report=collectBriefing(ns),raw=JSON.stringify(report);
         ns.write(OUTPUT,raw,"w");if(ns.read(OUTPUT)!==raw)throw new Error("briefing-write-failed");
-        ns.tprint(ns.args[0]==="--json"?raw:renderBriefing(report));
+        if(!watch)ns.tprint(ns.args[0]==="--json"?raw:renderBriefing(report));
     }catch(error){
         // Revoke a previous snapshot when observation fails. If storage itself
         // fails, the client must still enforce the previous report's short TTL.
         const now=Date.now(),raw=JSON.stringify({schemaVersion:1,updated:now,expiresAt:now,status:"unavailable",nodeProgress:null,objective:null,options:[],error:String(error)});
         let revoked=false;try{ns.write(OUTPUT,raw,"w");revoked=ns.read(OUTPUT)===raw;}catch{}
-        ns.tprint(`MATRIX // BRIEFING UNAVAILABLE: ${String(error)}. ${revoked?"Previous report revoked.":"Output storage unavailable; reject cached reports after their expiry."}`);
+        if(!watch)ns.tprint(`MATRIX // BRIEFING UNAVAILABLE: ${String(error)}. ${revoked?"Previous report revoked.":"Output storage unavailable; reject cached reports after their expiry."}`);
     }
+    if(watch)await ns.sleep(5000);
+    } while(watch);
 }

@@ -62,7 +62,7 @@ function candidateTargets(ns, hosts, cfg) {
     return hosts.filter(h =>
         h !== "home" &&
         ns.hasRootAccess(h) &&
-        ns.getServerMaxMoney(h) >= minMoney &&
+        (ns.getServerMaxMoney(h) >= minMoney || (h === "n00dles" && ns.getServerMaxMoney(h) > 0)) &&
         ns.getServerRequiredHackingLevel(h) <= ns.getHackingLevel()
     );
 }
@@ -84,6 +84,9 @@ function xpScore(ns, h) {
 }
 
 function rankTargets(ns, hosts, cfg, mode = "money", planner = null) {
+    // Cold starts need one cheap, fast source of cash before preparing large servers.
+    // Keep n00dles eligible afterwards, so background preparation cannot remove all income.
+    if (mode === "money" && ns.getServerMoneyAvailable("home") < 500000 && hosts.includes("n00dles") && ns.hasRootAccess("n00dles")) return ["n00dles"];
     const formulaMoney = mode === "money" && planner?.kind === PLANNER_FORMULAS;
     const scorer = mode === "xp"
         ? xpScore
@@ -166,7 +169,7 @@ function operationTimes(ns, target) {
 // Validated native planner. Keep this implementation intact as the capability
 // fallback; Formulas.exe only replaces clean-state planning/ranking, never the
 // execution layer or the launch-time native timing resample.
-function batchShape(ns, target, cfg) {
+function batchShape(ns, target, cfg, pool = null) {
     const max = ns.getServerMaxMoney(target);
     const chance = clamp(ns.hackAnalyzeChance(target), 0.0001, 1);
     const maxF = Math.min(0.90, Math.max(0, Number(cfg.hacking?.maxHackFraction ?? 0.40)));
@@ -178,7 +181,18 @@ function batchShape(ns, target, cfg) {
     const weakenPerThread = Math.max(0.0001, ns.weakenAnalyze(1));
 
     let best = null;
-    for (let f = minF; f <= maxF + 1e-9; f += 0.025) {
+    const fractions = [];
+    for (let f = minF; f <= maxF + 1e-9; f += 0.025) fractions.push(f);
+    // A complete 5% lot can exceed the entire early BN4 network. Permit smaller
+    // lots, including one hack thread, while preserving both security repairs.
+    if (pool) {
+        const perThread = ns.hackAnalyze(target);
+        if (perThread > 0 && Number.isFinite(perThread)) {
+            for (let f = minF / 2; f > perThread; f /= 2) fractions.push(f);
+            if (perThread <= maxF) fractions.push(perThread);
+        }
+    }
+    for (const f of fractions) {
         const hackAmount = max * f;
         let ht = Math.ceil(ns.hackAnalyzeThreads(target, hackAmount));
         if (!Number.isFinite(ht) || ht < 1) continue;
@@ -223,6 +237,7 @@ function batchShape(ns, target, cfg) {
             gRam,
             wRam,
         };
+        if (pool && !planBatchPlacement(pool, batchComponents(ns, shape)).ok) continue;
         if (!best || shape.metric > best.metric) best = shape;
     }
     return best;
@@ -237,6 +252,7 @@ function capturePlanningSnapshot(
     planner,
     desiredFraction = null,
     shapePolicy = null,
+    nativePool = null,
 ) {
     const live = targetLiveState(ns, target);
     const useFormulas = planner?.kind === PLANNER_FORMULAS;
@@ -248,7 +264,7 @@ function capturePlanningSnapshot(
     if (!shape) {
         shape = useFormulas
             ? formulaBatchShape(ns, target, cfg, planner)
-            : batchShape(ns, target, cfg);
+            : batchShape(ns, target, cfg, nativePool);
     }
     if (!shape) return null;
     const depth = pipelineDepth({
@@ -1426,6 +1442,7 @@ export async function main(ns) {
                         mode === "money" && planner.kind === PLANNER_FORMULAS
                             ? formulaShapePlan?.policy ?? SHAPE_POLICY_EFFICIENCY
                             : null,
+                        schedulablePool(ns, hosts, cfg, boost).map(item => ({host:item.host, free:item.free * (1 - reserveFraction)})),
                     );
                     if (!snapshot) {
                         schedulerState.set(host, "no-shape");

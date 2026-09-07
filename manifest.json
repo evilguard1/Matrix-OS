@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0-rp.7",
+  "version": "1.11.0-rp.7.1",
   "baseUrl": "https://raw.githubusercontent.com/evilguard1/Matrix-OS/rp/ghost-node-war/",
   "protectedFiles": [
     "matrix/config.json"
@@ -30,7 +30,7 @@
     {
       "path": "matrix/VERSION.txt",
       "stage": "bootstrap",
-      "sha256": "4b17b3108f889e17057452200cbc61af3b6fd7815429c1c581c5a109aa22e02e"
+      "sha256": "892100ff46d7723b7f6b810b2cd0033136cd3db1712e84b84b3c642e08a08b2c"
     },
     {
       "path": "matrix/bootstrap.js",
@@ -40,7 +40,7 @@
     {
       "path": "matrix/config.json",
       "stage": "bootstrap",
-      "sha256": "4e4909d1a7697a1caec0fd68b5210859d4fc74f3a650c13a67f904a1676aee0d"
+      "sha256": "a7bf430389b9f2fcfc9c23e296f46dd00fd4d6957da0b68c732ee129b213340f"
     },
     {
       "path": "matrix/kernel.js",
@@ -100,7 +100,7 @@
     {
       "path": "matrix/start.js",
       "stage": "full",
-      "sha256": "12ed7fad112a9cb18c85ab516b18e1e9a66afb13201bd42c892d69e45170cce9"
+      "sha256": "83adad2423f890adf9a232e3b526f6765e67ac446d58b07f6a687913dfe47176"
     },
     {
       "path": "matrix/dashboard.jsx",
@@ -110,7 +110,7 @@
     {
       "path": "matrix/lib/common.js",
       "stage": "early",
-      "sha256": "2eed95fb8168f9ecf0e9d1f557aaf013cbfa2cecae26448e4cbedfec496af939"
+      "sha256": "6d70007a81a414dd3b744239579adfe24b24b18a78595d3c805b8dfc722c2111"
     },
     {
       "path": "matrix/lib/network.js",
@@ -150,7 +150,7 @@
     {
       "path": "matrix/lib/voice.js",
       "stage": "full",
-      "sha256": "1c864a3bc472e3ed91b26eb2b23c1cd3deaf645460aa7c9f2946e57d72a6bf23"
+      "sha256": "afd00504a2534a21b9477984e99f59eec029299bbce13e8d874f63ecbcc60cd1"
     },
     {
       "path": "matrix/lib/hashes.js",
@@ -205,12 +205,12 @@
     {
       "path": "matrix/services/hacking.js",
       "stage": "full",
-      "sha256": "05ab371f03d3a1521d21a84cbcf94d5d89dc4f0d66e9a1e5e9512f99415cd873"
+      "sha256": "24b6341ef65e4a96f772087745e5c42515047f8671625472c16ac50c90b9b7bd"
     },
     {
       "path": "matrix/services/telemetry.js",
       "stage": "full",
-      "sha256": "06187fdb287099288c440fabf9b1003f73abc1d43a1d288630c2524e95177d7b"
+      "sha256": "8987993b891cff12aa07eb8d4d9378238dbda7b8edcb21f2d81a834533e43f3d"
     },
     {
       "path": "matrix/workers/hack.js",
@@ -390,7 +390,7 @@
     {
       "path": "matrix/control-engine.js",
       "stage": "bootstrap",
-      "sha256": "57ddfe951cf9a5cc45cd6e3d05645ad6e512955c9c19b5ee110e9fa6c55b9e0f"
+      "sha256": "d28bf3a1bd98f3844ae5382e7c74d3923dc8810f9f6d2c607f65ddb12e40c20d"
     },
     {
       "path": "matrix/control-player.js",
@@ -410,7 +410,7 @@
     {
       "path": "matrix/briefing.js",
       "stage": "early",
-      "sha256": "793d4f84e52782792d4e0ab0d02d3a2d0e961fe4b0153026593c5d2ac09cf180"
+      "sha256": "ab969c60ad032aa8ab378a4a8b149af454bac6d26f887bdb120970bff5438fa5"
     },
     {
       "path": "matrix/lib/briefing.js",

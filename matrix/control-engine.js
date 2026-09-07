@@ -2,7 +2,7 @@ import { readControl, writeControl, finishControl, CONTROL_PORT, PAUSE_SIGNAL } 
 import { scanAll } from "/matrix/lib/network.js";
 import { holdSingleton } from "/matrix/lib/singleton.js";
 
-const KEEP=new Set(["matrix/control-engine.js","matrix/control.js","matrix/dashboard.jsx","matrix/services/telemetry.js"]);
+const KEEP=new Set(["matrix/briefing.js","matrix/control-engine.js","matrix/control.js","matrix/dashboard.jsx","matrix/services/telemetry.js"]);
 const DRAIN=new Set(["matrix/workers/hack.js","matrix/workers/grow.js","matrix/workers/weaken.js","matrix/workers/early.js",
     "matrix/workers/share.js","matrix/worm/drone.js","matrix/workers/stanek-charge.js",
     "matrix/workers/backdoor-install.js","matrix/workers/singularity/backdoors.js"]);

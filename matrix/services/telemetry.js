@@ -145,7 +145,7 @@ export async function main(ns){
                     ...companyDirectives(player.jobs,{factions:player.factions}),
                     ...ramDirective,
                     ...augmentationDirectives(augState,{singularity}),
-                    ...moduleDirectives([...(reset.ownedSF?.entries?.()??[])]),
+                    ...moduleDirectives([...(reset.ownedSF?.entries?.()??[])], {currentNode:reset.currentNode}),
                 ]);
             }catch{}
 

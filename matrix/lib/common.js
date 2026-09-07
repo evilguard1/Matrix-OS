@@ -11,7 +11,7 @@ const BOOST_REQUEST_STATE = `${STATE_DIR}/boost-request.txt`;
 const REPUTATION_BOOST_TYPE = "reputation-boost";
 
 const DEFAULT_CONFIG = {
-    version: "1.11.0-rp.7",
+    version: "1.11.0-rp.7.1",
     masterEnabled: true,
     earlyAutomation: { enabled: true, buyPrograms: true },
     mode: "balanced",

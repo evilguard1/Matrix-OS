@@ -68,3 +68,11 @@ for(const change of [
  const r=JSON.parse(f.files.get('/matrix/state/briefing.txt'));assert.equal(r.status,'unavailable');assert.equal(r.expiresAt,r.updated);assert.deepEqual(r.options,[]);
 }
 console.log('Briefing passed: live stage ownership, scoped local metrics, stale/reset/corrupt evidence, locked APIs, dead producers, pause proof and verified output.');
+
+{
+ const f=fixture(),stop=new Error('stop-watch'),reports=[];f.ns.args=['--watch'];let cycles=0;
+ const write=f.ns.write;f.ns.write=(p,v)=>{write(p,v);if(p==='/matrix/state/briefing.txt')reports.push(JSON.parse(v));};
+ f.ns.sleep=async ms=>{assert.equal(ms,5000);if(++cycles===2)throw stop;f.ns.getResetInfo=()=>({currentNode:4,lastNodeReset:1,lastAugReset:3,ownedSF:new Map()});};
+ await assert.rejects(main(f.ns),e=>e===stop);
+ assert.equal(reports.length,2);assert.notEqual(reports[0].resetEpoch,reports[1].resetEpoch);assert.equal(reports[1].objective,null);assert.equal(f.prints.length,0);
+}
