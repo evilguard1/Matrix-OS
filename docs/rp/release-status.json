@@ -78,7 +78,20 @@
     "liveProof": "evidence/recovery/operator-bridge-1.3-live.json",
     "nativeProof": "evidence/operator/native.json",
     "liveScope": "read-and-rejection-only",
-    "adapters": ["pause", "resume", "faction-reputation", "automatic-policy"],
+    "adapters": [
+      "pause",
+      "resume",
+      "faction-reputation",
+      "automatic-policy"
+    ],
     "realGptValidated": false
+  },
+  "gptProfile": {
+    "version": "1.0.0",
+    "status": "saved-private-read-path-verified",
+    "documentation": "gpt-profile/README.md",
+    "existingActionReused": true,
+    "realGptReadValidated": true,
+    "realGptMutationValidated": false
   }
 }

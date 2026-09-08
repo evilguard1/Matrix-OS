@@ -1,0 +1,1852 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MATRIX-OS RP Operator",
+    "version": "1.3.0"
+  },
+  "servers": [
+    {
+      "url": "https://matrix.example.invalid"
+    }
+  ],
+  "components": {
+    "schemas": {},
+    "securitySchemes": {
+      "MatrixToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Matrix-Token"
+      }
+    }
+  },
+  "security": [
+    {
+      "MatrixToken": []
+    }
+  ],
+  "paths": {
+    "/v1/status": {
+      "get": {
+        "operationId": "getMatrixStatus",
+        "summary": "Check game connectivity",
+        "responses": {
+          "200": {
+            "description": "Operational facts or durable receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Expired evidence, changed option or reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bridge unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operator/briefing": {
+      "get": {
+        "operationId": "getMatrixBriefing",
+        "summary": "Read current facts, available choices, their effects, signed tickets and expiration times",
+        "responses": {
+          "200": {
+            "description": "Operational facts or durable receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Expired evidence, changed option or reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bridge unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operator/commands": {
+      "post": {
+        "operationId": "submitMatrixChoice",
+        "summary": "Submit the exact selected ticket; keep the same ticket when retrying an ambiguous request",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ticket"
+                ],
+                "properties": {
+                  "ticket": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "Unmodified ticket from a fresh briefing option."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operational facts or durable receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Queued or replayed. Not proof of completion. Preserve id and resetEpoch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Expired evidence, changed option or reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bridge unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operator/receipt": {
+      "get": {
+        "operationId": "getMatrixReceipt",
+        "summary": "Read the last recorded status and scoped postcondition for a submitted choice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^rp(?:-goal)?:[a-f0-9]{64}$"
+            }
+          },
+          {
+            "name": "resetEpoch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+:[0-9]+:[0-9]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operational facts or durable receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Expired evidence, changed option or reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bridge unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "resetEpoch": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "progressFresh": {
+                      "type": "boolean"
+                    },
+                    "rpReady": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "action": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "number"
+                          },
+                          "effect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "observation": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
