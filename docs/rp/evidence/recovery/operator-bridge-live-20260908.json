@@ -1,0 +1,48 @@
+{
+  "observedAt": "2026-09-08T12:32:34.198Z",
+  "gateway": {
+    "version": "1.2.0",
+    "bitburnerConnected": true,
+    "commandAgent": "/cloud/agent.js"
+  },
+  "resetEpoch": "4:1788659363133:1788865274681",
+  "updated": 1788870749531,
+  "expiresAt": 1788870764531,
+  "gameStatus": "running",
+  "home": {
+    "maxRam": 1024,
+    "usedRam": 973.6,
+    "cash": 60813326.32329397
+  },
+  "objective": {
+    "id": "FACTION_REP",
+    "title": "Augmentation: Neuralstimulator",
+    "source": "coordinator",
+    "updated": 1788870745467,
+    "metric": {
+      "name": "Neuralstimulator",
+      "current": 60754265.511191934,
+      "required": 3000000000,
+      "percent": 2.025142183706398,
+      "scope": "local-milestone",
+      "source": "coordinator"
+    }
+  },
+  "options": [
+    {
+      "action": "pause",
+      "expiresAt": 1788870764531
+    }
+  ],
+  "commandAdmission": "available",
+  "agent": {
+    "fresh": true,
+    "pid": 2
+  },
+  "invalidRequests": [
+    "400: {\"error\":\"Invalid ticket signature\"}",
+    "400: {\"error\":\"Invalid request: ticket only\"}"
+  ],
+  "rpReady": false,
+  "scope": "Live read and rejection only; no valid game command submitted"
+}

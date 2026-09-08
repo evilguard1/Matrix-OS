@@ -5,7 +5,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { normalizeJob } from "./job-protocol.mjs";
-const API_VERSION = "1.1.0";
+import { createOperator, OperatorError, requireFreshReport } from "./operator.mjs";
+const API_VERSION = "1.2.0";
 const DEFAULT_PORT = 31337;
 const TOKEN_FILE = resolve(".matrix-cloud.env");
 const MAX_BODY_BYTES = 512 * 1024;
@@ -85,6 +86,9 @@ function openApiDocument(publicUrl) {
     security: [{ MatrixToken: [] }],
     paths: {
       "/v1/status": { get: { operationId: "getBitburnerStatus", summary: "Check whether Bitburner is connected", responses: { "200": { description: "Gateway status" } } } },
+      "/v1/operator/briefing": {get:{operationId:"getOperatorBriefing",summary:"Read current facts and signed, expiring pause/resume options",responses:{"200":{description:"Observation and executable option tickets"},"409":{description:"Stale evidence"}}}},
+      "/v1/operator/commands": {post:{operationId:"submitOperatorChoice",summary:"Submit the exact chosen ticket; retry the same ticket after ambiguity",requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["ticket"],properties:{ticket:{type:"string",maxLength:2048}}}}}},responses:{"202":{description:"Queued or replayed; inspect the operation receipt"},"409":{description:"Expired, unavailable or previous-reset option"}}}},
+      "/v1/operator/receipt": {get:{operationId:"getOperatorReceipt",summary:"Distinguish dispatch, control acceptance and scoped completion",parameters:[{name:"id",in:"query",required:true,schema:{type:"string"}},{name:"resetEpoch",in:"query",required:true,schema:{type:"string"}}],responses:{"200":{description:"Durable operation evidence"},"409":{description:"Reset changed or evidence unavailable"}}}},
       "/v1/servers": { get: { operationId: "listBitburnerServers", summary: "List servers visible to Bitburner", responses: { "200": { description: "Server list" } } } },
       "/v1/files": { get: { operationId: "listBitburnerFiles", summary: "List files on one server", parameters: [{ name: "server", in: "query", required: true, schema: { type: "string" } }], responses: { "200": { description: "File names" } } } },
       "/v1/file": {
@@ -132,6 +136,15 @@ export function setRemoteApi(api) {
 
 export async function startGateway({ port = Number(process.env.MATRIX_GATEWAY_PORT ?? DEFAULT_PORT) } = {}) {
   token = await loadToken();
+  const operator = createOperator({secret:token,enqueue:enqueueJob,
+    readRam:async filename=>(await remoteApi.calculateRAM({filename,server:"home"})).result,
+    readJson:async (filename,...fallback)=>{
+      if (fallback.length) {
+        const names=(await remoteApi.getFileNames("home")).result;
+        if (!names.some(name=>name.replace(/^\/+/,"")===filename.replace(/^\/+/,""))) return fallback[0];
+      }
+      return JSON.parse((await remoteApi.getFile({server:"home",filename})).result);
+    }});
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
     const isSpec = request.method === "GET" && url.pathname === "/openapi.json";
@@ -144,6 +157,9 @@ export async function startGateway({ port = Number(process.env.MATRIX_GATEWAY_PO
       }
       if (request.method === "GET" && url.pathname === "/v1/status") return json(response, 200, { version: API_VERSION, bitburnerConnected: Boolean(remoteApi?.connection?.connected), commandAgent: "/cloud/agent.js" });
       if (!requireRemoteApi(response)) return;
+      if (request.method === "GET" && url.pathname === "/v1/operator/briefing") return json(response,200,await operator.briefing());
+      if (request.method === "POST" && url.pathname === "/v1/operator/commands") return json(response,202,await operator.submit(await readBody(request)));
+      if (request.method === "GET" && url.pathname === "/v1/operator/receipt") return json(response,200,await operator.receipt(url.searchParams.get("id"),url.searchParams.get("resetEpoch")));
       if (request.method === "GET" && url.pathname === "/v1/agent") {
         const heartbeat = JSON.parse((await remoteApi.getFile({server:"home",filename:"/cloud/heartbeat.txt"})).result);
         return json(response, 200, { ...heartbeat, fresh: Number.isFinite(heartbeat.updated) && heartbeat.updated <= Date.now() && Date.now()-heartbeat.updated < 10000 });
@@ -155,7 +171,7 @@ export async function startGateway({ port = Number(process.env.MATRIX_GATEWAY_PO
       if (request.method === "GET" && url.pathname === "/v1/briefing") {
         const report = JSON.parse((await remoteApi.getFile({server:"home",filename:"/matrix/state/briefing.txt"})).result);
         const heartbeat = JSON.parse((await remoteApi.getFile({server:"home",filename:"/cloud/heartbeat.txt"})).result);
-        if (!Number.isFinite(report.updated) || !Number.isFinite(heartbeat.updated) || heartbeat.updated > Date.now() || report.schemaVersion !== 1 || !Number.isFinite(report.expiresAt) || report.expiresAt <= Date.now() || report.updated > Date.now() || heartbeat.resetEpoch !== report.resetEpoch || Date.now()-heartbeat.updated > 10000) return json(response, 409, {error:"Briefing expired or previous reset"});
+        requireFreshReport(report,heartbeat);
         return json(response, 200, report);
       }
       if (request.method === "GET" && url.pathname === "/v1/servers") return json(response, 200, { servers: (await remoteApi.getAllServers()).result });
@@ -199,6 +215,7 @@ export async function startGateway({ port = Number(process.env.MATRIX_GATEWAY_PO
       }
       return json(response, 404, { error: "Unknown endpoint." });
     } catch (error) {
+      if (error instanceof OperatorError) return json(response,error.status,{error:error.message});
       const message = error instanceof Error ? error.message : String(error?.error ?? error ?? "Unexpected gateway error");
       const invalidRequest = message.includes("too large") || message.includes("JSON") || message.includes("required") || message.startsWith("Invalid") || message.startsWith("action") || message.startsWith("threads") || message.startsWith("args");
       return json(response, invalidRequest ? 400 : 502, { error: message });

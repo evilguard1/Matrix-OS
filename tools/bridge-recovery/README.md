@@ -1,8 +1,8 @@
 # Local Matrix bridge recovery kit
 
-Companion source for the running local bridge (gateway 1.1.0). Not part of the Netscript installation manifest. Never copy the private .matrix-cloud.env into Git.
+Companion source for the running local bridge (gateway 1.2.0). Not part of the Netscript installation manifest. Never copy the private .matrix-cloud.env into Git.
 
-Apply gateway.mjs and job-protocol.mjs at the external-editor project root, tools/loopback.mjs in its tools directory, and the agent at servers/home/cloud/agent.js. Preserve the existing token, config and dependencies. Import './tools/loopback.mjs' BEFORE dynamically importing esbuild-bitburner-plugin; import setRemoteApi/startGateway from gateway.mjs, await startGateway(), and call setRemoteApi(remoteApi) in afterConnect. The guarded loopback patch supports the installed esbuild-bitburner-plugin 1.6.3 shape and refuses unfamiliar source.
+Apply gateway.mjs, operator.mjs and job-protocol.mjs at the external-editor project root, tools/loopback.mjs in its tools directory, and the agent at servers/home/cloud/agent.js. Preserve the existing token, config and dependencies. Import './tools/loopback.mjs' BEFORE dynamically importing esbuild-bitburner-plugin; import setRemoteApi/startGateway from gateway.mjs, await startGateway(), and call setRemoteApi(remoteApi) in afterConnect. The guarded loopback patch supports the installed esbuild-bitburner-plugin 1.6.3 shape and refuses unfamiliar source.
 
 Restart the existing Node config process; do not create a second listener. In Bitburner connect localhost:12525 with a five-second reconnect delay. Publish the agent through the native Remote API, verify RAM, then run /cloud/agent.js once. The kernel starts the existing agent from 32 GB while reserving RAM for early progression. A 16-to-32 GB upgrade returns through the kernel to activate it. Below 32 GB it is deferred. The full supervisor maintains it afterwards. An absent agent file is not downloaded automatically.
 
@@ -15,5 +15,8 @@ The briefing route rejects expired evidence. This kit does not create a public t
 Run the standalone mocked regression suite from the repository root:
 
     node tools/bridge-recovery/tests/recovery.mjs
+    node tools/bridge-recovery/tests/operator.mjs
 
 It uses a temporary in-memory test token, never the production token, and binds its HTTP test to an ephemeral local port.
+
+The operator routes expose signed pause/resume choices and durable receipt tracking without asking the client to assemble Netscript commands. See ../../docs/rp/OPERATOR-BRIDGE-1.2.md for the exact protocol and limits. These routes reuse the gateway authentication; they are not a separate permission boundary. The existing administrative file/job routes remain available to the same credential.

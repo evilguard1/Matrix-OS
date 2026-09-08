@@ -63,5 +63,13 @@
   "controlProof": "evidence/control/native.json",
   "briefingProof": "evidence/briefing/native.json",
   "objectiveProof": "evidence/objective/native.json",
-  "lastLiveRecoveryProof": "evidence/recovery/live-2026-09-07.json"
+  "lastLiveRecoveryProof": "evidence/recovery/live-rp-7-2.json",
+  "operatorBridge": {
+    "version": "1.2.0",
+    "contract": "OPERATOR-BRIDGE-1.2.md",
+    "liveProof": "evidence/recovery/operator-bridge-live-20260908.json",
+    "liveScope": "read-and-rejection-only",
+    "adapters": ["pause", "resume"],
+    "realGptValidated": false
+  }
 }

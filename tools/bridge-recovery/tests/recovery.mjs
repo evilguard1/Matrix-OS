@@ -37,5 +37,16 @@ try{
  const b=await (await fetch(base+"/v1/jobs",{method:"POST",headers,body})).json();assert.equal(a.id,b.id);assert.equal(JSON.parse(files["/cloud/commands.json"]).length,1);
  assert.equal((await fetch(base+"/v1/jobs",{method:"POST",headers,body:JSON.stringify({action:"kill",script:"/test.js",idempotencyKey:"test"})})).status,400);
  files["/matrix/state/briefing.txt"]=JSON.stringify({expiresAt:Date.now()-1});assert.equal((await fetch(base+"/v1/briefing",{headers})).status,409);
+ files['/cloud/heartbeat.txt']=JSON.stringify({schemaVersion:2,updated:Date.now(),resetEpoch:epoch,status:'online',receiptCount:0,homeRam:32,usedRam:20});
+ files['/cloud/agent-journal.txt']=JSON.stringify({schemaVersion:2,resetEpoch:epoch,receipts:[],pending:null});
+ files['/matrix/state/briefing.txt']=JSON.stringify({schemaVersion:1,resetEpoch:epoch,updated:Date.now(),expiresAt:Date.now()+14000,options:[{id:'pause',effect:'Drain'}]});
+ assert.equal((await fetch(base+'/v1/operator/briefing')).status,401);
+ const offer=await (await fetch(base+'/v1/operator/briefing',{headers})).json();
+ assert.equal(offer.options[0].action,'pause');
+ const chosen=await fetch(base+'/v1/operator/commands',{method:'POST',headers,body:JSON.stringify({ticket:offer.options[0].ticket})});
+ assert.equal(chosen.status,202);const operation=await chosen.json();assert.equal(operation.completed,false);
+ const receipt=await (await fetch(base+'/v1/operator/receipt?id='+operation.id+'&resetEpoch='+epoch,{headers})).json();assert.equal(receipt.status,'queued');
+ assert.equal((await fetch(base+'/v1/operator/commands',{method:'POST',headers,body:JSON.stringify({ticket:'tampered'})})).status,400);
+ const spec=await (await fetch(base+'/openapi.json')).json();assert.equal(spec.info.version,'1.2.0');assert.ok(spec.paths['/v1/operator/commands']);
  console.log("PASS: native RAM dispatch, auth, idempotency conflict, stale briefing, legacy replay, duplicate, expiry, reset, exception recovery, crash ambiguity, capacity");
 }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
