@@ -1,0 +1,61 @@
+{
+  "observedAt": "2026-09-07T17:07:51.636Z",
+  "release": {
+    "schemaVersion": 1,
+    "channel": "fix/rp-runtime-recovery",
+    "installedSha": "144433e3bf323176a44ee4e60a8133a5842ec664",
+    "previousSha": "702fe5469f4d87f8442e99836c3cef8db3e6925b",
+    "version": "1.11.0-rp.7.2",
+    "installedAt": 1788800710662,
+    "runtimeHealth": "unverified"
+  },
+  "homeRam": 512,
+  "agent": {
+    "pid": 10,
+    "fresh": true
+  },
+  "briefing": {
+    "updated": 1788800867670,
+    "status": "running",
+    "objective": "FACTION_REP",
+    "resetEpoch": "4:1788659363133:1788786832437",
+    "pid": 71634
+  },
+  "control": {
+    "desired": "running",
+    "receipt": {
+      "id": "deploy-rp-7-2-resume",
+      "action": "resume",
+      "requestedAt": 1788800745873,
+      "status": "succeeded",
+      "phase": "starting",
+      "scope": "stage-started",
+      "stage": "full",
+      "pid": 71489,
+      "finishedAt": 1788800746142
+    }
+  },
+  "hacking": {
+    "pid": 71499,
+    "batches": 6,
+    "activeBatches": 2,
+    "failedThreads": 0,
+    "cumulativeIncome": 41114643.51859746,
+    "incomeIncrease": 2517153.7637376115,
+    "intervalMs": 68156
+  },
+  "singularity": {
+    "status": "online",
+    "work": {
+      "type": "FACTION",
+      "cyclesWorked": 593,
+      "factionWorkType": "hacking",
+      "factionName": "CyberSec",
+      "nextCompletion": {}
+    }
+  },
+  "verification": {
+    "matchedFiles": 80,
+    "configPreserved": true
+  }
+}
