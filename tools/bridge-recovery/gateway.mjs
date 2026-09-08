@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 
 import { normalizeJob } from "./job-protocol.mjs";
 import { createOperator, OperatorError, requireFreshReport } from "./operator.mjs";
-const API_VERSION = "1.2.0";
+const API_VERSION = "1.3.0";
 const DEFAULT_PORT = 31337;
 const TOKEN_FILE = resolve(".matrix-cloud.env");
 const MAX_BODY_BYTES = 512 * 1024;
@@ -86,7 +86,7 @@ function openApiDocument(publicUrl) {
     security: [{ MatrixToken: [] }],
     paths: {
       "/v1/status": { get: { operationId: "getBitburnerStatus", summary: "Check whether Bitburner is connected", responses: { "200": { description: "Gateway status" } } } },
-      "/v1/operator/briefing": {get:{operationId:"getOperatorBriefing",summary:"Read current facts and signed, expiring pause/resume options",responses:{"200":{description:"Observation and executable option tickets"},"409":{description:"Stale evidence"}}}},
+      "/v1/operator/briefing": {get:{operationId:"getOperatorBriefing",summary:"Read facts and signed pause, resume, faction reputation or automatic policy options",responses:{"200":{description:"Observation and executable option tickets"},"409":{description:"Stale evidence"}}}},
       "/v1/operator/commands": {post:{operationId:"submitOperatorChoice",summary:"Submit the exact chosen ticket; retry the same ticket after ambiguity",requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["ticket"],properties:{ticket:{type:"string",maxLength:2048}}}}}},responses:{"202":{description:"Queued or replayed; inspect the operation receipt"},"409":{description:"Expired, unavailable or previous-reset option"}}}},
       "/v1/operator/receipt": {get:{operationId:"getOperatorReceipt",summary:"Distinguish dispatch, control acceptance and scoped completion",parameters:[{name:"id",in:"query",required:true,schema:{type:"string"}},{name:"resetEpoch",in:"query",required:true,schema:{type:"string"}}],responses:{"200":{description:"Durable operation evidence"},"409":{description:"Reset changed or evidence unavailable"}}}},
       "/v1/servers": { get: { operationId: "listBitburnerServers", summary: "List servers visible to Bitburner", responses: { "200": { description: "Server list" } } } },

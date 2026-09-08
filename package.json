@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:bridge": "node tools/bridge-recovery/tests/recovery.mjs && node tools/bridge-recovery/tests/operator.mjs",
+    "test:bridge": "node tools/bridge-recovery/tests/recovery.mjs && node tools/bridge-recovery/tests/operator.mjs && node tools/bridge-recovery/tests/objectives.mjs",
+    "test:bridge-native-proof": "node tests/bridge-native-proof.mjs",
     "rfa": "node tools/rfa.mjs",
     "preview:ghost": "node tools/preview-ghost.mjs",
     "test:ghost": "node tests/ghost-deck.mjs && node tests/ghost-installer.mjs",

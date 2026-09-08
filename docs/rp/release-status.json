@@ -65,11 +65,12 @@
   "objectiveProof": "evidence/objective/native.json",
   "lastLiveRecoveryProof": "evidence/recovery/live-rp-7-2.json",
   "operatorBridge": {
-    "version": "1.2.0",
-    "contract": "OPERATOR-BRIDGE-1.2.md",
-    "liveProof": "evidence/recovery/operator-bridge-live-20260908.json",
+    "version": "1.3.0",
+    "contract": "OPERATOR-BRIDGE-1.3.md",
+    "liveProof": "evidence/recovery/operator-bridge-1.3-live.json",
+    "nativeProof": "evidence/operator/native.json",
     "liveScope": "read-and-rejection-only",
-    "adapters": ["pause", "resume"],
+    "adapters": ["pause", "resume", "faction-reputation", "automatic-policy"],
     "realGptValidated": false
   }
 }

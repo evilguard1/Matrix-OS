@@ -1,0 +1,60 @@
+{
+  "observedAt": "2026-09-08T12:46:27.442Z",
+  "gateway": {
+    "version": "1.3.0",
+    "bitburnerConnected": true,
+    "commandAgent": "/cloud/agent.js"
+  },
+  "resetEpoch": "4:1788659363133:1788865274681",
+  "updated": 1788871586120,
+  "expiresAt": 1788871601120,
+  "gameStatus": "running",
+  "home": {
+    "maxRam": 1024,
+    "usedRam": 974.6,
+    "cash": 80101075.81599101
+  },
+  "objective": {
+    "id": "FACTION_REP",
+    "title": "Augmentation: Neuralstimulator",
+    "source": "coordinator",
+    "updated": 1788871581824,
+    "metric": {
+      "name": "Neuralstimulator",
+      "current": 79998577.17285474,
+      "required": 3000000000,
+      "percent": 2.6666192390951577,
+      "scope": "local-milestone",
+      "source": "coordinator"
+    }
+  },
+  "options": [
+    {
+      "action": "pause",
+      "expiresAt": 1788871601120
+    },
+    {
+      "action": "faction-reputation",
+      "params": {
+        "faction": "Sector-12",
+        "targetRep": 50000
+      },
+      "evidence": {
+        "currentRep": 6453.4744936601555,
+        "targetRep": 50000,
+        "updated": 1788871577418,
+        "source": "native-singularity-goal",
+        "scope": "faction-reputation-threshold"
+      },
+      "expiresAt": 1788871601120
+    }
+  ],
+  "objectiveAdmission": "available",
+  "agent": {
+    "fresh": true,
+    "pid": 2
+  },
+  "invalidTicket": "400: {\"error\":\"Invalid ticket signature\"}",
+  "rpReady": false,
+  "scope": "Live read and invalid-ticket rejection only; valid gameplay commands exercised in the isolated native proof, not this save."
+}

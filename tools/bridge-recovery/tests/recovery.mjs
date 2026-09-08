@@ -47,6 +47,6 @@ try{
  assert.equal(chosen.status,202);const operation=await chosen.json();assert.equal(operation.completed,false);
  const receipt=await (await fetch(base+'/v1/operator/receipt?id='+operation.id+'&resetEpoch='+epoch,{headers})).json();assert.equal(receipt.status,'queued');
  assert.equal((await fetch(base+'/v1/operator/commands',{method:'POST',headers,body:JSON.stringify({ticket:'tampered'})})).status,400);
- const spec=await (await fetch(base+'/openapi.json')).json();assert.equal(spec.info.version,'1.2.0');assert.ok(spec.paths['/v1/operator/commands']);
+ const spec=await (await fetch(base+'/openapi.json')).json();assert.equal(spec.info.version,'1.3.0');assert.ok(spec.paths['/v1/operator/commands']);
  console.log("PASS: native RAM dispatch, auth, idempotency conflict, stale briefing, legacy replay, duplicate, expiry, reset, exception recovery, crash ambiguity, capacity");
 }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
