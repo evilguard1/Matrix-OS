@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import {randomBytes} from 'node:crypto';
+import {resolve} from 'node:path';
+import {startConnector} from './server.mjs';
+const configPath=process.argv[2];
+if(!configPath)throw new Error('Usage: node start.mjs /absolute/path/to/private-config.json');
+const config=JSON.parse(fs.readFileSync(configPath,'utf8'));
+const gatewayToken=fs.readFileSync(config.gatewayTokenFile,'utf8').match(/^MATRIX_GATEWAY_TOKEN=(.+)$/m)?.[1].trim();
+const keyPath=resolve(config.operatorTokenFile);
+if(!fs.existsSync(keyPath))fs.writeFileSync(keyPath,randomBytes(32).toString('base64url'),{flag:'wx',mode:0o600});
+const operatorToken=fs.readFileSync(keyPath,'utf8').trim();
+await startConnector({gatewayToken,operatorToken,publicOrigin:config.publicOrigin,port:config.port??31338});

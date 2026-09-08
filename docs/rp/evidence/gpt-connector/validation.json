@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-09-08T13:15:23.148Z",
+  "version": "0.1.0",
+  "status": "tests-passed",
+  "scope": "Isolated local HTTP connector tests. Existing bridge native source hashes also verified. No production deployment, public endpoint or real GPT validation.",
+  "checks": [
+    "distinct credentials",
+    "administrative routes refused",
+    "upstream header replacement",
+    "request size limit",
+    "receipt identity validation",
+    "queued preserved as incomplete",
+    "rate limit",
+    "schema contains no keys"
+  ],
+  "hashes": {
+    "server.mjs": "8ced3f3631114db19593123602feca6e1b34ec44aef94b998e88c0b37a4b8127",
+    "openapi.mjs": "494661886db4b3c5b5cbaae8accb002762fc904649882481c857565969465d2f",
+    "start.mjs": "c4ae2479165b7b87b2db39dbe365a8137a8f85ff981c87d2153c15a62a6d5c14",
+    "test.mjs": "781cc566d9311f46937a81af0f5aa3144ec1b9e96d1f0d0583b9302613cd2522",
+    "GPT-INSTRUCTIONS.md": "9dadb3de218682bf457137a03a896f7be4d5555a8f5f61cf8ea2bdfab2c98190"
+  }
+}

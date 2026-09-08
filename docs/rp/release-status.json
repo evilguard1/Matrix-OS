@@ -64,6 +64,14 @@
   "briefingProof": "evidence/briefing/native.json",
   "objectiveProof": "evidence/objective/native.json",
   "lastLiveRecoveryProof": "evidence/recovery/live-rp-7-2.json",
+  "gptConnector": {
+    "version": "0.1.0",
+    "status": "prepared-and-tested-not-deployed",
+    "documentation": "../../tools/gpt-connector/README.md",
+    "instructions": "../../tools/gpt-connector/GPT-INSTRUCTIONS.md",
+    "publicEndpointConfigured": false,
+    "realGptValidated": false
+  },
   "operatorBridge": {
     "version": "1.3.0",
     "contract": "OPERATOR-BRIDGE-1.3.md",
